@@ -204,9 +204,19 @@ class GetObjectAnnotatedBuilder implements IMethodBuilder<GetObject> {
 
         final Limit limit = m.getAnnotation(Limit.class);
         if (limit != null) {
+            if (limit.value() < 0) {
+                throw new StorageSetupException("Negative limit value in method " + m.getName());
+            }
+
             sql.append(" LIMIT ");
-            sql.append(limit.offset());
-            sql.append(",");
+            final Offset offset = m.getAnnotation(Offset.class);
+            if (offset != null) {
+                if (offset.value() < 0) {
+                    throw new StorageSetupException("Negative limit value in method " + m.getName());
+                }
+                sql.append(offset.value());
+                sql.append(",");
+            }
             sql.append(limit.value());
         }
 
