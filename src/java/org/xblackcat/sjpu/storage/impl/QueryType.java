@@ -5,7 +5,7 @@ package org.xblackcat.sjpu.storage.impl;
 *
 * @author xBlackCat
 */
-enum SqlType {
+enum QueryType {
     Select,
     Insert,
     Update,

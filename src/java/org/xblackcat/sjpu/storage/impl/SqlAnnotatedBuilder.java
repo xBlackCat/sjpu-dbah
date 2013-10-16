@@ -25,22 +25,22 @@ class SqlAnnotatedBuilder implements IMethodBuilder<Sql> {
             ClassPool pool, CtClass accessHelper, Method m, Sql annotation
     ) throws NotFoundException, NoSuchMethodException, CannotCompileException {
         final String sql = annotation.value();
-        final SqlType type;
+        final QueryType type;
         {
             final Matcher matcher = BuilderUtils.FIRST_WORD_SQL.matcher(sql);
             if (matcher.find()) {
                 final String word = matcher.group(1);
                 if ("select".equalsIgnoreCase(word)) {
-                    type = SqlType.Select;
+                    type = QueryType.Select;
                 } else if ("insert".equalsIgnoreCase(word)) {
-                    type = SqlType.Insert;
+                    type = QueryType.Insert;
                 } else if ("update".equalsIgnoreCase(word)) {
-                    type = SqlType.Update;
+                    type = QueryType.Update;
                 } else {
-                    type = SqlType.Other;
+                    type = QueryType.Other;
                 }
             } else {
-                type = SqlType.Other;
+                type = QueryType.Other;
             }
         }
 
@@ -48,7 +48,7 @@ class SqlAnnotatedBuilder implements IMethodBuilder<Sql> {
         final Class<?> realReturnType = converterInfo.getRealReturnType();
         Class<? extends IToObjectConverter<?>> converter = converterInfo.getConverter();
 
-        if (type == SqlType.Select && converter == null) {
+        if (type == QueryType.Select && converter == null) {
             throw new StorageSetupException("Converter should be specified for SELECT statement in method " + m.toString());
         }
 
@@ -64,7 +64,7 @@ class SqlAnnotatedBuilder implements IMethodBuilder<Sql> {
         final String targetMethodName;
         final CtClass targetReturnType;
         final int targetModifiers;
-        final boolean generateWrapper = type == SqlType.Select && returnType.isPrimitive();
+        final boolean generateWrapper = type == QueryType.Select && returnType.isPrimitive();
         if (generateWrapper) {
             targetMethodName = "$" + methodName + "$Wrap";
             assert ctReturnType instanceof CtPrimitiveType;
@@ -76,7 +76,7 @@ class SqlAnnotatedBuilder implements IMethodBuilder<Sql> {
             targetModifiers = Modifier.PUBLIC | Modifier.FINAL;
         }
 
-        if (type == SqlType.Select) {
+        if (type == QueryType.Select) {
             if (log.isDebugEnabled()) {
                 log.debug("Generate SELECT method " + m);
             }
