@@ -4,7 +4,6 @@ import org.xblackcat.sjpu.storage.IAH;
 import org.xblackcat.sjpu.storage.IStorage;
 import org.xblackcat.sjpu.storage.StorageException;
 import org.xblackcat.sjpu.storage.StorageSetupException;
-import org.xblackcat.sjpu.storage.connection.IConnectionFactory;
 import org.xblackcat.sjpu.storage.connection.IDatabaseSettings;
 import org.xblackcat.sjpu.storage.connection.SimplePooledConnectionFactory;
 
@@ -95,10 +94,5 @@ public class Storage implements IStorage {
                 return INSTANCE_AH_BUILDER;
             }
         }
-    }
-
-    @Override
-    public IConnectionFactory getConnectionFactory() {
-        return queryHelper.getConnectionFactory();
     }
 }
