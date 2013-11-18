@@ -64,13 +64,7 @@ public class SimplePooledConnectionFactory extends AConnectionFactory {
         }
     }
 
-    public Connection getWriteConnection() throws SQLException {
+    public Connection getConnection() throws SQLException {
         return DriverManager.getConnection("jdbc:apache:commons:dbcp:storage");
     }
-
-    @Override
-    public Connection getReadConnection() throws SQLException {
-        return getWriteConnection();
-    }
-
 }

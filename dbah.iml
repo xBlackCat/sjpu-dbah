@@ -33,7 +33,9 @@
           <root url="jar://$MODULE_DIR$/lib/javassist.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://D:/Libraries/Java/ByteCode/javassist-3.17.1-GA.zip!/javassist-3.17.1-GA/src/main" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library" scope="TEST">
@@ -62,7 +64,13 @@
           <root url="jar://$MODULE_DIR$/lib/commons-dbcp-1.4.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://D:/Libraries/Java/apache/commons-pool-1.6-src.zip!/commons-pool-1.6-src/src/java" />
+          <root url="jar://D:/Libraries/Java/apache/commons-pool-1.6-src.zip!/commons-pool-1.6-src/src/test" />
+          <root url="jar://D:/Libraries/Java/apache/commons-dbcp-1.4-src.zip!/commons-dbcp-1.4-src/doc" />
+          <root url="jar://D:/Libraries/Java/apache/commons-dbcp-1.4-src.zip!/commons-dbcp-1.4-src/src/java" />
+          <root url="jar://D:/Libraries/Java/apache/commons-dbcp-1.4-src.zip!/commons-dbcp-1.4-src/src/test" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">

@@ -1,6 +1,8 @@
 package org.xblackcat.sjpu.storage.impl;
 
-import org.xblackcat.sjpu.storage.*;
+import org.xblackcat.sjpu.storage.IAH;
+import org.xblackcat.sjpu.storage.Sql;
+import org.xblackcat.sjpu.storage.StorageException;
 
 /**
  * 16.08.13 15:55
@@ -29,6 +31,7 @@ public interface IPrimitiveAH extends IAH {
     @Sql("SELECT NULL")
     byte getByteBySqlAnn() throws StorageException;
 
+/*
     @GetObject(value = "none", fields = {@QueryField("none")})
     int getInt2ByGetObjectAnn() throws StorageException;
 
@@ -49,4 +52,5 @@ public interface IPrimitiveAH extends IAH {
 
     @GetObject(value = "none", fields = {@QueryField("none")})
     byte getByte2ByGetObjectAnn() throws StorageException;
+*/
 }

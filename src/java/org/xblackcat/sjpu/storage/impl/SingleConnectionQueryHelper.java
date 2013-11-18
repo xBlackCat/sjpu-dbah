@@ -1,7 +1,6 @@
 package org.xblackcat.sjpu.storage.impl;
 
 import org.xblackcat.sjpu.storage.StorageException;
-import org.xblackcat.sjpu.storage.connection.IConnectionFactory;
 import org.xblackcat.sjpu.storage.converter.IToObjectConverter;
 
 import java.sql.*;
@@ -14,26 +13,24 @@ import java.util.List;
  * @author ASUS
  */
 
-public final class QueryHelper implements IQueryHelper {
-    private final IConnectionFactory connectionFactory;
+final class SingleConnectionQueryHelper implements IQueryHelper {
+    private final Connection con;
 
-    public QueryHelper(IConnectionFactory connectionFactory) {
-        this.connectionFactory = connectionFactory;
+    public SingleConnectionQueryHelper(Connection con) {
+        this.con = con;
     }
 
     @Override
     public <T> List<T> execute(IToObjectConverter<T> c, String sql, Object... parameters) throws StorageException {
         try {
-            try (Connection con = connectionFactory.getConnection()) {
-                try (PreparedStatement st = QueryHelperUtils.constructSql(con, sql, Statement.NO_GENERATED_KEYS, parameters)) {
-                    try (ResultSet rs = st.executeQuery()) {
-                        List<T> res = new ArrayList<>();
-                        while (rs.next()) {
-                            res.add(c.convert(rs));
-                        }
-
-                        return Collections.unmodifiableList(res);
+            try (PreparedStatement st = QueryHelperUtils.constructSql(con, sql, Statement.NO_GENERATED_KEYS, parameters)) {
+                try (ResultSet rs = st.executeQuery()) {
+                    List<T> res = new ArrayList<>();
+                    while (rs.next()) {
+                        res.add(c.convert(rs));
                     }
+
+                    return Collections.unmodifiableList(res);
                 }
             }
         } catch (SQLException e) {
@@ -57,10 +54,8 @@ public final class QueryHelper implements IQueryHelper {
     @Override
     public int update(String sql, Object... parameters) throws StorageException {
         try {
-            try (Connection con = connectionFactory.getConnection()) {
-                try (PreparedStatement st = QueryHelperUtils.constructSql(con, sql, Statement.NO_GENERATED_KEYS, parameters)) {
-                    return st.executeUpdate();
-                }
+            try (PreparedStatement st = QueryHelperUtils.constructSql(con, sql, Statement.NO_GENERATED_KEYS, parameters)) {
+                return st.executeUpdate();
             }
         } catch (SQLException e) {
             throw new StorageException("Can not execute query " + QueryHelperUtils.constructDebugSQL(sql, parameters), e);
@@ -68,12 +63,7 @@ public final class QueryHelper implements IQueryHelper {
     }
 
     @Override
-    public Connection getConnection() throws StorageException {
-        try {
-            return connectionFactory.getConnection();
-        } catch (SQLException e) {
-            throw new StorageException("Can't obtain connection", e);
-        }
+    public Connection getConnection() {
+        return con;
     }
-
 }

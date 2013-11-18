@@ -8,6 +8,6 @@ import org.xblackcat.sjpu.storage.StorageSetupException;
  *
  * @author xBlackCat
  */
-interface IAHBuilder {
-    <T extends IAH> T build(Class<T> target, IQueryHelper helper) throws StorageSetupException;
+interface IAHBuilder<P> {
+    <T extends IAH> T build(Class<T> target, P helper) throws StorageSetupException;
 }

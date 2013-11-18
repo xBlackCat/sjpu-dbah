@@ -1,9 +1,9 @@
 package org.xblackcat.sjpu.storage.impl;
 
 import org.xblackcat.sjpu.storage.StorageException;
-import org.xblackcat.sjpu.storage.connection.IConnectionFactory;
 import org.xblackcat.sjpu.storage.converter.IToObjectConverter;
 
+import java.sql.Connection;
 import java.util.List;
 
 /**
@@ -17,5 +17,5 @@ public interface IQueryHelper {
 
     int update(String sql, Object... parameters) throws StorageException;
 
-    IConnectionFactory getConnectionFactory();
+    Connection getConnection() throws StorageException;
 }

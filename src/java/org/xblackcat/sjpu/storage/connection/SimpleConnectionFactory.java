@@ -15,16 +15,11 @@ public class SimpleConnectionFactory extends AConnectionFactory {
         super(settings);
     }
 
-    public Connection getWriteConnection() throws SQLException {
+    public Connection getConnection() throws SQLException {
         return DriverManager.getConnection(
                 settings.getDbConnectionUrlPattern(),
                 settings.getDbAccessUser(),
                 settings.getDbAccessPassword()
         );
-    }
-
-    @Override
-    public Connection getReadConnection() throws SQLException {
-        return getWriteConnection();
     }
 }

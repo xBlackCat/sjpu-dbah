@@ -2,9 +2,9 @@ package org.xblackcat.sjpu.storage.impl;
 
 
 import org.xblackcat.sjpu.storage.StorageException;
-import org.xblackcat.sjpu.storage.connection.IConnectionFactory;
 import org.xblackcat.sjpu.storage.converter.IToObjectConverter;
 
+import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -43,7 +43,8 @@ public class QueryHelperStub implements IQueryHelper {
     }
 
     @Override
-    public IConnectionFactory getConnectionFactory() {
+    public Connection getConnection() {
         return null;
     }
+
 }

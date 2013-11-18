@@ -5,7 +5,11 @@ package org.xblackcat.sjpu.storage;
  *
  * @author xBlackCat
  */
-public interface IStorage {
-    <T extends IAH> T get(Class<T> clazz);
-
+public interface IStorage extends IAHFactory {
+    /**
+     * Starts a transaction. See {@linkplain org.xblackcat.sjpu.storage.IBatch} interface description for details
+     *
+     * @return an IBatch object associated with transaction
+     */
+    IBatch openTransaction() throws StorageException;
 }
