@@ -61,8 +61,8 @@ class BatchHelper extends AnAHFactory implements IBatch {
     public void close() throws StorageException {
         if (rollbackOnClose()) {
             try {
-                if (log.isWarnEnabled()) {
-                    log.warn("Perform automatic rollback for non-committed transaction");
+                if (log.isInfoEnabled()) {
+                    log.info("Perform automatic rollback for non-committed transaction");
                 }
 
                 rollback();

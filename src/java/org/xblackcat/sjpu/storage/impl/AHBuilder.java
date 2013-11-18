@@ -40,6 +40,27 @@ class AHBuilder<B, P> implements IAHBuilder<P> {
     @Override
     public <T extends IAH> T build(Class<T> target, P helper) throws StorageSetupException {
         try {
+            // For the first: check if the implementation is exists
+
+            try {
+                Class<?> clazz = Class.forName(target.getName() + "$" + definer.getNestedClassName());
+
+                if (!target.isAssignableFrom(clazz)) {
+                    throw new StorageSetupException(
+                            target.getName() +
+                                    " already have implemented inner class " +
+                                    definer.getNestedClassName() +
+                                    " with inconsistent structure."
+                    );
+                }
+
+                @SuppressWarnings("unchecked") Class<T> aClass = (Class<T>) clazz;
+                return definer.build(aClass, helper);
+            } catch (ClassNotFoundException e) {
+                // Ignore, smile and go further
+            }
+
+            // Class not yet built: create a new one
             final CtClass accessHelper;
             if (target.isInterface()) {
                 accessHelper = defineCtClassByInterface(target);
