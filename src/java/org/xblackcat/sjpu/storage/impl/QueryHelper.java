@@ -68,12 +68,7 @@ public final class QueryHelper implements IQueryHelper {
     }
 
     @Override
-    public Connection getConnection() throws StorageException {
-        try {
-            return connectionFactory.getConnection();
-        } catch (SQLException e) {
-            throw new StorageException("Can't obtain connection", e);
-        }
+    public Connection getConnection() throws SQLException {
+        return connectionFactory.getConnection();
     }
-
 }
