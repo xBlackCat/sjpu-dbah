@@ -16,7 +16,7 @@ import java.util.List;
  * @author xBlackCat
  */
 @SuppressWarnings("unchecked")
-public class QueryHelperStub implements IQueryHelper {
+public class QueryHelperStub extends AQueryHelper {
     private final List data;
 
     public QueryHelperStub(Object... data) {

@@ -5,7 +5,6 @@ import org.apache.commons.logging.LogFactory;
 import org.xblackcat.sjpu.storage.IBatch;
 import org.xblackcat.sjpu.storage.StorageException;
 
-import java.sql.Connection;
 import java.sql.SQLException;
 
 /**
@@ -15,16 +14,13 @@ import java.sql.SQLException;
  */
 class BatchHelper extends AnAHFactory implements IBatch {
     private static final Log log = LogFactory.getLog(BatchHelper.class);
-    private final Connection con;
 
     private boolean rollbackOnClose = true;
     private boolean transactionDone = false;
 
-    BatchHelper(Connection con) throws SQLException {
-        super(new SingleConnectionQueryHelper(con));
-        this.con = con;
-
-        con.setAutoCommit(false);
+    BatchHelper(AQueryHelper helper) throws SQLException {
+        super(new SingleConnectionQueryHelper(helper));
+        queryHelper.getConnection().setAutoCommit(false);
     }
 
     @Override
@@ -36,7 +32,7 @@ class BatchHelper extends AnAHFactory implements IBatch {
         setTransactionDone();
 
         try {
-            con.commit();
+            queryHelper.getConnection().commit();
         } catch (SQLException e) {
             throw new StorageException("Can't commit changes to database", e);
         }
@@ -51,7 +47,7 @@ class BatchHelper extends AnAHFactory implements IBatch {
         setTransactionDone();
 
         try {
-            con.rollback();
+            queryHelper.getConnection().rollback();
         } catch (SQLException e) {
             throw new StorageException("Can't rollback changes", e);
         }
@@ -74,7 +70,7 @@ class BatchHelper extends AnAHFactory implements IBatch {
         setTransactionDone();
 
         try {
-            con.close();
+            queryHelper.getConnection().close();
         } catch (SQLException e) {
             throw new StorageException("Can't close database connection", e);
         }

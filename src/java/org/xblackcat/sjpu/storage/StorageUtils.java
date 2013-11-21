@@ -2,7 +2,7 @@ package org.xblackcat.sjpu.storage;
 
 import org.xblackcat.sjpu.storage.connection.IDatabaseSettings;
 import org.xblackcat.sjpu.storage.connection.SimplePooledConnectionFactory;
-import org.xblackcat.sjpu.storage.impl.IQueryHelper;
+import org.xblackcat.sjpu.storage.impl.AQueryHelper;
 import org.xblackcat.sjpu.storage.impl.QueryHelper;
 
 /**
@@ -11,7 +11,7 @@ import org.xblackcat.sjpu.storage.impl.QueryHelper;
  * @author xBlackCat
  */
 public class StorageUtils {
-    public static IQueryHelper buildQueryHelper(IDatabaseSettings settings) {
+    public static AQueryHelper buildQueryHelper(IDatabaseSettings settings) {
         try {
             return new QueryHelper(new SimplePooledConnectionFactory(settings));
         } catch (StorageException e) {

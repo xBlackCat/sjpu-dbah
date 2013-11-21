@@ -13,11 +13,12 @@ import java.util.List;
  * @author ASUS
  */
 
-final class SingleConnectionQueryHelper implements IQueryHelper {
+final class SingleConnectionQueryHelper extends AQueryHelper {
     private final Connection con;
 
-    public SingleConnectionQueryHelper(Connection con) {
-        this.con = con;
+    public SingleConnectionQueryHelper(AQueryHelper parentHelper) throws SQLException {
+        this.con = parentHelper.getConnection();
+        mappers.putAll(parentHelper.mappers);
     }
 
     @Override

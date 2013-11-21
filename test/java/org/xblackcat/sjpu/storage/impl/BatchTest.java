@@ -45,7 +45,7 @@ public class BatchTest {
 
     @Before
     public void setupDatabase() throws StorageException {
-        IQueryHelper helper = StorageUtils.buildQueryHelper(settings);
+        AQueryHelper helper = StorageUtils.buildQueryHelper(settings);
         storage = new Storage(helper);
 
         DBAH dbah = storage.get(DBAH.class);

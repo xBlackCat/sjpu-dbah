@@ -1,5 +1,6 @@
 package org.xblackcat.sjpu.storage.impl;
 
+import org.xblackcat.sjpu.storage.AnObjectMapper;
 import org.xblackcat.sjpu.storage.StorageException;
 import org.xblackcat.sjpu.storage.connection.IConnectionFactory;
 import org.xblackcat.sjpu.storage.converter.IToObjectConverter;
@@ -14,10 +15,12 @@ import java.util.List;
  * @author ASUS
  */
 
-public final class QueryHelper implements IQueryHelper {
+public final class QueryHelper extends AQueryHelper {
     private final IConnectionFactory connectionFactory;
 
-    public QueryHelper(IConnectionFactory connectionFactory) {
+    @SafeVarargs
+    public QueryHelper(IConnectionFactory connectionFactory, Class<? extends AnObjectMapper>... mappers) {
+        super(mappers);
         this.connectionFactory = connectionFactory;
     }
 
@@ -25,7 +28,12 @@ public final class QueryHelper implements IQueryHelper {
     public <T> List<T> execute(IToObjectConverter<T> c, String sql, Object... parameters) throws StorageException {
         try {
             try (Connection con = connectionFactory.getConnection()) {
-                try (PreparedStatement st = QueryHelperUtils.constructSql(con, sql, Statement.NO_GENERATED_KEYS, parameters)) {
+                try (PreparedStatement st = QueryHelperUtils.constructSql(
+                        con,
+                        sql,
+                        Statement.NO_GENERATED_KEYS,
+                        preProcessing(parameters)
+                )) {
                     try (ResultSet rs = st.executeQuery()) {
                         List<T> res = new ArrayList<>();
                         while (rs.next()) {
@@ -58,7 +66,12 @@ public final class QueryHelper implements IQueryHelper {
     public int update(String sql, Object... parameters) throws StorageException {
         try {
             try (Connection con = connectionFactory.getConnection()) {
-                try (PreparedStatement st = QueryHelperUtils.constructSql(con, sql, Statement.NO_GENERATED_KEYS, parameters)) {
+                try (PreparedStatement st = QueryHelperUtils.constructSql(
+                        con,
+                        sql,
+                        Statement.NO_GENERATED_KEYS,
+                        preProcessing(parameters)
+                )) {
                     return st.executeUpdate();
                 }
             }

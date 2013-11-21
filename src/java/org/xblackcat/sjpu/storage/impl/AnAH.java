@@ -6,9 +6,9 @@ import org.xblackcat.sjpu.storage.IAH;
  * @author xBlackCat Date: 27.07.11
  */
 public class AnAH implements IAH {
-    protected final IQueryHelper helper;
+    protected final AQueryHelper helper;
 
-    protected AnAH(IQueryHelper helper) {
+    protected AnAH(AQueryHelper helper) {
         if (helper == null) {
             throw new NullPointerException("Helper can not be null.");
         }
