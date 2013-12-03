@@ -361,7 +361,7 @@ class BuilderUtils {
 
                 final Class<?> aClass = Class.forName(baseClass.getName() + "$ToObjectConverter");
 
-                if (aClass.isAssignableFrom(IToObjectConverter.class)) {
+                if (IToObjectConverter.class.isAssignableFrom(aClass)) {
                     if (log.isTraceEnabled()) {
                         log.trace("Convertor class already exists: " + baseClass.getName() + "$ToObjectConverter");
                     }
