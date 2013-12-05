@@ -5,6 +5,7 @@ import org.apache.commons.logging.LogFactory;
 import org.xblackcat.sjpu.storage.IBatch;
 import org.xblackcat.sjpu.storage.StorageException;
 
+import java.sql.Connection;
 import java.sql.SQLException;
 
 /**
@@ -18,9 +19,13 @@ class BatchHelper extends AnAHFactory implements IBatch {
     private boolean rollbackOnClose = true;
     private boolean transactionDone = false;
 
-    BatchHelper(AQueryHelper helper) throws SQLException {
+    BatchHelper(AQueryHelper helper, int transactionIsolationLevel) throws SQLException {
         super(new SingleConnectionQueryHelper(helper));
-        queryHelper.getConnection().setAutoCommit(false);
+        final Connection con = queryHelper.getConnection();
+        con.setAutoCommit(false);
+        if (transactionIsolationLevel != -1) {
+            con.setTransactionIsolation(transactionIsolationLevel);
+        }
     }
 
     @Override

@@ -18,8 +18,13 @@ public class Storage extends AnAHFactory implements IStorage {
 
     @Override
     public IBatch openTransaction() throws StorageException {
+        return openTransaction(-1);
+    }
+
+    @Override
+    public IBatch openTransaction(int transactionIsolationLevel) throws StorageException {
         try {
-            return new BatchHelper(queryHelper);
+            return new BatchHelper(queryHelper, transactionIsolationLevel);
         } catch (SQLException e) {
             throw new StorageException("An exception occurs while starting a transaction", e);
         }
