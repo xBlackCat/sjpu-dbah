@@ -42,11 +42,15 @@ public abstract class AQueryHelper {
         while (i < params.length) {
             Object o = params[i];
 
-            AnObjectMapper m = mappers.get(o.getClass());
-            if (m == null) {
-                processed[i] = o;
+            if (o == null) {
+                processed[i] = null;
             } else {
-                processed[i] = m.convert(o);
+                AnObjectMapper m = mappers.get(o.getClass());
+                if (m == null) {
+                    processed[i] = o;
+                } else {
+                    processed[i] = m.convert(o);
+                }
             }
 
             i++;
