@@ -1,6 +1,7 @@
 package org.xblackcat.sjpu.storage.impl;
 
 import javassist.*;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -18,6 +19,7 @@ import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -177,16 +179,11 @@ class BuilderUtils {
                 }
             }
 
-            Class<? extends IToObjectConverter<?>> standartConverter = ConverterInfo.checkStandardClassConverter(
-                    realReturnType
-            );
+            Class<? extends IToObjectConverter<?>> standardConverter = ConverterInfo.checkStandardClassConverter(realReturnType);
             final ToObjectConverter objectConverterAnn = realReturnType.getAnnotation(ToObjectConverter.class);
 
-            if (realReturnType.getAnnotation(AutoConverter.class) != null) {
-                converter = ConverterInfo.initializeConverter(pool, realReturnType);
-                useFieldList = false;
-            } else if (standartConverter != null) {
-                converter = standartConverter;
+            if (standardConverter != null) {
+                converter = standardConverter;
                 useFieldList = true;
             } else if (objectConverterAnn != null) {
                 converter = objectConverterAnn.value();
@@ -196,10 +193,69 @@ class BuilderUtils {
 
                 useFieldList = true;
             } else {
-                throw new StorageSetupException(
-                        "Neither return object class nor access helper method not annotated with " +
-                                ToObjectConverter.class
-                );
+                final Constructor<?>[] constructors = realReturnType.getConstructors();
+                useFieldList = false;
+                Constructor<?> targetConstructor = null;
+                String suffix = "";
+
+                RowMap constructorSignature = m.getAnnotation(RowMap.class);
+                final Class<?>[] classes = constructorSignature == null ? null : constructorSignature.value();
+
+                if (constructors.length == 1) {
+                    targetConstructor = constructors[0];
+                } else {
+                    Constructor<?> def = null;
+
+                    int i = 0;
+                    int constructorsLength = constructors.length;
+
+                    while (i < constructorsLength) {
+                        Constructor<?> c = constructors[i];
+                        if (c.getAnnotation(DefaultRowMap.class) != null) {
+                            def = c;
+                            if (classes == null) {
+                                // No annotations so just use the constructor annotated as default map
+                                break;
+                            }
+                        } else if (classes != null) {
+                            if (ArrayUtils.isEquals(classes, c.getParameterTypes())) {
+                                targetConstructor = c;
+                                suffix = String.valueOf(i);
+                                break;
+                            }
+                        }
+                        i++;
+                    }
+
+                    if (targetConstructor == null) {
+                        if (classes != null) {
+                            throw new StorageSetupException(
+                                    "No constructor found in " + realReturnType.getName() + " with signature " + Arrays.asList(classes)
+                            );
+                        } else {
+                            targetConstructor = def;
+                            suffix = "Def";
+                        }
+                    }
+                }
+
+                if (targetConstructor == null) {
+                    throw new StorageSetupException(
+                            "Can't find a way to convert result row to object. Probably one of the following annotations should be used: " +
+                                    Arrays.asList(ToObjectConverter.class, RowMap.class, MapRowTo.class)
+                    );
+                }
+
+                if (classes != null) {
+                    if (!ArrayUtils.isEquals(classes, targetConstructor.getParameterTypes())) {
+                        throw new StorageSetupException(
+                                "No constructor found in " + realReturnType.getName() + " with signature " + Arrays.asList(classes)
+                        );
+                    }
+                }
+
+
+                converter = ConverterInfo.initializeConverter(pool, targetConstructor, suffix);
             }
         }
         return new ConverterInfo(realReturnType, converter, useFieldList);
@@ -352,25 +408,28 @@ class BuilderUtils {
         @SuppressWarnings("unchecked")
         private static Class<IToObjectConverter<?>> initializeConverter(
                 ClassPool pool,
-                Class<?> baseClass
+                Constructor<?> objectConstructor,
+                String suffix
         ) throws NotFoundException, CannotCompileException {
+            Class<?> returnType = objectConstructor.getDeclaringClass();
+            final String converterCN = "ToObjectConverter" + suffix;
             try {
+
                 if (log.isTraceEnabled()) {
-                    log.trace("Check if the convertor already exists for class " + baseClass.getName());
+                    log.trace("Check if the converter already exists for class " + returnType.getName());
                 }
 
-                final Class<?> aClass = Class.forName(baseClass.getName() + "$ToObjectConverter");
+                final String converterFQN = returnType.getName() + "$" + converterCN;
+                final Class<?> aClass = Class.forName(converterFQN);
 
                 if (IToObjectConverter.class.isAssignableFrom(aClass)) {
                     if (log.isTraceEnabled()) {
-                        log.trace("Convertor class already exists: " + baseClass.getName() + "$ToObjectConverter");
+                        log.trace("Converter class already exists: " + converterFQN);
                     }
                     return (Class<IToObjectConverter<?>>) aClass;
                 } else {
                     throw new StorageSetupException(
-                            baseClass.getName() +
-                                    "$ToObjectConverter class is already exists and it is not implements " +
-                                    IToObjectConverter.class
+                            converterFQN + " class is already exists and it is not implements " + IToObjectConverter.class
                     );
                 }
             } catch (ClassNotFoundException ignore) {
@@ -378,15 +437,11 @@ class BuilderUtils {
             }
 
             if (log.isTraceEnabled()) {
-                log.trace("Build converter class for class " + baseClass.getName());
+                log.trace("Build converter class for class " + returnType.getName());
             }
 
-            Constructor<?> objectConstructor = findConstructorByAnnotatedParameter(
-                    baseClass,
-                    QueryField.class
-            );
             StringBuilder body = new StringBuilder("{\nreturn new ");
-            body.append(getName(baseClass));
+            body.append(getName(returnType));
             body.append("(\n");
             final Class<?>[] parameterTypes = objectConstructor.getParameterTypes();
             int i = 0;
@@ -430,18 +485,20 @@ class BuilderUtils {
                 }
             }
 
-            body.setLength(body.length() - 2);
+            if (parameterTypesLength > 0) {
+                body.setLength(body.length() - 2);
+            }
             body.append("\n);\n}");
 
-            final CtClass baseCtClass = pool.get(baseClass.getName());
-            final CtClass toObjectConverter = baseCtClass.makeNestedClass("ToObjectConverter", true);
+            final CtClass baseCtClass = pool.get(returnType.getName());
+            final CtClass toObjectConverter = baseCtClass.makeNestedClass(converterCN, true);
 
             toObjectConverter.addInterface(pool.get(IToObjectConverter.class.getName()));
 
             if (log.isTraceEnabled()) {
                 log.trace(
                         "Generated convert method " +
-                                baseClass.getName() +
+                                returnType.getName() +
                                 " convert(ResultSet $1) throws SQLException " +
                                 body.toString()
                 );

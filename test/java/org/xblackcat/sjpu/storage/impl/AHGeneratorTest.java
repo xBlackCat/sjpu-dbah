@@ -132,4 +132,25 @@ public class AHGeneratorTest {
             }
         }
     }
+
+    @Test
+    public void generateToObjConverter() throws StorageException {
+        IAHFactory storage = new Storage(new QueryHelperStub("1", "2", "3", "4"));
+
+        storage.get(ITestObjAH.class);
+
+        try {
+            storage.get(ITestObjFailAH.class);
+            Assert.fail("Exception expected");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        try {
+            storage.get(ITestObjFail2AH.class);
+            Assert.fail("Exception expected");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 }

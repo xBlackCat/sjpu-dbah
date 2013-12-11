@@ -1,0 +1,16 @@
+package org.xblackcat.sjpu.storage;
+
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+/**
+ * 11.12.13 12:39
+ *
+ * @author xBlackCat
+ */
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.CONSTRUCTOR})
+public @interface DefaultRowMap {
+}
