@@ -65,5 +65,7 @@ public abstract class AQueryHelper {
 
     public abstract int update(String sql, Object... parameters) throws StorageException;
 
+    public abstract <T> T insert(IToObjectConverter<T> c, String sql, Object... parameters) throws StorageException;
+
     public abstract Connection getConnection() throws SQLException;
 }

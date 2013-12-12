@@ -85,15 +85,31 @@ class SqlAnnotatedBuilder implements IMethodBuilder<Sql> {
                     !realReturnType.isAssignableFrom(List.class);
 
             BuilderUtils.initSelectReturn(pool, targetReturnType, converter, returnList, body);
+        } else if (type == QueryType.Insert) {
+            if (log.isDebugEnabled()) {
+                log.debug("Generate INSERT method " + m);
+            }
+
+            if (returnType.isAssignableFrom(List.class) &&
+                    !realReturnType.isAssignableFrom(List.class)) {
+                throw new StorageSetupException(
+                        "Invalid return type for insert in method " +
+                                methodName +
+                                "(...): " +
+                                returnType.getName()
+                );
+            }
+
+            BuilderUtils.initInsertReturn(pool, returnType, converter, body);
         } else {
             if (log.isDebugEnabled()) {
                 log.debug("Generate UPDATE method " + m);
             }
 
-            if (returnType.equals(Integer.TYPE)) {
+            if (returnType.equals(int.class)) {
                 body.append("return helper.update(");
                 ctReturnType = CtClass.intType;
-            } else if (returnType.equals(Void.TYPE)) {
+            } else if (returnType.equals(void.class)) {
                 body.append("helper.update(");
                 ctReturnType = CtClass.voidType;
             } else {

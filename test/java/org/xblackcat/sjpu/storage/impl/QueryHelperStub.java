@@ -43,6 +43,11 @@ public class QueryHelperStub extends AQueryHelper {
     }
 
     @Override
+    public <T> T insert(IToObjectConverter<T> c, String sql, Object... parameters) throws StorageException {
+        return null;
+    }
+
+    @Override
     public Connection getConnection() {
         return null;
     }

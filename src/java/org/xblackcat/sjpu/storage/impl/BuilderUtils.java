@@ -99,6 +99,37 @@ class BuilderUtils {
             body.append(")helper.executeSingle(\n");
         }
 
+        checkConverterInstance(pool, converter);
+
+        body.append(getName(converter));
+        body.append(".Instance.I,\n");
+    }
+
+    static void initInsertReturn(
+            ClassPool pool,
+            Class<?> realReturnType,
+            Class<? extends IToObjectConverter<?>> converter,
+            StringBuilder body
+    ) throws NotFoundException, CannotCompileException {
+        if (realReturnType == void.class) {
+            body.append("// No need generated keys\n");
+            body.append("helper.insert(\nnull, \n");
+        } else {
+            body.append("return (");
+            body.append(getName(realReturnType));
+            body.append(")helper.insert(\n");
+
+            checkConverterInstance(pool, converter);
+
+            body.append(getName(converter));
+            body.append(".Instance.I,\n");
+        }
+    }
+
+    private static void checkConverterInstance(
+            ClassPool pool,
+            Class<? extends IToObjectConverter<?>> converter
+    ) throws NotFoundException, CannotCompileException {
         try {
             pool.get(converter.getName() + "$Instance");
         } catch (NotFoundException e) {
@@ -114,9 +145,6 @@ class BuilderUtils {
 
             instanceClass.toClass();
         }
-
-        body.append(getName(converter));
-        body.append(".Instance.I,\n");
     }
 
     static void addArgumentParameter(StringBuilder parameters, int i, Class<?> t) {
@@ -310,25 +338,25 @@ class BuilderUtils {
             throw new StorageSetupException("Can't build unwrap method for non-primitive class.");
         }
 
-        if (Boolean.TYPE.equals(returnType)) {
+        if (boolean.class.equals(returnType)) {
             return "booleanValue";
         }
-        if (Byte.TYPE.equals(returnType)) {
+        if (byte.class.equals(returnType)) {
             return "byteValue";
         }
-        if (Double.TYPE.equals(returnType)) {
+        if (double.class.equals(returnType)) {
             return "doubleValue";
         }
-        if (Float.TYPE.equals(returnType)) {
+        if (float.class.equals(returnType)) {
             return "floatValue";
         }
-        if (Integer.TYPE.equals(returnType)) {
+        if (int.class.equals(returnType)) {
             return "intValue";
         }
-        if (Long.TYPE.equals(returnType)) {
+        if (long.class.equals(returnType)) {
             return "longValue";
         }
-        if (Short.TYPE.equals(returnType)) {
+        if (short.class.equals(returnType)) {
             return "shortValue";
         }
 
@@ -368,10 +396,10 @@ class BuilderUtils {
             if (BigDecimal.class.equals(realReturnType)) {
                 return ToBigDecimalConverter.class;
             }
-            if (Boolean.TYPE.equals(realReturnType) || Boolean.class.equals(realReturnType)) {
+            if (boolean.class.equals(realReturnType) || Boolean.class.equals(realReturnType)) {
                 return ToBooleanObjectConverter.class;
             }
-            if (Byte.TYPE.equals(realReturnType) || Byte.class.equals(realReturnType)) {
+            if (byte.class.equals(realReturnType) || Byte.class.equals(realReturnType)) {
                 return ToByteObjectConverter.class;
             }
             if (byte[].class.equals(realReturnType)) {
@@ -380,19 +408,19 @@ class BuilderUtils {
             if (Date.class.equals(realReturnType)) {
                 return ToDateConverter.class;
             }
-            if (Double.TYPE.equals(realReturnType) || Double.class.equals(realReturnType)) {
+            if (double.class.equals(realReturnType) || Double.class.equals(realReturnType)) {
                 return ToDoubleObjectConverter.class;
             }
-            if (Float.TYPE.equals(realReturnType) || Float.class.equals(realReturnType)) {
+            if (float.class.equals(realReturnType) || Float.class.equals(realReturnType)) {
                 return ToFloatObjectConverter.class;
             }
-            if (Integer.TYPE.equals(realReturnType) || Integer.class.equals(realReturnType)) {
+            if (int.class.equals(realReturnType) || Integer.class.equals(realReturnType)) {
                 return ToIntObjectConverter.class;
             }
-            if (Long.TYPE.equals(realReturnType) || Long.class.equals(realReturnType)) {
+            if (long.class.equals(realReturnType) || Long.class.equals(realReturnType)) {
                 return ToLongObjectConverter.class;
             }
-            if (Short.TYPE.equals(realReturnType) || Short.class.equals(realReturnType)) {
+            if (short.class.equals(realReturnType) || Short.class.equals(realReturnType)) {
                 return ToShortObjectConverter.class;
             }
             if (String.class.equals(realReturnType)) {

@@ -63,6 +63,32 @@ final class SingleConnectionQueryHelper extends AQueryHelper {
         }
     }
 
+
+    @Override
+    public <T> T insert(IToObjectConverter<T> c, String sql, Object... parameters) throws StorageException {
+        try {
+            try (PreparedStatement st = QueryHelperUtils.constructSql(
+                    con,
+                    sql,
+                    c == null ? Statement.NO_GENERATED_KEYS : Statement.RETURN_GENERATED_KEYS,
+                    preProcessing(parameters)
+            )) {
+                st.executeUpdate();
+                if (c != null) {
+                    try (ResultSet keys = st.getGeneratedKeys()) {
+                        if (keys.next()) {
+                            return c.convert(keys);
+                        }
+                    }
+                }
+
+                return null;
+            }
+        } catch (SQLException e) {
+            throw new StorageException("Can not execute query " + QueryHelperUtils.constructDebugSQL(sql, parameters), e);
+        }
+    }
+
     @Override
     public Connection getConnection() {
         return con;
