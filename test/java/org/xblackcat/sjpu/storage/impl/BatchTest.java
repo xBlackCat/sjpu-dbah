@@ -86,4 +86,16 @@ public class BatchTest {
         Assert.assertEquals("Checkpoint3", dbah.get(102));
 
     }
+
+    @Test
+    public void returnKeysSet() throws Exception {
+        DBAutoIncAH dbAH = storage.get(DBAutoIncAH.class);
+
+        dbAH.createDB();
+
+        final String value = "Hello, H2 database :)";
+        int id = dbAH.put(value);
+
+        Assert.assertEquals(value, dbAH.get(id));
+    }
 }

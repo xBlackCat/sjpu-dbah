@@ -107,11 +107,11 @@ class BuilderUtils {
 
     static void initInsertReturn(
             ClassPool pool,
-            Class<?> realReturnType,
+            CtClass realReturnType,
             Class<? extends IToObjectConverter<?>> converter,
             StringBuilder body
     ) throws NotFoundException, CannotCompileException {
-        if (realReturnType == void.class) {
+        if (realReturnType == null) {
             body.append("// No need generated keys\n");
             body.append("helper.insert(\nnull, \n");
         } else {

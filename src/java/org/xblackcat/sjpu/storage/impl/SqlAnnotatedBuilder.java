@@ -64,7 +64,10 @@ class SqlAnnotatedBuilder implements IMethodBuilder<Sql> {
         final String targetMethodName;
         final CtClass targetReturnType;
         final int targetModifiers;
-        final boolean generateWrapper = type == QueryType.Select && returnType.isPrimitive();
+
+        final boolean generateWrapper = (type == QueryType.Select || type == QueryType.Insert) &&
+                (returnType.isPrimitive() && returnType != void.class);
+
         if (generateWrapper) {
             targetMethodName = "$" + methodName + "$Wrap";
             assert ctReturnType instanceof CtPrimitiveType;
@@ -100,7 +103,9 @@ class SqlAnnotatedBuilder implements IMethodBuilder<Sql> {
                 );
             }
 
-            BuilderUtils.initInsertReturn(pool, returnType, converter, body);
+            // Real return type for insert
+            final CtClass rrt = returnType == void.class ? null : targetReturnType;
+            BuilderUtils.initInsertReturn(pool, rrt, converter, body);
         } else {
             if (log.isDebugEnabled()) {
                 log.debug("Generate UPDATE method " + m);
