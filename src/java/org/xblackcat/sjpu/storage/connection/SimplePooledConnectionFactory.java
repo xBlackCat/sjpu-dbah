@@ -11,12 +11,17 @@ import org.xblackcat.sjpu.storage.StorageException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author xBlackCat
  */
 
 public class SimplePooledConnectionFactory extends AConnectionFactory {
+    private static final AtomicInteger POOL_NUMBER = new AtomicInteger();
+
+    private final String poolName;
+
     public SimplePooledConnectionFactory(IDatabaseSettings settings) throws StorageException {
         super(settings);
 
@@ -58,13 +63,14 @@ public class SimplePooledConnectionFactory extends AConnectionFactory {
         try {
             PoolingDriver driver = (PoolingDriver) DriverManager.getDriver("jdbc:apache:commons:dbcp:");
 
-            driver.registerPool("storage", connectionPool);
+            poolName = "storage" + POOL_NUMBER.incrementAndGet();
+            driver.registerPool(poolName, connectionPool);
         } catch (SQLException e) {
             throw new StorageException("Can not obtain pooling driver", e);
         }
     }
 
     public Connection getConnection() throws SQLException {
-        return DriverManager.getConnection("jdbc:apache:commons:dbcp:storage");
+        return DriverManager.getConnection("jdbc:apache:commons:dbcp:" + poolName);
     }
 }
