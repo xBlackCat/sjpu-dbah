@@ -9,8 +9,7 @@ import org.xblackcat.sjpu.storage.StorageSetupException;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * 21.02.13 11:54
@@ -21,7 +20,7 @@ class AHBuilder<B, P> implements IAHBuilder<P> {
     private static final Map<Class<? extends Annotation>, IMethodBuilder> METHOD_BUILDERS;
 
     static {
-        METHOD_BUILDERS = new HashMap<>();
+        METHOD_BUILDERS = new LinkedHashMap<>();
 
         METHOD_BUILDERS.put(Sql.class, new SqlAnnotatedBuilder());
 //        METHOD_BUILDERS.put(GetObject.class, new GetObjectAnnotatedBuilder());
@@ -88,6 +87,10 @@ class AHBuilder<B, P> implements IAHBuilder<P> {
                 for (Method m : target.getMethods()) {
                     implementMethod(accessHelper, m);
                 }
+
+                Set<ImplementedMethod> implementedMethods = new HashSet<>();
+                // Implement protected and other methods
+                implementNotPublicMethods(target, target, accessHelper, implementedMethods);
             } catch (NoSuchMethodException e) {
                 throw new StorageSetupException("Can't find a method in implementing class", e);
             }
@@ -98,6 +101,44 @@ class AHBuilder<B, P> implements IAHBuilder<P> {
         } catch (NotFoundException | CannotCompileException e) {
             throw new StorageSetupException("Exception", e);
         }
+    }
+
+    private void implementNotPublicMethods(
+            Class<?> root,
+            Class<?> target,
+            CtClass accessHelper,
+            Set<ImplementedMethod> implementedMethods
+    ) throws NoSuchMethodException, CannotCompileException, NotFoundException {
+        if (target == null || target == Object.class) {
+            // Done
+            return;
+        }
+
+        for (Method m : target.getDeclaredMethods()) {
+            if (Modifier.isPublic(m.getModifiers())) {
+                // Public methods already checked
+                continue;
+            }
+
+            final ImplementedMethod method = new ImplementedMethod(m.getName(), m.getParameterTypes());
+            if (!Modifier.isAbstract(m.getModifiers())) {
+                implementedMethods.add(method);
+                continue;
+            }
+
+            try {
+                // Check non-public abstract method for implementation in the root class
+                root.getMethod(m.getName(), m.getParameterTypes());
+            } catch (NoSuchMethodException e) {
+                // Method is not found - build it!
+
+                if (implementedMethods.add(method)) {
+                    implementMethod(accessHelper, m);
+                }
+            }
+        }
+
+        implementNotPublicMethods(root, target.getSuperclass(), accessHelper, implementedMethods);
     }
 
     private <T extends IAH> CtClass defineCtClassByInterface(Class<T> target) throws NotFoundException, CannotCompileException {
@@ -145,6 +186,38 @@ class AHBuilder<B, P> implements IAHBuilder<P> {
         throw new StorageSetupException(
                 "Method " + m + " should be annotated with one of the following annotations:  " + METHOD_BUILDERS.keySet()
         );
+    }
+
+    private final static class ImplementedMethod {
+        private final String name;
+        private final Class<?>[] parameters;
+
+        private ImplementedMethod(String name, Class<?>[] parameters) {
+            this.name = name;
+            this.parameters = parameters;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (!(o instanceof ImplementedMethod)) {
+                return false;
+            }
+
+            ImplementedMethod that = (ImplementedMethod) o;
+
+            return name.equals(that.name) && Arrays.equals(parameters, that.parameters);
+
+        }
+
+        @Override
+        public int hashCode() {
+            int result = name.hashCode();
+            result = 31 * result + Arrays.hashCode(parameters);
+            return result;
+        }
     }
 
 }

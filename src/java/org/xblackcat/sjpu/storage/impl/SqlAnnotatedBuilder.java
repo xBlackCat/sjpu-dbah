@@ -76,7 +76,7 @@ class SqlAnnotatedBuilder implements IMethodBuilder<Sql> {
         } else {
             targetMethodName = methodName;
             targetReturnType = ctReturnType;
-            targetModifiers = Modifier.PUBLIC | Modifier.FINAL;
+            targetModifiers = m.getModifiers() | Modifier.FINAL;
         }
 
         if (type == QueryType.Select) {
@@ -181,7 +181,7 @@ class SqlAnnotatedBuilder implements IMethodBuilder<Sql> {
                     "();\n}";
 
             final CtMethod coverMethod = CtNewMethod.make(
-                    Modifier.PUBLIC | Modifier.FINAL,
+                    m.getModifiers() | Modifier.FINAL,
                     ctReturnType,
                     methodName,
                     BuilderUtils.toCtClasses(pool, types),
