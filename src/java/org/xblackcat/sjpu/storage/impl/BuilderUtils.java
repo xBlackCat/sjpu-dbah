@@ -201,7 +201,11 @@ class BuilderUtils {
                 }
             }
 
-            if (!realReturnType.isPrimitive()) {
+            if (realReturnType.isArray()) {
+                if (realReturnType != byte[].class) {
+                    throw new StorageSetupException("Invalid array component type: only array of bytes is supported as return value");
+                }
+            } else if (!realReturnType.isPrimitive()) {
                 if (realReturnType.isInterface() || Modifier.isAbstract(realReturnType.getModifiers())) {
                     throw new StorageSetupException("Row could be mapped only to non-abstract class");
                 }
@@ -507,11 +511,10 @@ class BuilderUtils {
                     body.append(i);
                     body.append(")");
                 } else if (type.equals(Date.class)) {
-                    body.append("new ");
-                    body.append(getName(Date.class));
-                    body.append("($1.getTimestamp(");
+                    body.append(getName(ToObjectUtils.class));
+                    body.append(".toDate($1.getTimestamp(");
                     body.append(i);
-                    body.append(").getTime())");
+                    body.append("))");
                 } else {
                     throw new StorageSetupException("Can't process type " + type.getName());
                 }

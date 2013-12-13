@@ -3,6 +3,8 @@ package org.xblackcat.sjpu.storage.impl;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.util.Date;
 import java.util.regex.Matcher;
 
 /**
@@ -29,6 +31,8 @@ public class QueryHelperUtils {
             for (int i = 0; i < parameters.length; i++) {
                 if (parameters[i] instanceof Boolean) {
                     pstmt.setInt(i + 1, ((Boolean) (parameters[i])) ? 1 : 0);
+                } else if (parameters[i] instanceof Date) {
+                    pstmt.setTimestamp(i + 1, new Timestamp(((Date) parameters[i]).getTime()));
                 } else {
                     pstmt.setObject(i + 1, parameters[i]);
                 }
