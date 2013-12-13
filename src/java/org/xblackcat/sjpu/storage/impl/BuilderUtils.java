@@ -481,36 +481,42 @@ class BuilderUtils {
                 if (String.class.equals(type)) {
                     body.append("$1.getString(");
                     body.append(i);
-                    body.append("),\n");
-                } else if (Long.TYPE.equals(type) || Long.class.equals(type)) {
+                    body.append(")");
+                } else if (long.class.equals(type) || Long.class.equals(type)) {
                     body.append("$1.getLong(");
                     body.append(i);
-                    body.append("),\n");
-                } else if (Integer.TYPE.equals(type) || Integer.class.equals(type)) {
+                    body.append(")");
+                } else if (int.class.equals(type) || Integer.class.equals(type)) {
                     body.append("$1.getInt(");
                     body.append(i);
-                    body.append("),\n");
-                } else if (Short.TYPE.equals(type) || Short.class.equals(type)) {
+                    body.append(")");
+                } else if (short.class.equals(type) || Short.class.equals(type)) {
                     body.append("$1.getShort(");
                     body.append(i);
-                    body.append("),\n");
-                } else if (Byte.TYPE.equals(type) || Byte.class.equals(type)) {
+                    body.append(")");
+                } else if (byte.class.equals(type) || Byte.class.equals(type)) {
                     body.append("$1.getByte(");
                     body.append(i);
-                    body.append("),\n");
-                } else if (Boolean.TYPE.equals(type) || Boolean.class.equals(type)) {
+                    body.append(")");
+                } else if (boolean.class.equals(type) || Boolean.class.equals(type)) {
                     body.append("$1.getBoolean(");
                     body.append(i);
-                    body.append("),\n");
+                    body.append(")");
+                } else if (byte[].class.equals(type)) {
+                    body.append("$1.getBytes(");
+                    body.append(i);
+                    body.append(")");
                 } else if (type.equals(Date.class)) {
                     body.append("new ");
                     body.append(getName(Date.class));
                     body.append("($1.getTimestamp(");
                     body.append(i);
-                    body.append(").getTime()),\n");
+                    body.append(").getTime())");
                 } else {
                     throw new StorageSetupException("Can't process type " + type.getName());
                 }
+
+                body.append(",\n");
             }
 
             if (parameterTypesLength > 0) {
