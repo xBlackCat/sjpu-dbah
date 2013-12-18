@@ -4,9 +4,11 @@ import javassist.*;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.xblackcat.sjpu.storage.ATypeMap;
 import org.xblackcat.sjpu.storage.Sql;
 import org.xblackcat.sjpu.storage.StorageSetupException;
 import org.xblackcat.sjpu.storage.converter.IToObjectConverter;
+import org.xblackcat.sjpu.storage.converter.StandardMappers;
 
 import java.lang.reflect.Method;
 import java.util.Date;
@@ -25,6 +27,16 @@ class SqlAnnotatedBuilder implements IMethodBuilder<Sql> {
     public void buildMethod(
             ClassPool pool, TypeMapper typeMapper, CtClass accessHelper, Method m, Sql annotation
     ) throws NotFoundException, ReflectiveOperationException, CannotCompileException {
+        final String methodName = m.getName();
+
+        final Class<?> returnType = m.getReturnType();
+
+        ConverterInfo converterInfo = BuilderUtils.invoke(pool, typeMapper, m);
+        final Class<?> realReturnType = converterInfo.getRealReturnType();
+        Class<? extends IToObjectConverter<?>> converter = converterInfo.getConverter();
+
+        final StringBuilder body = new StringBuilder();
+
         final String sql = annotation.value();
         final QueryType type;
         {
@@ -45,39 +57,23 @@ class SqlAnnotatedBuilder implements IMethodBuilder<Sql> {
             }
         }
 
-        ConverterInfo converterInfo = BuilderUtils.invoke(pool, typeMapper, m);
-        final Class<?> realReturnType = converterInfo.getRealReturnType();
-        Class<? extends IToObjectConverter<?>> converter = converterInfo.getConverter();
-
         if (type == QueryType.Select && converter == null) {
             throw new StorageSetupException("Converter should be specified for SELECT statement in method " + m.toString());
         }
 
-        final String methodName = m.getName();
-
-        final Class<?> returnType = m.getReturnType();
-        final Class<?>[] types = m.getParameterTypes();
-        int typesAmount = types.length;
-
         CtClass ctReturnType = pool.get(returnType.getName());
-        StringBuilder body = new StringBuilder("{\n");
+        body.append("{\n");
 
-        final String targetMethodName;
         final CtClass targetReturnType;
-        final int targetModifiers;
 
         final boolean generateWrapper = (type == QueryType.Select || type == QueryType.Insert) &&
                 (returnType.isPrimitive() && returnType != void.class);
 
         if (generateWrapper) {
-            targetMethodName = "$" + methodName + "$Wrap";
             assert ctReturnType instanceof CtPrimitiveType;
             targetReturnType = pool.get(((CtPrimitiveType) ctReturnType).getWrapperName());
-            targetModifiers = Modifier.PRIVATE;
         } else {
-            targetMethodName = methodName;
             targetReturnType = ctReturnType;
-            targetModifiers = m.getModifiers() | Modifier.FINAL;
         }
 
         if (type == QueryType.Select) {
@@ -130,22 +126,36 @@ class SqlAnnotatedBuilder implements IMethodBuilder<Sql> {
 
         body.append("\"");
         body.append(StringEscapeUtils.escapeJava(sql));
-        body.append("\",\nnew Object[");
+        body.append("\",\n");
+
+        appendArgumentList(typeMapper, m.getParameterTypes(), body);
+
+        body.append("\n);\n}");
+
+        addMethod(pool, accessHelper, m, ctReturnType, targetReturnType, body.toString());
+    }
+
+    protected void appendArgumentList(TypeMapper typeMapper, Class<?>[] types, StringBuilder body) {
+        int typesAmount = types.length;
+        body.append("new Object[");
 
         if (typesAmount > 0) {
             body.append("]{\n");
             int i = 0;
 
             while (i < typesAmount) {
-                Class<?> mapperClass = typeMapper.hasTypeMap(types[i]);
+                ATypeMap<?, ?> mapperClass = typeMapper.hasTypeMap(types[i]);
                 if (mapperClass == null) {
                     body.append("$args[");
                     body.append(i);
                     body.append("]");
                 } else if (Date.class.equals(types[i])) {
-                    body.append("");
+                    body.append(BuilderUtils.getName(StandardMappers.class));
+                    body.append(".dateToTimestamp($args[");
+                    body.append(i);
+                    body.append("])");
                 } else {
-                    body.append(BuilderUtils.getName(mapperClass));
+                    body.append(BuilderUtils.getName(mapperClass.getClass()));
                     body.append(".Instance.I.forStore($args[");
                     body.append(i);
                     body.append("])");
@@ -162,13 +172,40 @@ class SqlAnnotatedBuilder implements IMethodBuilder<Sql> {
         } else {
             body.append("0]");
         }
+    }
 
-        body.append("\n);\n}");
+    protected void addMethod(
+            ClassPool pool,
+            CtClass accessHelper,
+            Method m,
+            CtClass ctReturnType,
+            CtClass targetReturnType,
+            String methodBody
+    ) throws CannotCompileException, NotFoundException {
+        final boolean generateWrapper = !targetReturnType.equals(ctReturnType);
+
+        final String methodName = m.getName();
+        final Class<?>[] types = m.getParameterTypes();
+
+        final String targetMethodName;
+        final int targetModifiers;
 
         if (log.isTraceEnabled()) {
             log.trace("Method " + ctReturnType.getName() + " " + methodName + "(...)");
-            log.trace("Method body: " + body.toString());
+            if (generateWrapper) {
+                log.trace(" [ + Wrapper for unboxing ]");
+            }
+            log.trace("Method body: " + methodBody);
         }
+
+        if (generateWrapper) {
+            targetMethodName = "$" + methodName + "$Wrap";
+            targetModifiers = Modifier.PRIVATE;
+        } else {
+            targetMethodName = methodName;
+            targetModifiers = m.getModifiers() | Modifier.FINAL;
+        }
+
 
         final CtMethod method = CtNewMethod.make(
                 targetModifiers,
@@ -176,7 +213,7 @@ class SqlAnnotatedBuilder implements IMethodBuilder<Sql> {
                 targetMethodName,
                 BuilderUtils.toCtClasses(pool, types),
                 BuilderUtils.toCtClasses(pool, m.getExceptionTypes()),
-                body.toString(),
+                methodBody,
                 accessHelper
         );
 
@@ -187,8 +224,10 @@ class SqlAnnotatedBuilder implements IMethodBuilder<Sql> {
                     targetReturnType.getName() +
                     " value = " +
                     targetMethodName +
-                    "($$);\nreturn value." +
-                    BuilderUtils.getUnwrapMethodName(returnType) +
+                    "($$);\n" +
+                    "if (value == null) {\nthrow new java.lang.NullPointerException(\"Can't unwrap null value.\");\n}\n" +
+                    "return value." +
+                    BuilderUtils.getUnwrapMethodName(targetReturnType) +
                     "();\n}";
 
             final CtMethod coverMethod = CtNewMethod.make(

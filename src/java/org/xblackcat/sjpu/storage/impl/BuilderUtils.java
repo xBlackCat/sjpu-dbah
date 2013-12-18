@@ -227,7 +227,7 @@ class BuilderUtils {
 
                 useFieldList = true;
             } else {
-                Class<? extends ATypeMap<?, ?>> mapper = typeMapper.hasTypeMap(realReturnType);
+                ATypeMap<?, ?> mapper = typeMapper.hasTypeMap(realReturnType);
                 if (mapper != null) {
                     converter = getTypeMapperConverter(pool, mapper);
                     useFieldList = false;
@@ -293,7 +293,7 @@ class BuilderUtils {
                         }
                     }
 
-                    converter = initializeConverter(pool, targetConstructor, suffix);
+                    converter = initializeConverter(pool, targetConstructor, typeMapper, suffix);
                 }
             }
         }
@@ -302,20 +302,17 @@ class BuilderUtils {
 
     private static Class<? extends IToObjectConverter<?>> getTypeMapperConverter(
             ClassPool pool,
-            Class<? extends ATypeMap<?, ?>> mapper
+            ATypeMap<?, ?> mapper
     ) throws NotFoundException, CannotCompileException, ReflectiveOperationException {
-        if (!ATypeMap.class.isAssignableFrom(mapper)) {
-            throw new StorageSetupException("Class " + mapper.getName() + " is not a child of " + ATypeMap.class.getName());
-        }
-
         final String converterCN = "ToObjectConverter";
+        final String mapperName = mapper.getClass().getName();
         try {
 
             if (log.isTraceEnabled()) {
-                log.trace("Check if the converter already exists for mapper " + mapper.getName());
+                log.trace("Check if the converter already exists for mapper " + mapperName);
             }
 
-            final String converterFQN = mapper.getName() + "$" + converterCN;
+            final String converterFQN = mapperName + "$" + converterCN;
             final Class<?> aClass = Class.forName(converterFQN);
 
             if (IToObjectConverter.class.isAssignableFrom(aClass)) {
@@ -333,10 +330,10 @@ class BuilderUtils {
         }
 
         if (log.isTraceEnabled()) {
-            log.trace("Build converter class for mapper " + mapper.getName());
+            log.trace("Build converter class for mapper " + mapperName);
         }
 
-        final ATypeMap<?, ?> typeMap = initializeMapper(pool, mapper);
+        final ATypeMap<?, ?> typeMap = initializeMapper(pool, mapper.getClass());
 
         StringBuilder body = new StringBuilder("{\nreturn new ");
         final Class<?> returnType = typeMap.getRealType();
@@ -366,7 +363,7 @@ class BuilderUtils {
 
         body.append("\n);\n}");
 
-        final CtClass baseCtClass = pool.get(mapper.getName());
+        final CtClass baseCtClass = pool.get(mapper.getClass().getName());
         final CtClass toObjectConverter = baseCtClass.makeNestedClass(converterCN, true);
 
         toObjectConverter.addInterface(pool.get(IToObjectConverter.class.getName()));
@@ -446,30 +443,30 @@ class BuilderUtils {
         return StringUtils.replaceChars(clazz.getName(), '$', '.');
     }
 
-    public static String getUnwrapMethodName(Class<?> returnType) {
+    public static String getUnwrapMethodName(CtClass returnType) {
         if (!returnType.isPrimitive()) {
             throw new StorageSetupException("Can't build unwrap method for non-primitive class.");
         }
 
-        if (boolean.class.equals(returnType)) {
+        if (CtClass.booleanType.equals(returnType)) {
             return "booleanValue";
         }
-        if (byte.class.equals(returnType)) {
+        if (CtClass.byteType.equals(returnType)) {
             return "byteValue";
         }
-        if (double.class.equals(returnType)) {
+        if (CtClass.doubleType.equals(returnType)) {
             return "doubleValue";
         }
-        if (float.class.equals(returnType)) {
+        if (CtClass.floatType.equals(returnType)) {
             return "floatValue";
         }
-        if (int.class.equals(returnType)) {
+        if (CtClass.intType.equals(returnType)) {
             return "intValue";
         }
-        if (long.class.equals(returnType)) {
+        if (CtClass.longType.equals(returnType)) {
             return "longValue";
         }
-        if (short.class.equals(returnType)) {
+        if (CtClass.shortType.equals(returnType)) {
             return "shortValue";
         }
 
@@ -535,6 +532,7 @@ class BuilderUtils {
     protected static Class<IToObjectConverter<?>> initializeConverter(
             ClassPool pool,
             Constructor<?> objectConstructor,
+            TypeMapper typeMapper,
             String suffix
     ) throws NotFoundException, CannotCompileException {
         Class<?> returnType = objectConstructor.getDeclaringClass();
@@ -566,9 +564,12 @@ class BuilderUtils {
             log.trace("Build converter class for class " + returnType.getName());
         }
 
-        StringBuilder body = new StringBuilder("{\nreturn new ");
-        body.append(getName(returnType));
-        body.append("(\n");
+        StringBuilder body = new StringBuilder("{\n");
+
+        StringBuilder newObject = new StringBuilder("\nreturn new ");
+        newObject.append(getName(returnType));
+        newObject.append("(\n");
+
         final Class<?>[] parameterTypes = objectConstructor.getParameterTypes();
         int i = 0;
         int parameterTypesLength = parameterTypes.length;
@@ -576,38 +577,84 @@ class BuilderUtils {
             Class<?> type = parameterTypes[i];
             i++;
 
-            if (String.class.equals(type)) {
-                body.append("$1.getString(1)");
-            } else if (long.class.equals(type) || Long.class.equals(type)) {
-                body.append("$1.getLong(1)");
-            } else if (int.class.equals(type) || Integer.class.equals(type)) {
-                body.append("$1.getInt(1)");
-            } else if (short.class.equals(type) || Short.class.equals(type)) {
-                body.append("$1.getShort(1)");
-            } else if (byte.class.equals(type) || Byte.class.equals(type)) {
-                body.append("$1.getByte(1)");
-            } else if (boolean.class.equals(type) || Boolean.class.equals(type)) {
-                body.append("$1.getBoolean(1)");
-            } else if (byte[].class.equals(type)) {
-                body.append("$1.getBytes(1)");
+            final ATypeMap<?, ?> typeMap = typeMapper.hasTypeMap(type);
+            final Class<?> dbType;
+            if (typeMap == null) {
+                dbType = type;
             } else {
-
-                if (type.equals(Date.class)) {
-                    body.append(getName(ToObjectUtils.class));
-                    body.append(".toDate($1.getTimestamp(");
-                    body.append(i);
-                    body.append("))");
-                } else {
-                    throw new StorageSetupException("Can't process type " + type.getName());
-                }
+                dbType = typeMap.getDbType();
             }
 
-            body.append(",\n");
+            body.append(BuilderUtils.getName(dbType));
+            body.append(" value");
+            body.append(i);
+            body.append(" = ");
+
+            boolean wasNullCheck = !type.isPrimitive();
+
+            if (long.class.equals(dbType) || Long.class.equals(dbType)) {
+                body.append("$1.getLong(");
+                body.append(i);
+                body.append(")");
+            } else if (int.class.equals(dbType) || Integer.class.equals(dbType)) {
+                body.append("$1.getInt(");
+                body.append(i);
+                body.append(")");
+            } else if (short.class.equals(dbType) || Short.class.equals(dbType)) {
+                body.append("$1.getShort(");
+                body.append(i);
+                body.append(")");
+            } else if (byte.class.equals(dbType) || Byte.class.equals(dbType)) {
+                body.append("$1.getByte(");
+                body.append(i);
+                body.append(")");
+            } else if (boolean.class.equals(dbType) || Boolean.class.equals(dbType)) {
+                body.append("$1.getBoolean(");
+                body.append(i);
+                body.append(")");
+            } else if (byte[].class.equals(dbType)) {
+                body.append("$1.getBytes(");
+                body.append(i);
+                body.append(")");
+                wasNullCheck = false;
+            } else if (String.class.equals(dbType)) {
+                body.append("$1.getString(");
+                body.append(i);
+                body.append(")");
+                wasNullCheck = false;
+            } else if (Date.class.equals(dbType)) {
+                body.append(getName(StandardMappers.class));
+                body.append(".timestampToDate($1.getTimestamp(");
+                body.append(i);
+                body.append("))");
+                wasNullCheck = false;
+            } else {
+                throw new StorageSetupException("Can't process type " + dbType.getName());
+            }
+
+            body.append(";\n");
+            if (wasNullCheck) {
+                body.append("if ($1.wasNull()) { value");
+                body.append(i);
+                body.append(" = null; }\n");
+            }
+
+            if (typeMap != null) {
+                body.append(BuilderUtils.getName(typeMap.getClass()));
+                body.append(".Instance.I.forRead(");
+            }
+            newObject.append("value");
+            newObject.append(i);
+            if (typeMap != null) {
+                newObject.append(")");
+            }
+            newObject.append(", ");
         }
 
         if (parameterTypesLength > 0) {
-            body.setLength(body.length() - 2);
+            newObject.setLength(newObject.length() - 2);
         }
+        body.append(newObject);
         body.append("\n);\n}");
 
         final CtClass baseCtClass = pool.get(returnType.getName());
@@ -666,6 +713,7 @@ class BuilderUtils {
             instanceClass.addField(instanceField, CtField.Initializer.byNew(toObjectClazz));
 
             instanceClass.toClass();
+            instanceClass.defrost();
         }
 
         return (T) Class.forName(mapperClass.getName() + "$Instance").getField("I").get(null);

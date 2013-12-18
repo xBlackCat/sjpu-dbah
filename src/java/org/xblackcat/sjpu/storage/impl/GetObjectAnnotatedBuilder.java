@@ -25,19 +25,19 @@ class GetObjectAnnotatedBuilder implements IMethodBuilder<GetObject> {
     public void buildMethod(
             ClassPool pool, TypeMapper typeMapper, CtClass accessHelper, Method m, GetObject annotation
     ) throws NotFoundException, ReflectiveOperationException, CannotCompileException {
-        final Class<?> returnType = m.getReturnType();
-        final Class<?> realReturnType;
-
-        final String methodName = m.getName();
 
         ConverterInfo converterInfo = BuilderUtils.invoke(pool, typeMapper, m);
-        realReturnType = converterInfo.getRealReturnType();
+        final Class<?> realReturnType = converterInfo.getRealReturnType();
         Class<? extends IToObjectConverter<?>> converter = converterInfo.getConverter();
         boolean useFieldList = converterInfo.isUseFieldList();
 
         if (useFieldList && annotation.fields().length == 0) {
             throw new StorageSetupException("Specify a field set to process");
         }
+
+        final String methodName = m.getName();
+
+        final Class<?> returnType = m.getReturnType();
 
         boolean returnList = returnType.isAssignableFrom(List.class) &&
                 !realReturnType.isAssignableFrom(List.class);
@@ -48,7 +48,10 @@ class GetObjectAnnotatedBuilder implements IMethodBuilder<GetObject> {
         final String targetMethodName;
         final CtClass targetReturnType;
         final int targetModifiers;
-        if (returnType.isPrimitive()) {
+
+        final boolean generateWrapper = returnType.isPrimitive();
+
+        if (generateWrapper) {
             targetMethodName = "$" + methodName + "$Wrap";
             assert ctReturnType instanceof CtPrimitiveType;
             targetReturnType = pool.get(((CtPrimitiveType) ctReturnType).getWrapperName());
@@ -56,7 +59,7 @@ class GetObjectAnnotatedBuilder implements IMethodBuilder<GetObject> {
         } else {
             targetMethodName = methodName;
             targetReturnType = ctReturnType;
-            targetModifiers = Modifier.PUBLIC | Modifier.FINAL;
+            targetModifiers = m.getModifiers() | Modifier.FINAL;
         }
 
         if (log.isDebugEnabled()) {
@@ -244,7 +247,7 @@ class GetObjectAnnotatedBuilder implements IMethodBuilder<GetObject> {
 
         accessHelper.addMethod(method);
 
-        if (returnType.isPrimitive()) {
+        if (generateWrapper) {
             final String unwrapBody = "{\n" +
                     targetReturnType.getName() +
                     " value = " +
@@ -254,7 +257,7 @@ class GetObjectAnnotatedBuilder implements IMethodBuilder<GetObject> {
                     "();\n}";
 
             final CtMethod coverMethod = CtNewMethod.make(
-                    Modifier.PUBLIC | Modifier.FINAL,
+                    m.getModifiers() | Modifier.FINAL,
                     ctReturnType,
                     methodName,
                     BuilderUtils.toCtClasses(pool, types),

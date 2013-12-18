@@ -15,8 +15,8 @@ import java.util.Map;
  * @author xBlackCat
  */
 class TypeMapper {
-    private final Map<Class<?>, Class<? extends ATypeMap<?, ?>>> objectMappers = new HashMap<>();
-    private final Map<Class<?>, Class<? extends ATypeMap<?, ?>>> interfaceMappers = new HashMap<>();
+    private final Map<Class<?>, ATypeMap<?, ?>> objectMappers = new HashMap<>();
+    private final Map<Class<?>, ATypeMap<?, ?>> interfaceMappers = new HashMap<>();
 
     @SafeVarargs
     public TypeMapper(Class<? extends ATypeMap<?, ?>>... mappers) {
@@ -28,9 +28,9 @@ class TypeMapper {
 
                 final Class<?> realType = mapper.getRealType();
                 if (realType.isInterface()) {
-                    interfaceMappers.put(realType, m);
+                    interfaceMappers.put(realType, mapper);
                 } else {
-                    objectMappers.put(realType, m);
+                    objectMappers.put(realType, mapper);
                 }
             }
         } catch (ReflectiveOperationException | CannotCompileException | NotFoundException e) {
@@ -39,8 +39,8 @@ class TypeMapper {
 
     }
 
-    public Class<? extends ATypeMap<?, ?>> hasTypeMap(Class<?> objClass) {
-        Class<? extends ATypeMap<?, ?>> mapClass;
+    public ATypeMap<?, ?> hasTypeMap(Class<?> objClass) {
+        ATypeMap<?, ?> mapClass;
         if (!objClass.isInterface()) {
             mapClass = findThoughHierarchy(objClass);
         } else {
@@ -51,7 +51,7 @@ class TypeMapper {
             return mapClass;
         }
 
-        for (Map.Entry<Class<?>, Class<? extends ATypeMap<?, ?>>> m : interfaceMappers.entrySet()) {
+        for (Map.Entry<Class<?>, ATypeMap<?, ?>> m : interfaceMappers.entrySet()) {
             if (m.getKey().isAssignableFrom(objClass)) {
                 return m.getValue();
             }
@@ -60,12 +60,12 @@ class TypeMapper {
         return null;
     }
 
-    private Class<? extends ATypeMap<?, ?>> findThoughHierarchy(Class<?> obj) {
+    private ATypeMap<?, ?> findThoughHierarchy(Class<?> obj) {
         if (obj == null) {
             return null;
         }
 
-        final Class<? extends ATypeMap<?, ?>> mapClass = objectMappers.get(obj);
+        final ATypeMap<?, ?> mapClass = objectMappers.get(obj);
         if (mapClass == null) {
             return findThoughHierarchy(obj.getSuperclass());
         } else {
