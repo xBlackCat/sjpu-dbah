@@ -44,7 +44,7 @@ public class MultiLevelHelpers {
 
     @Before
     public void setupDatabase() throws StorageException {
-        AQueryHelper helper = StorageUtils.buildQueryHelper(settings);
+        IQueryHelper helper = StorageUtils.buildQueryHelper(settings);
         storage = new Storage(helper);
     }
 

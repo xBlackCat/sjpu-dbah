@@ -16,8 +16,8 @@ import java.lang.reflect.Method;
 interface IMethodBuilder<T extends Annotation> {
     void buildMethod(
             ClassPool pool,
-            CtClass accessHelper,
+            TypeMapper typeMapper, CtClass accessHelper,
             Method m,
             T annotation
-    ) throws NotFoundException, NoSuchMethodException, CannotCompileException;
+    ) throws NotFoundException, ReflectiveOperationException, CannotCompileException;
 }

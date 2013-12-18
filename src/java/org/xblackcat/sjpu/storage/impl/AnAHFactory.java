@@ -14,13 +14,17 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * @author xBlackCat
  */
 public abstract class AnAHFactory implements IAHFactory {
-    protected static final AHBuilder<AnAH, AQueryHelper> ahBuilder = new AHBuilder<>(new Definer<>(AnAH.class, AQueryHelper.class));
+    protected final IAHBuilder<IQueryHelper> ahBuilder;
+
     protected final Map<Class<? extends IAH>, IAH> helpers = new HashMap<>();
     protected final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
-    protected final AQueryHelper queryHelper;
+    protected final IQueryHelper queryHelper;
+    protected final TypeMapper typeMapper;
 
-    public AnAHFactory(AQueryHelper queryHelper) {
+    public AnAHFactory(IQueryHelper queryHelper, TypeMapper typeMapper) {
         this.queryHelper = queryHelper;
+        this.typeMapper = typeMapper;
+        ahBuilder = new AHBuilder<>(typeMapper, new Definer<>(AnAH.class, IQueryHelper.class));
     }
 
     public <T extends IAH> T get(Class<T> clazz) throws StorageSetupException {

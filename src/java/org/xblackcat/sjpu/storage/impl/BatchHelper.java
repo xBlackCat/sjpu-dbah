@@ -19,8 +19,8 @@ class BatchHelper extends AnAHFactory implements IBatch {
     private boolean rollbackOnClose = true;
     private boolean transactionDone = false;
 
-    BatchHelper(AQueryHelper helper, int transactionIsolationLevel) throws SQLException {
-        super(new SingleConnectionQueryHelper(helper));
+    BatchHelper(IQueryHelper helper, int transactionIsolationLevel, TypeMapper typeMapper) throws SQLException {
+        super(new SingleConnectionQueryHelper(helper), typeMapper);
         final Connection con = queryHelper.getConnection();
         con.setAutoCommit(false);
         if (transactionIsolationLevel != -1) {

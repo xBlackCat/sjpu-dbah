@@ -30,6 +30,8 @@ import java.util.regex.Pattern;
  * @author xBlackCat
  */
 class BuilderUtils {
+    private static final Log log = LogFactory.getLog(BuilderUtils.class);
+
     public final static DateFormat SQL_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     public static final CtClass[] EMPTY_LIST = new CtClass[]{};
 
@@ -155,8 +157,8 @@ class BuilderUtils {
 
     static ConverterInfo invoke(
             ClassPool pool,
-            Method m
-    ) throws NoSuchMethodException, NotFoundException, CannotCompileException {
+            TypeMapper typeMapper, Method m
+    ) throws ReflectiveOperationException, NotFoundException, CannotCompileException {
         final Class<?> returnType = m.getReturnType();
         final Class<? extends IToObjectConverter<?>> converter;
         final boolean useFieldList;
@@ -211,7 +213,7 @@ class BuilderUtils {
                 }
             }
 
-            Class<? extends IToObjectConverter<?>> standardConverter = ConverterInfo.checkStandardClassConverter(realReturnType);
+            Class<? extends IToObjectConverter<?>> standardConverter = checkStandardClassConverter(realReturnType);
             final ToObjectConverter objectConverterAnn = realReturnType.getAnnotation(ToObjectConverter.class);
 
             if (standardConverter != null) {
@@ -225,72 +227,179 @@ class BuilderUtils {
 
                 useFieldList = true;
             } else {
-                final Constructor<?>[] constructors = realReturnType.getConstructors();
-                useFieldList = false;
-                Constructor<?> targetConstructor = null;
-                String suffix = "";
-
-                RowMap constructorSignature = m.getAnnotation(RowMap.class);
-                final Class<?>[] classes = constructorSignature == null ? null : constructorSignature.value();
-
-                if (constructors.length == 1) {
-                    targetConstructor = constructors[0];
+                Class<? extends ATypeMap<?, ?>> mapper = typeMapper.hasTypeMap(realReturnType);
+                if (mapper != null) {
+                    converter = getTypeMapperConverter(pool, mapper);
+                    useFieldList = false;
                 } else {
-                    Constructor<?> def = null;
+                    final Constructor<?>[] constructors = realReturnType.getConstructors();
+                    useFieldList = false;
+                    Constructor<?> targetConstructor = null;
+                    String suffix = "";
 
-                    int i = 0;
-                    int constructorsLength = constructors.length;
+                    RowMap constructorSignature = m.getAnnotation(RowMap.class);
+                    final Class<?>[] classes = constructorSignature == null ? null : constructorSignature.value();
 
-                    while (i < constructorsLength) {
-                        Constructor<?> c = constructors[i];
-                        if (c.getAnnotation(DefaultRowMap.class) != null) {
-                            def = c;
-                            if (classes == null) {
-                                // No annotations so just use the constructor annotated as default map
-                                break;
+                    if (constructors.length == 1) {
+                        targetConstructor = constructors[0];
+                    } else {
+                        Constructor<?> def = null;
+
+                        int i = 0;
+                        int constructorsLength = constructors.length;
+
+                        while (i < constructorsLength) {
+                            Constructor<?> c = constructors[i];
+                            if (c.getAnnotation(DefaultRowMap.class) != null) {
+                                def = c;
+                                if (classes == null) {
+                                    // No annotations so just use the constructor annotated as default map
+                                    break;
+                                }
+                            } else if (classes != null) {
+                                if (ArrayUtils.isEquals(classes, c.getParameterTypes())) {
+                                    targetConstructor = c;
+                                    suffix = String.valueOf(i);
+                                    break;
+                                }
                             }
-                        } else if (classes != null) {
-                            if (ArrayUtils.isEquals(classes, c.getParameterTypes())) {
-                                targetConstructor = c;
-                                suffix = String.valueOf(i);
-                                break;
+                            i++;
+                        }
+
+                        if (targetConstructor == null) {
+                            if (classes != null) {
+                                throw new StorageSetupException(
+                                        "No constructor found in " + realReturnType.getName() + " with signature " + Arrays.asList(classes)
+                                );
+                            } else {
+                                targetConstructor = def;
+                                suffix = "Def";
                             }
                         }
-                        i++;
                     }
 
                     if (targetConstructor == null) {
-                        if (classes != null) {
+                        throw new StorageSetupException(
+                                "Can't find a way to convert result row to object. Probably one of the following annotations should be used: " +
+                                        Arrays.asList(ToObjectConverter.class, RowMap.class, MapRowTo.class)
+                        );
+                    }
+
+                    if (classes != null) {
+                        if (!ArrayUtils.isEquals(classes, targetConstructor.getParameterTypes())) {
                             throw new StorageSetupException(
                                     "No constructor found in " + realReturnType.getName() + " with signature " + Arrays.asList(classes)
                             );
-                        } else {
-                            targetConstructor = def;
-                            suffix = "Def";
                         }
                     }
+
+                    converter = initializeConverter(pool, targetConstructor, suffix);
                 }
-
-                if (targetConstructor == null) {
-                    throw new StorageSetupException(
-                            "Can't find a way to convert result row to object. Probably one of the following annotations should be used: " +
-                                    Arrays.asList(ToObjectConverter.class, RowMap.class, MapRowTo.class)
-                    );
-                }
-
-                if (classes != null) {
-                    if (!ArrayUtils.isEquals(classes, targetConstructor.getParameterTypes())) {
-                        throw new StorageSetupException(
-                                "No constructor found in " + realReturnType.getName() + " with signature " + Arrays.asList(classes)
-                        );
-                    }
-                }
-
-
-                converter = ConverterInfo.initializeConverter(pool, targetConstructor, suffix);
             }
         }
         return new ConverterInfo(realReturnType, converter, useFieldList);
+    }
+
+    private static Class<? extends IToObjectConverter<?>> getTypeMapperConverter(
+            ClassPool pool,
+            Class<? extends ATypeMap<?, ?>> mapper
+    ) throws NotFoundException, CannotCompileException, ReflectiveOperationException {
+        if (!ATypeMap.class.isAssignableFrom(mapper)) {
+            throw new StorageSetupException("Class " + mapper.getName() + " is not a child of " + ATypeMap.class.getName());
+        }
+
+        final String converterCN = "ToObjectConverter";
+        try {
+
+            if (log.isTraceEnabled()) {
+                log.trace("Check if the converter already exists for mapper " + mapper.getName());
+            }
+
+            final String converterFQN = mapper.getName() + "$" + converterCN;
+            final Class<?> aClass = Class.forName(converterFQN);
+
+            if (IToObjectConverter.class.isAssignableFrom(aClass)) {
+                if (log.isTraceEnabled()) {
+                    log.trace("Converter class already exists: " + converterFQN);
+                }
+                return (Class<IToObjectConverter<?>>) aClass;
+            } else {
+                throw new StorageSetupException(
+                        converterFQN + " class is already exists and it is not implements " + IToObjectConverter.class.getName()
+                );
+            }
+        } catch (ClassNotFoundException ignore) {
+            // Just build a new class
+        }
+
+        if (log.isTraceEnabled()) {
+            log.trace("Build converter class for mapper " + mapper.getName());
+        }
+
+        final ATypeMap<?, ?> typeMap = initializeMapper(pool, mapper);
+
+        StringBuilder body = new StringBuilder("{\nreturn new ");
+        final Class<?> returnType = typeMap.getRealType();
+        body.append(getName(returnType));
+        body.append("(\n");
+
+        Class<?> type = typeMap.getDbType();
+        if (String.class.equals(type)) {
+            body.append("$1.getString(1)");
+        } else if (long.class.equals(type) || Long.class.equals(type)) {
+            body.append("$1.getLong(1)");
+        } else if (int.class.equals(type) || Integer.class.equals(type)) {
+            body.append("$1.getInt(1)");
+        } else if (short.class.equals(type) || Short.class.equals(type)) {
+            body.append("$1.getShort(1)");
+        } else if (byte.class.equals(type) || Byte.class.equals(type)) {
+            body.append("$1.getByte(1)");
+        } else if (boolean.class.equals(type) || Boolean.class.equals(type)) {
+            body.append("$1.getBoolean(1)");
+        } else if (byte[].class.equals(type)) {
+            body.append("$1.getBytes(1)");
+        } else if (Date.class.equals(type)) {
+            body.append("$1.getTimeStamp(1)");
+        } else {
+            throw new StorageSetupException("Can't process type " + type.getName());
+        }
+
+        body.append("\n);\n}");
+
+        final CtClass baseCtClass = pool.get(mapper.getName());
+        final CtClass toObjectConverter = baseCtClass.makeNestedClass(converterCN, true);
+
+        toObjectConverter.addInterface(pool.get(IToObjectConverter.class.getName()));
+
+        if (log.isTraceEnabled()) {
+            log.trace(
+                    "Generated convert method " +
+                            returnType.getName() +
+                            " convert(ResultSet $1) throws SQLException " +
+                            body.toString()
+            );
+        }
+
+
+        final CtMethod method = CtNewMethod.make(
+                Modifier.PUBLIC | Modifier.FINAL,
+                pool.get(Object.class.getName()),
+                "convert",
+                toCtClasses(pool, ResultSet.class),
+                toCtClasses(pool, SQLException.class),
+                body.toString(),
+                toObjectConverter
+        );
+
+        toObjectConverter.addMethod(method);
+
+        if (log.isTraceEnabled()) {
+            log.trace("Initialize subclass with object converter instance");
+        }
+
+        final Class<IToObjectConverter<?>> converterClass = (Class<IToObjectConverter<?>>) toObjectConverter.toClass();
+        toObjectConverter.defrost();
+        return converterClass;
     }
 
     public static Constructor<?> findConstructorByAnnotatedParameter(Class<?> clazz, Class<? extends Annotation> ann) {
@@ -367,203 +476,6 @@ class BuilderUtils {
         throw new StorageSetupException("Unsupported primitive type: " + returnType);
     }
 
-    static class ConverterInfo {
-        private static final Log log = LogFactory.getLog(ConverterInfo.class);
-
-        private final Class<?> realReturnType;
-        private final Class<? extends IToObjectConverter<?>> converter;
-        private final boolean useFieldList;
-
-        private ConverterInfo(
-                Class<?> realReturnType,
-                Class<? extends IToObjectConverter<?>> converter,
-                boolean useFieldList
-        ) {
-            this.realReturnType = realReturnType;
-            this.converter = converter;
-            this.useFieldList = useFieldList;
-        }
-
-        public Class<?> getRealReturnType() {
-            return realReturnType;
-        }
-
-        public Class<? extends IToObjectConverter<?>> getConverter() {
-            return converter;
-        }
-
-        public boolean isUseFieldList() {
-            return useFieldList;
-        }
-
-        private static Class<? extends IToObjectConverter<?>> checkStandardClassConverter(Class<?> realReturnType) {
-            if (BigDecimal.class.equals(realReturnType)) {
-                return ToBigDecimalConverter.class;
-            }
-            if (boolean.class.equals(realReturnType) || Boolean.class.equals(realReturnType)) {
-                return ToBooleanObjectConverter.class;
-            }
-            if (byte.class.equals(realReturnType) || Byte.class.equals(realReturnType)) {
-                return ToByteObjectConverter.class;
-            }
-            if (byte[].class.equals(realReturnType)) {
-                return ToBytesConverter.class;
-            }
-            if (Date.class.equals(realReturnType)) {
-                return ToDateConverter.class;
-            }
-            if (double.class.equals(realReturnType) || Double.class.equals(realReturnType)) {
-                return ToDoubleObjectConverter.class;
-            }
-            if (float.class.equals(realReturnType) || Float.class.equals(realReturnType)) {
-                return ToFloatObjectConverter.class;
-            }
-            if (int.class.equals(realReturnType) || Integer.class.equals(realReturnType)) {
-                return ToIntObjectConverter.class;
-            }
-            if (long.class.equals(realReturnType) || Long.class.equals(realReturnType)) {
-                return ToLongObjectConverter.class;
-            }
-            if (short.class.equals(realReturnType) || Short.class.equals(realReturnType)) {
-                return ToShortObjectConverter.class;
-            }
-            if (String.class.equals(realReturnType)) {
-                return ToStringConverter.class;
-            }
-            if (Void.TYPE.equals(realReturnType) || Void.class.equals(realReturnType)) {
-                return VoidConverter.class;
-            }
-
-            return null;
-        }
-
-        @SuppressWarnings("unchecked")
-        private static Class<IToObjectConverter<?>> initializeConverter(
-                ClassPool pool,
-                Constructor<?> objectConstructor,
-                String suffix
-        ) throws NotFoundException, CannotCompileException {
-            Class<?> returnType = objectConstructor.getDeclaringClass();
-            final String converterCN = "ToObjectConverter" + suffix;
-            try {
-
-                if (log.isTraceEnabled()) {
-                    log.trace("Check if the converter already exists for class " + returnType.getName());
-                }
-
-                final String converterFQN = returnType.getName() + "$" + converterCN;
-                final Class<?> aClass = Class.forName(converterFQN);
-
-                if (IToObjectConverter.class.isAssignableFrom(aClass)) {
-                    if (log.isTraceEnabled()) {
-                        log.trace("Converter class already exists: " + converterFQN);
-                    }
-                    return (Class<IToObjectConverter<?>>) aClass;
-                } else {
-                    throw new StorageSetupException(
-                            converterFQN + " class is already exists and it is not implements " + IToObjectConverter.class
-                    );
-                }
-            } catch (ClassNotFoundException ignore) {
-                // Just build a new class
-            }
-
-            if (log.isTraceEnabled()) {
-                log.trace("Build converter class for class " + returnType.getName());
-            }
-
-            StringBuilder body = new StringBuilder("{\nreturn new ");
-            body.append(getName(returnType));
-            body.append("(\n");
-            final Class<?>[] parameterTypes = objectConstructor.getParameterTypes();
-            int i = 0;
-            int parameterTypesLength = parameterTypes.length;
-            while (i < parameterTypesLength) {
-                Class<?> type = parameterTypes[i];
-                i++;
-
-                if (String.class.equals(type)) {
-                    body.append("$1.getString(");
-                    body.append(i);
-                    body.append(")");
-                } else if (long.class.equals(type) || Long.class.equals(type)) {
-                    body.append("$1.getLong(");
-                    body.append(i);
-                    body.append(")");
-                } else if (int.class.equals(type) || Integer.class.equals(type)) {
-                    body.append("$1.getInt(");
-                    body.append(i);
-                    body.append(")");
-                } else if (short.class.equals(type) || Short.class.equals(type)) {
-                    body.append("$1.getShort(");
-                    body.append(i);
-                    body.append(")");
-                } else if (byte.class.equals(type) || Byte.class.equals(type)) {
-                    body.append("$1.getByte(");
-                    body.append(i);
-                    body.append(")");
-                } else if (boolean.class.equals(type) || Boolean.class.equals(type)) {
-                    body.append("$1.getBoolean(");
-                    body.append(i);
-                    body.append(")");
-                } else if (byte[].class.equals(type)) {
-                    body.append("$1.getBytes(");
-                    body.append(i);
-                    body.append(")");
-                } else if (type.equals(Date.class)) {
-                    body.append(getName(ToObjectUtils.class));
-                    body.append(".toDate($1.getTimestamp(");
-                    body.append(i);
-                    body.append("))");
-                } else {
-                    throw new StorageSetupException("Can't process type " + type.getName());
-                }
-
-                body.append(",\n");
-            }
-
-            if (parameterTypesLength > 0) {
-                body.setLength(body.length() - 2);
-            }
-            body.append("\n);\n}");
-
-            final CtClass baseCtClass = pool.get(returnType.getName());
-            final CtClass toObjectConverter = baseCtClass.makeNestedClass(converterCN, true);
-
-            toObjectConverter.addInterface(pool.get(IToObjectConverter.class.getName()));
-
-            if (log.isTraceEnabled()) {
-                log.trace(
-                        "Generated convert method " +
-                                returnType.getName() +
-                                " convert(ResultSet $1) throws SQLException " +
-                                body.toString()
-                );
-            }
-
-
-            final CtMethod method = CtNewMethod.make(
-                    Modifier.PUBLIC | Modifier.FINAL,
-                    pool.get(Object.class.getName()),
-                    "convert",
-                    toCtClasses(pool, ResultSet.class),
-                    toCtClasses(pool, SQLException.class),
-                    body.toString(),
-                    toObjectConverter
-            );
-
-            toObjectConverter.addMethod(method);
-
-            if (log.isTraceEnabled()) {
-                log.trace("Initialize subclass with object converter instance");
-            }
-
-            final Class<IToObjectConverter<?>> converterClass = (Class<IToObjectConverter<?>>) toObjectConverter.toClass();
-            toObjectConverter.defrost();
-            return converterClass;
-        }
-    }
-
     public static CtClass[] toCtClasses(ClassPool pool, Class<?>... classes) throws NotFoundException {
         CtClass[] ctClasses = new CtClass[classes.length];
 
@@ -578,4 +490,184 @@ class BuilderUtils {
         return ctClasses;
     }
 
+    protected static Class<? extends IToObjectConverter<?>> checkStandardClassConverter(Class<?> realReturnType) {
+        if (BigDecimal.class.equals(realReturnType)) {
+            return ToBigDecimalConverter.class;
+        }
+        if (boolean.class.equals(realReturnType) || Boolean.class.equals(realReturnType)) {
+            return ToBooleanObjectConverter.class;
+        }
+        if (byte.class.equals(realReturnType) || Byte.class.equals(realReturnType)) {
+            return ToByteObjectConverter.class;
+        }
+        if (byte[].class.equals(realReturnType)) {
+            return ToBytesConverter.class;
+        }
+        if (Date.class.equals(realReturnType)) {
+            return ToDateConverter.class;
+        }
+        if (double.class.equals(realReturnType) || Double.class.equals(realReturnType)) {
+            return ToDoubleObjectConverter.class;
+        }
+        if (float.class.equals(realReturnType) || Float.class.equals(realReturnType)) {
+            return ToFloatObjectConverter.class;
+        }
+        if (int.class.equals(realReturnType) || Integer.class.equals(realReturnType)) {
+            return ToIntObjectConverter.class;
+        }
+        if (long.class.equals(realReturnType) || Long.class.equals(realReturnType)) {
+            return ToLongObjectConverter.class;
+        }
+        if (short.class.equals(realReturnType) || Short.class.equals(realReturnType)) {
+            return ToShortObjectConverter.class;
+        }
+        if (String.class.equals(realReturnType)) {
+            return ToStringConverter.class;
+        }
+        if (void.class.equals(realReturnType) || Void.class.equals(realReturnType)) {
+            return VoidConverter.class;
+        }
+
+        return null;
+    }
+
+    @SuppressWarnings("unchecked")
+    protected static Class<IToObjectConverter<?>> initializeConverter(
+            ClassPool pool,
+            Constructor<?> objectConstructor,
+            String suffix
+    ) throws NotFoundException, CannotCompileException {
+        Class<?> returnType = objectConstructor.getDeclaringClass();
+        final String converterCN = "ToObjectConverter" + suffix;
+        try {
+
+            if (log.isTraceEnabled()) {
+                log.trace("Check if the converter already exists for class " + returnType.getName());
+            }
+
+            final String converterFQN = returnType.getName() + "$" + converterCN;
+            final Class<?> aClass = Class.forName(converterFQN);
+
+            if (IToObjectConverter.class.isAssignableFrom(aClass)) {
+                if (log.isTraceEnabled()) {
+                    log.trace("Converter class already exists: " + converterFQN);
+                }
+                return (Class<IToObjectConverter<?>>) aClass;
+            } else {
+                throw new StorageSetupException(
+                        converterFQN + " class is already exists and it is not implements " + IToObjectConverter.class
+                );
+            }
+        } catch (ClassNotFoundException ignore) {
+            // Just build a new class
+        }
+
+        if (log.isTraceEnabled()) {
+            log.trace("Build converter class for class " + returnType.getName());
+        }
+
+        StringBuilder body = new StringBuilder("{\nreturn new ");
+        body.append(getName(returnType));
+        body.append("(\n");
+        final Class<?>[] parameterTypes = objectConstructor.getParameterTypes();
+        int i = 0;
+        int parameterTypesLength = parameterTypes.length;
+        while (i < parameterTypesLength) {
+            Class<?> type = parameterTypes[i];
+            i++;
+
+            if (String.class.equals(type)) {
+                body.append("$1.getString(1)");
+            } else if (long.class.equals(type) || Long.class.equals(type)) {
+                body.append("$1.getLong(1)");
+            } else if (int.class.equals(type) || Integer.class.equals(type)) {
+                body.append("$1.getInt(1)");
+            } else if (short.class.equals(type) || Short.class.equals(type)) {
+                body.append("$1.getShort(1)");
+            } else if (byte.class.equals(type) || Byte.class.equals(type)) {
+                body.append("$1.getByte(1)");
+            } else if (boolean.class.equals(type) || Boolean.class.equals(type)) {
+                body.append("$1.getBoolean(1)");
+            } else if (byte[].class.equals(type)) {
+                body.append("$1.getBytes(1)");
+            } else {
+
+                if (type.equals(Date.class)) {
+                    body.append(getName(ToObjectUtils.class));
+                    body.append(".toDate($1.getTimestamp(");
+                    body.append(i);
+                    body.append("))");
+                } else {
+                    throw new StorageSetupException("Can't process type " + type.getName());
+                }
+            }
+
+            body.append(",\n");
+        }
+
+        if (parameterTypesLength > 0) {
+            body.setLength(body.length() - 2);
+        }
+        body.append("\n);\n}");
+
+        final CtClass baseCtClass = pool.get(returnType.getName());
+        final CtClass toObjectConverter = baseCtClass.makeNestedClass(converterCN, true);
+
+        toObjectConverter.addInterface(pool.get(IToObjectConverter.class.getName()));
+
+        if (log.isTraceEnabled()) {
+            log.trace(
+                    "Generated convert method " +
+                            returnType.getName() +
+                            " convert(ResultSet $1) throws SQLException " +
+                            body.toString()
+            );
+        }
+
+
+        final CtMethod method = CtNewMethod.make(
+                Modifier.PUBLIC | Modifier.FINAL,
+                pool.get(Object.class.getName()),
+                "convert",
+                toCtClasses(pool, ResultSet.class),
+                toCtClasses(pool, SQLException.class),
+                body.toString(),
+                toObjectConverter
+        );
+
+        toObjectConverter.addMethod(method);
+
+        if (log.isTraceEnabled()) {
+            log.trace("Initialize subclass with object converter instance");
+        }
+
+        final Class<IToObjectConverter<?>> converterClass = (Class<IToObjectConverter<?>>) toObjectConverter.toClass();
+        toObjectConverter.defrost();
+        return converterClass;
+    }
+
+    @SuppressWarnings("unchecked")
+    protected static <T extends ATypeMap<?, ?>> T initializeMapper(
+            ClassPool pool,
+            Class<T> mapperClass
+    ) throws CannotCompileException, NotFoundException, ReflectiveOperationException {
+
+        try {
+            pool.get(mapperClass.getName() + "$Instance");
+        } catch (NotFoundException e) {
+            // Create sub-class with the object instance for internal purposes
+
+            final CtClass toObjectClazz = pool.get(mapperClass.getName());
+            final CtClass instanceClass = toObjectClazz.makeNestedClass("Instance", true);
+            CtField instanceField = CtField.make(
+                    "public static final " + getName(mapperClass) + " I;",
+                    instanceClass
+            );
+            instanceClass.addField(instanceField, CtField.Initializer.byNew(toObjectClazz));
+
+            instanceClass.toClass();
+        }
+
+        return (T) Class.forName(mapperClass.getName() + "$Instance").getField("I").get(null);
+    }
 }

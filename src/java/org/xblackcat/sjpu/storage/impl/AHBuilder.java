@@ -28,10 +28,12 @@ class AHBuilder<B, P> implements IAHBuilder<P> {
     }
 
     protected final ClassPool pool;
+    protected final TypeMapper typeMapper;
     protected final Definer<B, P> definer;
     protected final Log log = LogFactory.getLog(getClass());
 
-    protected AHBuilder(Definer<B, P> definer) {
+    protected AHBuilder(TypeMapper typeMapper, Definer<B, P> definer) {
+        this.typeMapper = typeMapper;
         this.definer = definer;
         pool = ClassPool.getDefault();
     }
@@ -91,7 +93,7 @@ class AHBuilder<B, P> implements IAHBuilder<P> {
                 Set<ImplementedMethod> implementedMethods = new HashSet<>();
                 // Implement protected and other methods
                 implementNotPublicMethods(target, target, accessHelper, implementedMethods);
-            } catch (NoSuchMethodException e) {
+            } catch (ReflectiveOperationException e) {
                 throw new StorageSetupException("Can't find a method in implementing class", e);
             }
 
@@ -108,7 +110,7 @@ class AHBuilder<B, P> implements IAHBuilder<P> {
             Class<?> target,
             CtClass accessHelper,
             Set<ImplementedMethod> implementedMethods
-    ) throws NoSuchMethodException, CannotCompileException, NotFoundException {
+    ) throws ReflectiveOperationException, CannotCompileException, NotFoundException {
         if (target == null || target == Object.class) {
             // Done
             return;
@@ -160,7 +162,7 @@ class AHBuilder<B, P> implements IAHBuilder<P> {
     }
 
     @SuppressWarnings("unchecked")
-    private void implementMethod(CtClass accessHelper, Method m) throws NotFoundException, NoSuchMethodException, CannotCompileException {
+    private void implementMethod(CtClass accessHelper, Method m) throws NotFoundException, ReflectiveOperationException, CannotCompileException {
         if (log.isTraceEnabled()) {
             log.trace("Check method: " + m);
         }
@@ -177,7 +179,7 @@ class AHBuilder<B, P> implements IAHBuilder<P> {
             final Annotation annotation = m.getAnnotation(builder.getKey());
 
             if (annotation != null) {
-                builder.getValue().buildMethod(pool, accessHelper, m, annotation);
+                builder.getValue().buildMethod(pool, typeMapper, accessHelper, m, annotation);
 
                 return;
             }

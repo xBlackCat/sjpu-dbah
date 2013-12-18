@@ -13,12 +13,11 @@ import java.util.List;
  * @author ASUS
  */
 
-final class SingleConnectionQueryHelper extends AQueryHelper {
+final class SingleConnectionQueryHelper implements IQueryHelper {
     private final Connection con;
 
-    public SingleConnectionQueryHelper(AQueryHelper parentHelper) throws SQLException {
+    public SingleConnectionQueryHelper(IQueryHelper parentHelper) throws SQLException {
         this.con = parentHelper.getConnection();
-        mappers.putAll(parentHelper.mappers);
     }
 
     @Override
@@ -71,7 +70,7 @@ final class SingleConnectionQueryHelper extends AQueryHelper {
                     con,
                     sql,
                     c == null ? Statement.NO_GENERATED_KEYS : Statement.RETURN_GENERATED_KEYS,
-                    preProcessing(parameters)
+                    parameters
             )) {
                 st.executeUpdate();
                 if (c != null) {

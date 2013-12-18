@@ -8,7 +8,7 @@ import org.xblackcat.sjpu.storage.StorageException;
  * @author xBlackCat
  */
 public abstract class Level4AH extends Level3AH {
-    protected Level4AH(AQueryHelper helper) {
+    protected Level4AH(IQueryHelper helper) {
         super(helper);
     }
 

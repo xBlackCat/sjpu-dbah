@@ -22,7 +22,7 @@ class UpdateObjectAnnotatedBuilder implements IMethodBuilder<UpdateObject> {
     @Override
     public void buildMethod(
             ClassPool pool,
-            CtClass accessHelper,
+            TypeMapper typeMapper, CtClass accessHelper,
             Method m,
             UpdateObject annotation
     ) throws NotFoundException, NoSuchMethodException, CannotCompileException {

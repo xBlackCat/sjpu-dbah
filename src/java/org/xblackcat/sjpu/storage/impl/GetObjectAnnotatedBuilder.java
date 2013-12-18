@@ -23,14 +23,14 @@ class GetObjectAnnotatedBuilder implements IMethodBuilder<GetObject> {
 
     @Override
     public void buildMethod(
-            ClassPool pool, CtClass accessHelper, Method m, GetObject annotation
-    ) throws NotFoundException, NoSuchMethodException, CannotCompileException {
+            ClassPool pool, TypeMapper typeMapper, CtClass accessHelper, Method m, GetObject annotation
+    ) throws NotFoundException, ReflectiveOperationException, CannotCompileException {
         final Class<?> returnType = m.getReturnType();
         final Class<?> realReturnType;
 
         final String methodName = m.getName();
 
-        BuilderUtils.ConverterInfo converterInfo = BuilderUtils.invoke(pool, m);
+        ConverterInfo converterInfo = BuilderUtils.invoke(pool, typeMapper, m);
         realReturnType = converterInfo.getRealReturnType();
         Class<? extends IToObjectConverter<?>> converter = converterInfo.getConverter();
         boolean useFieldList = converterInfo.isUseFieldList();

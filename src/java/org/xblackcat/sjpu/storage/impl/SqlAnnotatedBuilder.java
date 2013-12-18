@@ -9,6 +9,7 @@ import org.xblackcat.sjpu.storage.StorageSetupException;
 import org.xblackcat.sjpu.storage.converter.IToObjectConverter;
 
 import java.lang.reflect.Method;
+import java.util.Date;
 import java.util.List;
 import java.util.regex.Matcher;
 
@@ -22,8 +23,8 @@ class SqlAnnotatedBuilder implements IMethodBuilder<Sql> {
 
     @Override
     public void buildMethod(
-            ClassPool pool, CtClass accessHelper, Method m, Sql annotation
-    ) throws NotFoundException, NoSuchMethodException, CannotCompileException {
+            ClassPool pool, TypeMapper typeMapper, CtClass accessHelper, Method m, Sql annotation
+    ) throws NotFoundException, ReflectiveOperationException, CannotCompileException {
         final String sql = annotation.value();
         final QueryType type;
         {
@@ -44,7 +45,7 @@ class SqlAnnotatedBuilder implements IMethodBuilder<Sql> {
             }
         }
 
-        BuilderUtils.ConverterInfo converterInfo = BuilderUtils.invoke(pool, m);
+        ConverterInfo converterInfo = BuilderUtils.invoke(pool, typeMapper, m);
         final Class<?> realReturnType = converterInfo.getRealReturnType();
         Class<? extends IToObjectConverter<?>> converter = converterInfo.getConverter();
 
@@ -136,9 +137,19 @@ class SqlAnnotatedBuilder implements IMethodBuilder<Sql> {
             int i = 0;
 
             while (i < typesAmount) {
-                body.append("$args[");
-                body.append(i);
-                body.append("]");
+                Class<?> mapperClass = typeMapper.hasTypeMap(types[i]);
+                if (mapperClass == null) {
+                    body.append("$args[");
+                    body.append(i);
+                    body.append("]");
+                } else if (Date.class.equals(types[i])) {
+                    body.append("");
+                } else {
+                    body.append(BuilderUtils.getName(mapperClass));
+                    body.append(".Instance.I.forStore($args[");
+                    body.append(i);
+                    body.append("])");
+                }
 
                 i++;
 

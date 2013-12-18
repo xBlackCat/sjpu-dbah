@@ -1,6 +1,5 @@
 package org.xblackcat.sjpu.storage.impl;
 
-import org.xblackcat.sjpu.storage.AnObjectMapper;
 import org.xblackcat.sjpu.storage.StorageException;
 import org.xblackcat.sjpu.storage.connection.IConnectionFactory;
 import org.xblackcat.sjpu.storage.converter.IToObjectConverter;
@@ -15,12 +14,10 @@ import java.util.List;
  * @author ASUS
  */
 
-public final class QueryHelper extends AQueryHelper {
+public final class QueryHelper implements IQueryHelper {
     private final IConnectionFactory connectionFactory;
 
-    @SafeVarargs
-    public QueryHelper(IConnectionFactory connectionFactory, Class<? extends AnObjectMapper>... mappers) {
-        super(mappers);
+    public QueryHelper(IConnectionFactory connectionFactory) {
         this.connectionFactory = connectionFactory;
     }
 
@@ -32,7 +29,7 @@ public final class QueryHelper extends AQueryHelper {
                         con,
                         sql,
                         Statement.NO_GENERATED_KEYS,
-                        preProcessing(parameters)
+                        parameters
                 )) {
                     try (ResultSet rs = st.executeQuery()) {
                         List<T> res = new ArrayList<>();
@@ -70,7 +67,7 @@ public final class QueryHelper extends AQueryHelper {
                         con,
                         sql,
                         Statement.NO_GENERATED_KEYS,
-                        preProcessing(parameters)
+                        parameters
                 )) {
                     return st.executeUpdate();
                 }
@@ -88,7 +85,7 @@ public final class QueryHelper extends AQueryHelper {
                         con,
                         sql,
                         c == null ? Statement.NO_GENERATED_KEYS : Statement.RETURN_GENERATED_KEYS,
-                        preProcessing(parameters)
+                        parameters
                 )) {
                     st.executeUpdate();
                     if (c != null) {
