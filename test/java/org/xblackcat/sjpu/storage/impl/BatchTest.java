@@ -4,9 +4,7 @@ import org.h2.Driver;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.xblackcat.sjpu.storage.IBatch;
-import org.xblackcat.sjpu.storage.StorageException;
-import org.xblackcat.sjpu.storage.StorageUtils;
+import org.xblackcat.sjpu.storage.*;
 import org.xblackcat.sjpu.storage.connection.IDatabaseSettings;
 
 /**
@@ -47,17 +45,16 @@ public class BatchTest {
     public void setupDatabase() throws StorageException {
         IQueryHelper helper = StorageUtils.buildQueryHelper(settings);
         storage = new Storage(helper);
-
-        DBAH dbah = storage.get(DBAH.class);
-        dbah.createDB();
-        for (int i = 0; i < 10; i++) {
-            dbah.fill(i, "Text-" + i);
-        }
     }
 
     @Test
     public void checkData() throws Exception {
         DBAH dbah = storage.get(DBAH.class);
+        dbah.createDB();
+        for (int i = 0; i < 10; i++) {
+            dbah.fill(i, "Text-" + i);
+        }
+
         for (int i = 0; i < 10; i++) {
             Assert.assertEquals("Index [" + i + "]", "Text-" + i, dbah.get(i));
         }
@@ -97,5 +94,43 @@ public class BatchTest {
         int id = dbAH.put(value);
 
         Assert.assertEquals(value, dbAH.get(id));
+    }
+
+    /**
+     * 18.11.13 12:53
+     *
+     * @author xBlackCat
+     */
+    public static interface DBAH extends IAH {
+        @Sql("CREATE TABLE \"data\" (\"id\" INT PRIMARY KEY NOT NULL, \"txt\" VARCHAR NOT NULL)")
+        void createDB() throws StorageException;
+
+        @Sql("INSERT INTO \"data\" (\"id\", \"txt\") VALUES (?, ?)")
+        void fill(int id, String txt) throws StorageException;
+
+        @Sql("SELECT\n" +
+                     "  \"txt\"\n" +
+                     "FROM \"data\"\n" +
+                     "WHERE \"id\" = ?")
+        String get(int id) throws StorageException;
+    }
+
+    /**
+     * 18.11.13 12:53
+     *
+     * @author xBlackCat
+     */
+    public static interface DBAutoIncAH extends IAH {
+        @Sql("CREATE TABLE \"autoinc\" (\"id\" INT PRIMARY KEY AUTO_INCREMENT NOT NULL, \"txt\" VARCHAR NOT NULL)")
+        void createDB() throws StorageException;
+
+        @Sql("INSERT INTO \"autoinc\" (\"txt\") VALUES (?)")
+        int put(String value) throws StorageException;
+
+        @Sql("SELECT\n" +
+                     "  \"txt\"\n" +
+                     "FROM \"autoinc\"\n" +
+                     "WHERE \"id\" = ?")
+        String get(int id) throws StorageException;
     }
 }

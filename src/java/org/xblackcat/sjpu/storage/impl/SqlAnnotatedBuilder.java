@@ -61,7 +61,7 @@ class SqlAnnotatedBuilder implements IMethodBuilder<Sql> {
             throw new StorageSetupException("Converter should be specified for SELECT statement in method " + m.toString());
         }
 
-        CtClass ctReturnType = pool.get(returnType.getName());
+        CtClass ctRealReturnType = pool.get(returnType.getName());
         body.append("{\n");
 
         final CtClass targetReturnType;
@@ -70,10 +70,10 @@ class SqlAnnotatedBuilder implements IMethodBuilder<Sql> {
                 (returnType.isPrimitive() && returnType != void.class);
 
         if (generateWrapper) {
-            assert ctReturnType instanceof CtPrimitiveType;
-            targetReturnType = pool.get(((CtPrimitiveType) ctReturnType).getWrapperName());
+            assert ctRealReturnType instanceof CtPrimitiveType;
+            targetReturnType = pool.get(((CtPrimitiveType) ctRealReturnType).getWrapperName());
         } else {
-            targetReturnType = ctReturnType;
+            targetReturnType = ctRealReturnType;
         }
 
         if (type == QueryType.Select) {
@@ -110,10 +110,10 @@ class SqlAnnotatedBuilder implements IMethodBuilder<Sql> {
 
             if (returnType.equals(int.class)) {
                 body.append("return helper.update(");
-                ctReturnType = CtClass.intType;
+                ctRealReturnType = CtClass.intType;
             } else if (returnType.equals(void.class)) {
                 body.append("helper.update(");
-                ctReturnType = CtClass.voidType;
+                ctRealReturnType = CtClass.voidType;
             } else {
                 throw new StorageSetupException(
                         "Invalid return type for updater in method " +
@@ -132,7 +132,7 @@ class SqlAnnotatedBuilder implements IMethodBuilder<Sql> {
 
         body.append("\n);\n}");
 
-        addMethod(pool, accessHelper, m, ctReturnType, targetReturnType, body.toString());
+        addMethod(pool, accessHelper, m, ctRealReturnType, targetReturnType, body.toString());
     }
 
     protected void appendArgumentList(TypeMapper typeMapper, Class<?>[] types, StringBuilder body) {
@@ -178,11 +178,11 @@ class SqlAnnotatedBuilder implements IMethodBuilder<Sql> {
             ClassPool pool,
             CtClass accessHelper,
             Method m,
-            CtClass ctReturnType,
+            CtClass realReturnType,
             CtClass targetReturnType,
             String methodBody
     ) throws CannotCompileException, NotFoundException {
-        final boolean generateWrapper = !targetReturnType.equals(ctReturnType);
+        final boolean generateWrapper = !targetReturnType.equals(realReturnType);
 
         final String methodName = m.getName();
         final Class<?>[] types = m.getParameterTypes();
@@ -191,7 +191,7 @@ class SqlAnnotatedBuilder implements IMethodBuilder<Sql> {
         final int targetModifiers;
 
         if (log.isTraceEnabled()) {
-            log.trace("Method " + ctReturnType.getName() + " " + methodName + "(...)");
+            log.trace("Method " + realReturnType.getName() + " " + methodName + "(...)");
             if (generateWrapper) {
                 log.trace(" [ + Wrapper for unboxing ]");
             }
@@ -227,12 +227,12 @@ class SqlAnnotatedBuilder implements IMethodBuilder<Sql> {
                     "($$);\n" +
                     "if (value == null) {\nthrow new java.lang.NullPointerException(\"Can't unwrap null value.\");\n}\n" +
                     "return value." +
-                    BuilderUtils.getUnwrapMethodName(targetReturnType) +
+                    BuilderUtils.getUnwrapMethodName(realReturnType) +
                     "();\n}";
 
             final CtMethod coverMethod = CtNewMethod.make(
                     m.getModifiers() | Modifier.FINAL,
-                    ctReturnType,
+                    realReturnType,
                     methodName,
                     BuilderUtils.toCtClasses(pool, types),
                     BuilderUtils.toCtClasses(pool, m.getExceptionTypes()),

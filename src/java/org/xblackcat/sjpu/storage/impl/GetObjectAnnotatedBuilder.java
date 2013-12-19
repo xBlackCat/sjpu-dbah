@@ -253,7 +253,7 @@ class GetObjectAnnotatedBuilder implements IMethodBuilder<GetObject> {
                     " value = " +
                     targetMethodName +
                     "($$);\nreturn value." +
-                    BuilderUtils.getUnwrapMethodName(returnType) +
+                    BuilderUtils.getUnwrapMethodName(ctReturnType) +
                     "();\n}";
 
             final CtMethod coverMethod = CtNewMethod.make(

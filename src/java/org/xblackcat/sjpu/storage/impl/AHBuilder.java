@@ -85,23 +85,19 @@ class AHBuilder<B, P> implements IAHBuilder<P> {
 
             accessHelper.addConstructor(constructor);
 
-            try {
-                for (Method m : target.getMethods()) {
-                    implementMethod(accessHelper, m);
-                }
-
-                Set<ImplementedMethod> implementedMethods = new HashSet<>();
-                // Implement protected and other methods
-                implementNotPublicMethods(target, target, accessHelper, implementedMethods);
-            } catch (ReflectiveOperationException e) {
-                throw new StorageSetupException("Can't find a method in implementing class", e);
+            for (Method m : target.getMethods()) {
+                implementMethod(accessHelper, m);
             }
+
+            Set<ImplementedMethod> implementedMethods = new HashSet<>();
+            // Implement protected and other methods
+            implementNotPublicMethods(target, target, accessHelper, implementedMethods);
 
             @SuppressWarnings("unchecked")
             final Class<T> ahClass = (Class<T>) accessHelper.toClass();
             return definer.build(ahClass, helper);
         } catch (NotFoundException | CannotCompileException e) {
-            throw new StorageSetupException("Exception", e);
+            throw new StorageSetupException("Exception occurs while build AccessHelper", e);
         }
     }
 
@@ -110,7 +106,7 @@ class AHBuilder<B, P> implements IAHBuilder<P> {
             Class<?> target,
             CtClass accessHelper,
             Set<ImplementedMethod> implementedMethods
-    ) throws ReflectiveOperationException, CannotCompileException, NotFoundException {
+    ) throws StorageSetupException {
         if (target == null || target == Object.class) {
             // Done
             return;
@@ -162,7 +158,7 @@ class AHBuilder<B, P> implements IAHBuilder<P> {
     }
 
     @SuppressWarnings("unchecked")
-    private void implementMethod(CtClass accessHelper, Method m) throws NotFoundException, ReflectiveOperationException, CannotCompileException {
+    private void implementMethod(CtClass accessHelper, Method m) throws StorageSetupException {
         if (log.isTraceEnabled()) {
             log.trace("Check method: " + m);
         }
@@ -179,7 +175,20 @@ class AHBuilder<B, P> implements IAHBuilder<P> {
             final Annotation annotation = m.getAnnotation(builder.getKey());
 
             if (annotation != null) {
-                builder.getValue().buildMethod(pool, typeMapper, accessHelper, m, annotation);
+                try {
+                    builder.getValue().buildMethod(pool, typeMapper, accessHelper, m, annotation);
+                } catch (NotFoundException | CannotCompileException | ReflectiveOperationException e) {
+                    throw new StorageSetupException("Exception occurs while building method " + m, e);
+                } catch (StorageSetupException e) {
+                    final StorageSetupException ex = new StorageSetupException(
+                            "Exception occurs while building method " +
+                                    m +
+                                    ": " +
+                                    e.getMessage(), e.getCause()
+                    );
+                    ex.setStackTrace(e.getStackTrace());
+                    throw ex;
+                }
 
                 return;
             }
