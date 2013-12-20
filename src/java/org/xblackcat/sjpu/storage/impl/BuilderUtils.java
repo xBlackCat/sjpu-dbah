@@ -1,29 +1,26 @@
 package org.xblackcat.sjpu.storage.impl;
 
 import javassist.*;
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.xblackcat.sjpu.storage.*;
+import org.xblackcat.sjpu.storage.SetField;
+import org.xblackcat.sjpu.storage.StorageSetupException;
 import org.xblackcat.sjpu.storage.converter.*;
 import org.xblackcat.sjpu.storage.typemap.ATypeMap;
 import org.xblackcat.sjpu.storage.typemap.ITypeMap;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.Date;
-import java.util.List;
 import java.util.regex.Pattern;
 
 /**
@@ -157,165 +154,19 @@ class BuilderUtils {
         parameters.append("]");
     }
 
-    static ConverterInfo invoke(
-            ClassPool pool,
-            TypeMapper typeMapper, Method m
-    ) throws ReflectiveOperationException, NotFoundException, CannotCompileException {
-        final Class<?> returnType = m.getReturnType();
-        final Class<? extends IToObjectConverter<?>> converter;
-        final boolean useFieldList;
-        final Class<?> realReturnType;
-
-        final ToObjectConverter converterAnn = m.getAnnotation(ToObjectConverter.class);
-        final MapRowTo mapRowTo = m.getAnnotation(MapRowTo.class);
-
-        if (converterAnn != null) {
-            converter = converterAnn.value();
-            if (converter.isInterface() || Modifier.isAbstract(converter.getModifiers())) {
-                throw new StorageSetupException("Converter should be implemented class");
-            }
-            final Method converterMethod = converter.getMethod("convert", ResultSet.class);
-
-            realReturnType = converterMethod.getReturnType();
-            useFieldList = true;
-        } else {
-            if (mapRowTo == null) {
-                if (List.class.isAssignableFrom(returnType)) {
-                    throw new StorageSetupException(
-                            "Set target class with annotation " +
-                                    MapRowTo.class +
-                                    " for method " +
-                                    m
-                    );
-                } else {
-                    realReturnType = returnType;
-                }
-            } else {
-                realReturnType = mapRowTo.value();
-                if (!List.class.isAssignableFrom(returnType) &&
-                        !returnType.isAssignableFrom(realReturnType)) {
-                    throw new StorageSetupException(
-                            "Mapped object " +
-                                    realReturnType.getName() +
-                                    " can not be returned as " +
-                                    returnType.getName() +
-                                    " from method " +
-                                    m
-                    );
-                }
-            }
-
-            if (realReturnType.isArray()) {
-                if (realReturnType != byte[].class) {
-                    throw new StorageSetupException("Invalid array component type: only array of bytes is supported as return value");
-                }
-            } else if (!realReturnType.isPrimitive()) {
-                if (realReturnType.isInterface() || Modifier.isAbstract(realReturnType.getModifiers())) {
-                    throw new StorageSetupException("Row could be mapped only to non-abstract class");
-                }
-            }
-
-            Class<? extends IToObjectConverter<?>> standardConverter = checkStandardClassConverter(realReturnType);
-            final ToObjectConverter objectConverterAnn = realReturnType.getAnnotation(ToObjectConverter.class);
-
-            if (standardConverter != null) {
-                converter = standardConverter;
-                useFieldList = true;
-            } else if (objectConverterAnn != null) {
-                converter = objectConverterAnn.value();
-                if (converter.isInterface() || Modifier.isAbstract(converter.getModifiers())) {
-                    throw new StorageSetupException("Converter should be implemented class");
-                }
-
-                useFieldList = true;
-            } else {
-                ITypeMap<?, ?> mapper = typeMapper.hasTypeMap(realReturnType);
-                if (mapper != null) {
-                    converter = getTypeMapperConverter(pool, mapper);
-                    useFieldList = false;
-                } else {
-                    final Constructor<?>[] constructors = realReturnType.getConstructors();
-                    useFieldList = false;
-                    Constructor<?> targetConstructor = null;
-                    String suffix = "";
-
-                    RowMap constructorSignature = m.getAnnotation(RowMap.class);
-                    final Class<?>[] classes = constructorSignature == null ? null : constructorSignature.value();
-
-                    if (constructors.length == 1) {
-                        targetConstructor = constructors[0];
-                    } else {
-                        Constructor<?> def = null;
-
-                        int i = 0;
-                        int constructorsLength = constructors.length;
-
-                        while (i < constructorsLength) {
-                            Constructor<?> c = constructors[i];
-                            if (c.getAnnotation(DefaultRowMap.class) != null) {
-                                def = c;
-                                if (classes == null) {
-                                    // No annotations so just use the constructor annotated as default map
-                                    break;
-                                }
-                            } else if (classes != null) {
-                                if (ArrayUtils.isEquals(classes, c.getParameterTypes())) {
-                                    targetConstructor = c;
-                                    suffix = String.valueOf(i);
-                                    break;
-                                }
-                            }
-                            i++;
-                        }
-
-                        if (targetConstructor == null) {
-                            if (classes != null) {
-                                throw new StorageSetupException(
-                                        "No constructor found in " + realReturnType.getName() + " with signature " + Arrays.asList(classes)
-                                );
-                            } else {
-                                targetConstructor = def;
-                                suffix = "Def";
-                            }
-                        }
-                    }
-
-                    if (targetConstructor == null) {
-                        throw new StorageSetupException(
-                                "Can't find a way to convert result row to object. Probably one of the following annotations should be used: " +
-                                        Arrays.asList(ToObjectConverter.class, RowMap.class, MapRowTo.class)
-                        );
-                    }
-
-                    if (classes != null) {
-                        if (!ArrayUtils.isEquals(classes, targetConstructor.getParameterTypes())) {
-                            throw new StorageSetupException(
-                                    "No constructor found in " + realReturnType.getName() + " with signature " + Arrays.asList(classes)
-                            );
-                        }
-                    }
-
-                    converter = initializeConverter(pool, targetConstructor, typeMapper, suffix);
-                }
-            }
-        }
-        return new ConverterInfo(realReturnType, converter, useFieldList);
-    }
-
-    private static Class<? extends IToObjectConverter<?>> getTypeMapperConverter(
+    static Class<? extends IToObjectConverter<?>> getTypeMapperConverter(
             ClassPool pool,
             ITypeMap<?, ?> typeMap
     ) throws NotFoundException, CannotCompileException, ReflectiveOperationException {
         final String converterCN = "ToObjectConverter";
         final String realClassName = typeMap.getClass().getName();
-        final String mapperName = realClassName;
         try {
 
             if (log.isTraceEnabled()) {
-                log.trace("Check if the converter already exists for mapper " + mapperName);
+                log.trace("Check if the converter already exists for mapper " + realClassName);
             }
 
-            final String converterFQN = mapperName + "$" + converterCN;
+            final String converterFQN = realClassName + "$" + converterCN;
             final Class<?> aClass = Class.forName(converterFQN);
 
             if (IToObjectConverter.class.isAssignableFrom(aClass)) {
@@ -333,7 +184,7 @@ class BuilderUtils {
         }
 
         if (log.isTraceEnabled()) {
-            log.trace("Build converter class for mapper " + mapperName);
+            log.trace("Build converter class for mapper " + realClassName);
         }
 
         StringBuilder body = new StringBuilder("{\nreturn new ");
@@ -364,7 +215,7 @@ class BuilderUtils {
 
         body.append("\n);\n}");
 
-        final CtClass baseCtClass = pool.get(realClassName);
+        final CtClass baseCtClass = pool.get(typeMap.getClass().getName());
         final CtClass toObjectConverter = baseCtClass.makeNestedClass(converterCN, true);
 
         toObjectConverter.addInterface(pool.get(IToObjectConverter.class.getName()));
