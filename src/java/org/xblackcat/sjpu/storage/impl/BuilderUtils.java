@@ -9,6 +9,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.xblackcat.sjpu.storage.*;
 import org.xblackcat.sjpu.storage.converter.*;
+import org.xblackcat.sjpu.storage.typemap.ATypeMap;
+import org.xblackcat.sjpu.storage.typemap.ITypeMap;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
@@ -227,7 +229,7 @@ class BuilderUtils {
 
                 useFieldList = true;
             } else {
-                ATypeMap<?, ?> mapper = typeMapper.hasTypeMap(realReturnType);
+                ITypeMap<?, ?> mapper = typeMapper.hasTypeMap(realReturnType);
                 if (mapper != null) {
                     converter = getTypeMapperConverter(pool, mapper);
                     useFieldList = false;
@@ -302,10 +304,11 @@ class BuilderUtils {
 
     private static Class<? extends IToObjectConverter<?>> getTypeMapperConverter(
             ClassPool pool,
-            ATypeMap<?, ?> mapper
+            ITypeMap<?, ?> typeMap
     ) throws NotFoundException, CannotCompileException, ReflectiveOperationException {
         final String converterCN = "ToObjectConverter";
-        final String mapperName = mapper.getClass().getName();
+        final String realClassName = typeMap.getClass().getName();
+        final String mapperName = realClassName;
         try {
 
             if (log.isTraceEnabled()) {
@@ -332,8 +335,6 @@ class BuilderUtils {
         if (log.isTraceEnabled()) {
             log.trace("Build converter class for mapper " + mapperName);
         }
-
-        final ATypeMap<?, ?> typeMap = initializeMapper(pool, mapper.getClass());
 
         StringBuilder body = new StringBuilder("{\nreturn new ");
         final Class<?> returnType = typeMap.getRealType();
@@ -363,7 +364,7 @@ class BuilderUtils {
 
         body.append("\n);\n}");
 
-        final CtClass baseCtClass = pool.get(mapper.getClass().getName());
+        final CtClass baseCtClass = pool.get(realClassName);
         final CtClass toObjectConverter = baseCtClass.makeNestedClass(converterCN, true);
 
         toObjectConverter.addInterface(pool.get(IToObjectConverter.class.getName()));
@@ -577,7 +578,7 @@ class BuilderUtils {
             Class<?> type = parameterTypes[i];
             i++;
 
-            final ATypeMap<?, ?> typeMap = typeMapper.hasTypeMap(type);
+            final ITypeMap<?, ?> typeMap = typeMapper.hasTypeMap(type);
             final Class<?> dbType;
             if (typeMap == null) {
                 dbType = type;

@@ -17,15 +17,7 @@ import java.util.*;
  * @author xBlackCat
  */
 class AHBuilder<B, P> implements IAHBuilder<P> {
-    private static final Map<Class<? extends Annotation>, IMethodBuilder> METHOD_BUILDERS;
-
-    static {
-        METHOD_BUILDERS = new LinkedHashMap<>();
-
-        METHOD_BUILDERS.put(Sql.class, new SqlAnnotatedBuilder());
-//        METHOD_BUILDERS.put(GetObject.class, new GetObjectAnnotatedBuilder());
-//        METHOD_BUILDERS.put(UpdateObject.class, new UpdateObjectAnnotatedBuilder());
-    }
+    private final Map<Class<? extends Annotation>, IMethodBuilder> methodBuilders = new LinkedHashMap<>();
 
     protected final ClassPool pool;
     protected final TypeMapper typeMapper;
@@ -33,9 +25,13 @@ class AHBuilder<B, P> implements IAHBuilder<P> {
     protected final Log log = LogFactory.getLog(getClass());
 
     protected AHBuilder(TypeMapper typeMapper, Definer<B, P> definer) {
+        pool = ClassPool.getDefault();
         this.typeMapper = typeMapper;
         this.definer = definer;
-        pool = ClassPool.getDefault();
+
+        methodBuilders.put(Sql.class, new SqlAnnotatedBuilder(pool, typeMapper));
+//        methodBuilders.put(GetObject.class, new GetObjectAnnotatedBuilder(pool, typeMapper));
+//        methodBuilders.put(UpdateObject.class, new UpdateObjectAnnotatedBuilder(pool, typeMapper));
     }
 
     @Override
@@ -171,12 +167,12 @@ class AHBuilder<B, P> implements IAHBuilder<P> {
             return;
         }
 
-        for (Map.Entry<Class<? extends Annotation>, IMethodBuilder> builder : METHOD_BUILDERS.entrySet()) {
+        for (Map.Entry<Class<? extends Annotation>, IMethodBuilder> builder : methodBuilders.entrySet()) {
             final Annotation annotation = m.getAnnotation(builder.getKey());
 
             if (annotation != null) {
                 try {
-                    builder.getValue().buildMethod(pool, typeMapper, accessHelper, m, annotation);
+                    builder.getValue().buildMethod(accessHelper, m, annotation);
                 } catch (NotFoundException | CannotCompileException | ReflectiveOperationException e) {
                     throw new StorageSetupException("Exception occurs while building method " + m, e);
                 } catch (StorageSetupException e) {
@@ -195,7 +191,7 @@ class AHBuilder<B, P> implements IAHBuilder<P> {
         }
 
         throw new StorageSetupException(
-                "Method " + m + " should be annotated with one of the following annotations:  " + METHOD_BUILDERS.keySet()
+                "Method " + m + " should be annotated with one of the following annotations:  " + methodBuilders.keySet()
         );
     }
 

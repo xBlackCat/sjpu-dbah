@@ -20,4 +20,6 @@ public interface IStorage extends IAHFactory {
      * @param transactionIsolationLevel
      */
     IBatch openTransaction(int transactionIsolationLevel) throws StorageException;
+
+    void shutdown() throws StorageException;
 }

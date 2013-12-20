@@ -2,8 +2,6 @@ package org.xblackcat.sjpu.storage.impl;
 
 import javassist.*;
 import org.apache.commons.lang3.StringEscapeUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.xblackcat.sjpu.storage.*;
 import org.xblackcat.sjpu.storage.converter.IToObjectConverter;
 
@@ -18,12 +16,14 @@ import java.util.Locale;
  *
  * @author xBlackCat
  */
-class GetObjectAnnotatedBuilder implements IMethodBuilder<GetObject> {
-    private static final Log log = LogFactory.getLog(GetObjectAnnotatedBuilder.class);
+class GetObjectAnnotatedBuilder extends AMethodBuilder<GetObject> {
+    GetObjectAnnotatedBuilder(TypeMapper typeMapper, ClassPool pool) {
+        super(typeMapper, pool);
+    }
 
     @Override
     public void buildMethod(
-            ClassPool pool, TypeMapper typeMapper, CtClass accessHelper, Method m, GetObject annotation
+            CtClass accessHelper, Method m, GetObject annotation
     ) throws NotFoundException, ReflectiveOperationException, CannotCompileException {
 
         ConverterInfo converterInfo = BuilderUtils.invoke(pool, typeMapper, m);

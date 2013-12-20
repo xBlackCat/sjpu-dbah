@@ -2,13 +2,11 @@ package org.xblackcat.sjpu.storage.impl;
 
 import javassist.*;
 import org.apache.commons.lang3.StringEscapeUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.xblackcat.sjpu.storage.ATypeMap;
 import org.xblackcat.sjpu.storage.Sql;
 import org.xblackcat.sjpu.storage.StorageSetupException;
 import org.xblackcat.sjpu.storage.converter.IToObjectConverter;
 import org.xblackcat.sjpu.storage.converter.StandardMappers;
+import org.xblackcat.sjpu.storage.typemap.ITypeMap;
 
 import java.lang.reflect.Method;
 import java.util.Date;
@@ -20,12 +18,14 @@ import java.util.regex.Matcher;
  *
  * @author xBlackCat
  */
-class SqlAnnotatedBuilder implements IMethodBuilder<Sql> {
-    private static final Log log = LogFactory.getLog(SqlAnnotatedBuilder.class);
+class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
+    public SqlAnnotatedBuilder(ClassPool pool, TypeMapper typeMapper) {
+        super(typeMapper, pool);
+    }
 
     @Override
     public void buildMethod(
-            ClassPool pool, TypeMapper typeMapper, CtClass accessHelper, Method m, Sql annotation
+            CtClass accessHelper, Method m, Sql annotation
     ) throws NotFoundException, ReflectiveOperationException, CannotCompileException {
         final String methodName = m.getName();
 
@@ -128,14 +128,14 @@ class SqlAnnotatedBuilder implements IMethodBuilder<Sql> {
         body.append(StringEscapeUtils.escapeJava(sql));
         body.append("\",\n");
 
-        appendArgumentList(typeMapper, m.getParameterTypes(), body);
+        appendArgumentList(m.getParameterTypes(), body);
 
         body.append("\n);\n}");
 
-        addMethod(pool, accessHelper, m, ctRealReturnType, targetReturnType, body.toString());
+        addMethod(accessHelper, m, ctRealReturnType, targetReturnType, body.toString());
     }
 
-    protected void appendArgumentList(TypeMapper typeMapper, Class<?>[] types, StringBuilder body) {
+    protected void appendArgumentList(Class<?>[] types, StringBuilder body) {
         int typesAmount = types.length;
         body.append("new Object[");
 
@@ -144,7 +144,7 @@ class SqlAnnotatedBuilder implements IMethodBuilder<Sql> {
             int i = 0;
 
             while (i < typesAmount) {
-                ATypeMap<?, ?> mapperClass = typeMapper.hasTypeMap(types[i]);
+                ITypeMap<?, ?> mapperClass = typeMapper.hasTypeMap(types[i]);
                 if (mapperClass == null) {
                     body.append("$args[");
                     body.append(i);
@@ -175,7 +175,6 @@ class SqlAnnotatedBuilder implements IMethodBuilder<Sql> {
     }
 
     protected void addMethod(
-            ClassPool pool,
             CtClass accessHelper,
             Method m,
             CtClass realReturnType,

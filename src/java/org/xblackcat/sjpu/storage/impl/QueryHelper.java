@@ -108,4 +108,9 @@ public final class QueryHelper implements IQueryHelper {
     public Connection getConnection() throws SQLException {
         return connectionFactory.getConnection();
     }
+
+    @Override
+    public void shutdown() throws StorageException {
+        connectionFactory.shutdown();
+    }
 }

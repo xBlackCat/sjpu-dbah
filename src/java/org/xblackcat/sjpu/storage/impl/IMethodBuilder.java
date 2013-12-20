@@ -1,7 +1,6 @@
 package org.xblackcat.sjpu.storage.impl;
 
 import javassist.CannotCompileException;
-import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.NotFoundException;
 
@@ -15,8 +14,7 @@ import java.lang.reflect.Method;
  */
 interface IMethodBuilder<T extends Annotation> {
     void buildMethod(
-            ClassPool pool,
-            TypeMapper typeMapper, CtClass accessHelper,
+            CtClass accessHelper,
             Method m,
             T annotation
     ) throws NotFoundException, ReflectiveOperationException, CannotCompileException;

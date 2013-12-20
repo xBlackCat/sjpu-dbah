@@ -52,4 +52,9 @@ public class QueryHelperStub implements IQueryHelper {
         return null;
     }
 
+    @Override
+    public void shutdown() throws StorageException {
+
+    }
+
 }

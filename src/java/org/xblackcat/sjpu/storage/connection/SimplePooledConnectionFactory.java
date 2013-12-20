@@ -21,6 +21,7 @@ public class SimplePooledConnectionFactory extends AConnectionFactory {
     private static final AtomicInteger POOL_NUMBER = new AtomicInteger();
 
     private final String poolName;
+    private final ObjectPool connectionPool;
 
     public SimplePooledConnectionFactory(IDatabaseSettings settings) throws StorageException {
         super(settings);
@@ -31,7 +32,7 @@ public class SimplePooledConnectionFactory extends AConnectionFactory {
                 this.settings.getDbAccessPassword()
         );
 
-        ObjectPool connectionPool = new GenericObjectPool<Object>(
+        connectionPool = new GenericObjectPool<Object>(
                 null,
                 this.settings.getDbPoolSize(),
                 GenericObjectPool.WHEN_EXHAUSTED_BLOCK,
@@ -72,5 +73,14 @@ public class SimplePooledConnectionFactory extends AConnectionFactory {
 
     public Connection getConnection() throws SQLException {
         return DriverManager.getConnection("jdbc:apache:commons:dbcp:" + poolName);
+    }
+
+    @Override
+    public void shutdown() throws StorageException{
+        try {
+            connectionPool.close();
+        } catch (Exception e) {
+            throw new StorageException("Can't dismiss connection pool", e);
+        }
     }
 }

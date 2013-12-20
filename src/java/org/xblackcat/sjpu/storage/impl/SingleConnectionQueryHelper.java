@@ -92,4 +92,13 @@ final class SingleConnectionQueryHelper implements IQueryHelper {
     public Connection getConnection() {
         return con;
     }
+
+    @Override
+    public void shutdown() throws StorageException {
+        try {
+            con.close();
+        } catch (SQLException e) {
+            throw new StorageException("Can't close connection", e);
+        }
+    }
 }

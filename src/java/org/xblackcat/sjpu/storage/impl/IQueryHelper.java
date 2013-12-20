@@ -22,4 +22,6 @@ public interface IQueryHelper {
     <T> T insert(IToObjectConverter<T> c, String sql, Object... parameters) throws StorageException;
 
     Connection getConnection() throws SQLException;
+
+    void shutdown() throws StorageException;
 }

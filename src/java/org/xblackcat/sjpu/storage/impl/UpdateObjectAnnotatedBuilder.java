@@ -2,8 +2,6 @@ package org.xblackcat.sjpu.storage.impl;
 
 import javassist.*;
 import org.apache.commons.lang3.StringEscapeUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.xblackcat.sjpu.storage.*;
 
 import java.lang.annotation.Annotation;
@@ -16,13 +14,14 @@ import java.util.Set;
  *
  * @author xBlackCat
  */
-class UpdateObjectAnnotatedBuilder implements IMethodBuilder<UpdateObject> {
-    private static final Log log = LogFactory.getLog(UpdateObjectAnnotatedBuilder.class);
+class UpdateObjectAnnotatedBuilder extends AMethodBuilder<UpdateObject> {
+    UpdateObjectAnnotatedBuilder(TypeMapper typeMapper, ClassPool pool) {
+        super(typeMapper, pool);
+    }
 
     @Override
     public void buildMethod(
-            ClassPool pool,
-            TypeMapper typeMapper, CtClass accessHelper,
+            CtClass accessHelper,
             Method m,
             UpdateObject annotation
     ) throws NotFoundException, NoSuchMethodException, CannotCompileException {

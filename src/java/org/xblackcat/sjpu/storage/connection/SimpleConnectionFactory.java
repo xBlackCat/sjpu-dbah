@@ -22,4 +22,9 @@ public class SimpleConnectionFactory extends AConnectionFactory {
                 settings.getDbAccessPassword()
         );
     }
+
+    @Override
+    public void shutdown() {
+
+    }
 }

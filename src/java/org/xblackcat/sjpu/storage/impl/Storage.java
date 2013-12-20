@@ -1,9 +1,9 @@
 package org.xblackcat.sjpu.storage.impl;
 
-import org.xblackcat.sjpu.storage.ATypeMap;
 import org.xblackcat.sjpu.storage.IBatch;
 import org.xblackcat.sjpu.storage.IStorage;
 import org.xblackcat.sjpu.storage.StorageException;
+import org.xblackcat.sjpu.storage.typemap.IMapFactory;
 
 import java.sql.SQLException;
 
@@ -13,8 +13,7 @@ import java.sql.SQLException;
  * @author xBlackCat
  */
 public class Storage extends AnAHFactory implements IStorage {
-    @SafeVarargs
-    public Storage(IQueryHelper queryHelper, Class<? extends ATypeMap<?, ?>> ...mappers) {
+    public Storage(IQueryHelper queryHelper, IMapFactory<?, ?>... mappers) {
         super(queryHelper, new TypeMapper(mappers));
     }
 
@@ -30,5 +29,10 @@ public class Storage extends AnAHFactory implements IStorage {
         } catch (SQLException e) {
             throw new StorageException("An exception occurs while starting a transaction", e);
         }
+    }
+
+    @Override
+    public void shutdown() throws StorageException {
+        queryHelper.shutdown();
     }
 }
