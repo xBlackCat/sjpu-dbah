@@ -171,6 +171,12 @@ public class WorkflowTest {
         @MapRowTo(ElementNumber.class)
         List<ElementNumber> getListElement() throws StorageException;
 
+        @Sql("SELECT\n" +
+                     "  \"name\"\n" +
+                     "FROM \"list\"")
+        @MapRowTo(Numbers.class)
+        List<Numbers> getList() throws StorageException;
+
         @Sql("DELETE FROM \"list\"")
         void dropElements() throws StorageException;
     }

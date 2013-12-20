@@ -144,21 +144,23 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
             int i = 0;
 
             while (i < typesAmount) {
-                ITypeMap<?, ?> mapperClass = typeMapper.hasTypeMap(types[i]);
-                if (mapperClass == null) {
-                    body.append("$args[");
+                final ITypeMap<?, ?> typeMap = typeMapper.hasTypeMap(types[i]);
+
+                String mapperInstanceRef = typeMap == null ? null : typeMapper.getTypeMapInstanceRef(types[i]);
+                if (mapperInstanceRef != null) {
+                    body.append(mapperInstanceRef);
+                    body.append(".forStore($args[");
                     body.append(i);
-                    body.append("]");
+                    body.append("])");
                 } else if (Date.class.equals(types[i])) {
                     body.append(BuilderUtils.getName(StandardMappers.class));
                     body.append(".dateToTimestamp($args[");
                     body.append(i);
                     body.append("])");
                 } else {
-                    body.append(BuilderUtils.getName(mapperClass.getClass()));
-                    body.append(".Instance.I.forStore($args[");
+                    body.append("$args[");
                     body.append(i);
-                    body.append("])");
+                    body.append("]");
                 }
 
                 i++;

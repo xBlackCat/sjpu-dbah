@@ -5,11 +5,8 @@ import javassist.ClassPool;
 import javassist.Modifier;
 import javassist.NotFoundException;
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.xblackcat.sjpu.storage.*;
 import org.xblackcat.sjpu.storage.converter.IToObjectConverter;
-import org.xblackcat.sjpu.storage.typemap.ITypeMap;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -18,13 +15,11 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
-* 17.12.13 16:45
-*
-* @author xBlackCat
-*/
+ * 17.12.13 16:45
+ *
+ * @author xBlackCat
+ */
 class ConverterInfo {
-    private static final Log log = LogFactory.getLog(ConverterInfo.class);
-
     private final Class<?> realReturnType;
     private final Class<? extends IToObjectConverter<?>> converter;
     private final boolean useFieldList;
@@ -111,9 +106,9 @@ class ConverterInfo {
 
                 useFieldList = true;
             } else {
-                ITypeMap<?, ?> mapper = typeMapper.hasTypeMap(realReturnType);
-                if (mapper != null) {
-                    converter = BuilderUtils.getTypeMapperConverter(pool, mapper);
+                Class<? extends IToObjectConverter<?>> mapperConverter = typeMapper.getTypeMapperConverter(pool, realReturnType);
+                if (mapperConverter != null) {
+                    converter = mapperConverter;
                     useFieldList = false;
                 } else {
                     final Constructor<?>[] constructors = realReturnType.getConstructors();

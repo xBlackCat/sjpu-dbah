@@ -9,7 +9,6 @@ import org.apache.commons.logging.LogFactory;
 import org.xblackcat.sjpu.storage.SetField;
 import org.xblackcat.sjpu.storage.StorageSetupException;
 import org.xblackcat.sjpu.storage.converter.*;
-import org.xblackcat.sjpu.storage.typemap.ATypeMap;
 import org.xblackcat.sjpu.storage.typemap.ITypeMap;
 
 import java.lang.annotation.Annotation;
@@ -139,7 +138,7 @@ class BuilderUtils {
             final CtClass toObjectClazz = pool.get(converter.getName());
             CtClass instanceClass = toObjectClazz.makeNestedClass("Instance", true);
             CtField instanceField = CtField.make(
-                    "public static final " + getName(converter) + " I;",
+                    "public static final " + getName(IToObjectConverter.class) + " I;",
                     instanceClass
             );
             instanceClass.addField(instanceField, CtField.Initializer.byNew(toObjectClazz));
@@ -152,103 +151,6 @@ class BuilderUtils {
         parameters.append("$args[");
         parameters.append(i);
         parameters.append("]");
-    }
-
-    static Class<? extends IToObjectConverter<?>> getTypeMapperConverter(
-            ClassPool pool,
-            ITypeMap<?, ?> typeMap
-    ) throws NotFoundException, CannotCompileException, ReflectiveOperationException {
-        final String converterCN = "ToObjectConverter";
-        final String realClassName = typeMap.getClass().getName();
-        try {
-
-            if (log.isTraceEnabled()) {
-                log.trace("Check if the converter already exists for mapper " + realClassName);
-            }
-
-            final String converterFQN = realClassName + "$" + converterCN;
-            final Class<?> aClass = Class.forName(converterFQN);
-
-            if (IToObjectConverter.class.isAssignableFrom(aClass)) {
-                if (log.isTraceEnabled()) {
-                    log.trace("Converter class already exists: " + converterFQN);
-                }
-                return (Class<IToObjectConverter<?>>) aClass;
-            } else {
-                throw new StorageSetupException(
-                        converterFQN + " class is already exists and it is not implements " + IToObjectConverter.class.getName()
-                );
-            }
-        } catch (ClassNotFoundException ignore) {
-            // Just build a new class
-        }
-
-        if (log.isTraceEnabled()) {
-            log.trace("Build converter class for mapper " + realClassName);
-        }
-
-        StringBuilder body = new StringBuilder("{\nreturn new ");
-        final Class<?> returnType = typeMap.getRealType();
-        body.append(getName(returnType));
-        body.append("(\n");
-
-        Class<?> type = typeMap.getDbType();
-        if (String.class.equals(type)) {
-            body.append("$1.getString(1)");
-        } else if (long.class.equals(type) || Long.class.equals(type)) {
-            body.append("$1.getLong(1)");
-        } else if (int.class.equals(type) || Integer.class.equals(type)) {
-            body.append("$1.getInt(1)");
-        } else if (short.class.equals(type) || Short.class.equals(type)) {
-            body.append("$1.getShort(1)");
-        } else if (byte.class.equals(type) || Byte.class.equals(type)) {
-            body.append("$1.getByte(1)");
-        } else if (boolean.class.equals(type) || Boolean.class.equals(type)) {
-            body.append("$1.getBoolean(1)");
-        } else if (byte[].class.equals(type)) {
-            body.append("$1.getBytes(1)");
-        } else if (Date.class.equals(type)) {
-            body.append("$1.getTimeStamp(1)");
-        } else {
-            throw new StorageSetupException("Can't process type " + type.getName());
-        }
-
-        body.append("\n);\n}");
-
-        final CtClass baseCtClass = pool.get(typeMap.getClass().getName());
-        final CtClass toObjectConverter = baseCtClass.makeNestedClass(converterCN, true);
-
-        toObjectConverter.addInterface(pool.get(IToObjectConverter.class.getName()));
-
-        if (log.isTraceEnabled()) {
-            log.trace(
-                    "Generated convert method " +
-                            returnType.getName() +
-                            " convert(ResultSet $1) throws SQLException " +
-                            body.toString()
-            );
-        }
-
-
-        final CtMethod method = CtNewMethod.make(
-                Modifier.PUBLIC | Modifier.FINAL,
-                pool.get(Object.class.getName()),
-                "convert",
-                toCtClasses(pool, ResultSet.class),
-                toCtClasses(pool, SQLException.class),
-                body.toString(),
-                toObjectConverter
-        );
-
-        toObjectConverter.addMethod(method);
-
-        if (log.isTraceEnabled()) {
-            log.trace("Initialize subclass with object converter instance");
-        }
-
-        final Class<IToObjectConverter<?>> converterClass = (Class<IToObjectConverter<?>>) toObjectConverter.toClass();
-        toObjectConverter.defrost();
-        return converterClass;
     }
 
     public static Constructor<?> findConstructorByAnnotatedParameter(Class<?> clazz, Class<? extends Annotation> ann) {
@@ -492,15 +394,18 @@ class BuilderUtils {
             }
 
             if (typeMap != null) {
-                body.append(BuilderUtils.getName(typeMap.getClass()));
-                body.append(".Instance.I.forRead(");
+                newObject.append("(");
+                newObject.append(getName(type));
+                newObject.append(") ");
+                newObject.append(typeMapper.getTypeMapInstanceRef(type));
+                newObject.append(".forRead(");
             }
             newObject.append("value");
             newObject.append(i);
             if (typeMap != null) {
                 newObject.append(")");
             }
-            newObject.append(", ");
+            newObject.append(",\n");
         }
 
         if (parameterTypesLength > 0) {
@@ -543,31 +448,5 @@ class BuilderUtils {
         final Class<IToObjectConverter<?>> converterClass = (Class<IToObjectConverter<?>>) toObjectConverter.toClass();
         toObjectConverter.defrost();
         return converterClass;
-    }
-
-    @SuppressWarnings("unchecked")
-    protected static <T extends ATypeMap<?, ?>> T initializeMapper(
-            ClassPool pool,
-            Class<T> mapperClass
-    ) throws CannotCompileException, NotFoundException, ReflectiveOperationException {
-
-        try {
-            pool.get(mapperClass.getName() + "$Instance");
-        } catch (NotFoundException e) {
-            // Create sub-class with the object instance for internal purposes
-
-            final CtClass toObjectClazz = pool.get(mapperClass.getName());
-            final CtClass instanceClass = toObjectClazz.makeNestedClass("Instance", true);
-            CtField instanceField = CtField.make(
-                    "public static final " + getName(mapperClass) + " I;",
-                    instanceClass
-            );
-            instanceClass.addField(instanceField, CtField.Initializer.byNew(toObjectClazz));
-
-            instanceClass.toClass();
-            instanceClass.defrost();
-        }
-
-        return (T) Class.forName(mapperClass.getName() + "$Instance").getField("I").get(null);
     }
 }
