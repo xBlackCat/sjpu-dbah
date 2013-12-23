@@ -20,6 +20,8 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 /**
@@ -34,6 +36,27 @@ class BuilderUtils {
     public static final CtClass[] EMPTY_LIST = new CtClass[]{};
 
     static final Pattern FIRST_WORD_SQL = Pattern.compile("(\\w+)(\\s|$)");
+
+    private static final Map<Class<?>, String> readDeclarations = new HashMap<>();
+
+    static {
+        readDeclarations.put(long.class, "long value%1$d = $1.getLong(%1$d);\n");
+        readDeclarations.put(Long.class, "long tmp%1$d = $1.getLong(%1$d);\njava.lang.Long value%1$d = $1.wasNull() ? null : java.lang.Long.valueOf(tmp%1$d);\n");
+        readDeclarations.put(int.class, "int value%1$d = $1.getInt(%1$d);\n");
+        readDeclarations.put(Integer.class, "int tmp%1$d = $1.getInt(%1$d);\njava.lang.Integer value%1$d = $1.wasNull() ? null : java.lang.Integer.valueOf(tmp%1$d);\n");
+        readDeclarations.put(short.class, "short value%1$d = $1.getShort(%1$d);\n");
+        readDeclarations.put(Short.class, "short tmp%1$d = $1.getShort(%1$d);\njava.lang.Short value%1$d = $1.wasNull() ? null : java.lang.Short.valueOf(tmp%1$d);\n");
+        readDeclarations.put(byte.class, "byte value%1$d = $1.getByte(%1$d);\n");
+        readDeclarations.put(Byte.class, "byte tmp%1$d = $1.getByte(%1$d);\njava.lang.Byte value%1$d = $1.wasNull() ? null : java.lang.Byte.valueOf(tmp%1$d);\n");
+        readDeclarations.put(boolean.class, "boolean value%1$d = $1.getBoolean(%1$d);\n");
+        readDeclarations.put(Boolean.class, "boolean tmp%1$d = $1.getBoolean(%1$d);\njava.lang.Boolean value%1$d = $1.wasNull() ? null : java.lang.Boolean.valueOf(tmp%1$d);\n");
+        readDeclarations.put(byte[].class, "byte[] value%1$d = $1.getBytes(%1$d);\n");
+        readDeclarations.put(String.class, String.class.getName() + " value%1$d = $1.getString(%1$d);\n");
+        readDeclarations.put(
+                Date.class,
+                Date.class.getName() + " value%1$d = " + getName(StandardMappers.class) + ".timestampToDate($1.getTimestamp(%1$d));\n"
+        );
+    }
 
     public static void addStringifiedParameter(StringBuilder parameters, SetField filter) throws NoSuchMethodException {
         Class<?> type = filter.type();
@@ -347,59 +370,12 @@ class BuilderUtils {
                 dbType = typeMap.getDbType();
             }
 
-            body.append(BuilderUtils.getName(dbType));
-            body.append(" value");
-            body.append(i);
-            body.append(" = ");
-
-            boolean wasNullCheck = !type.isPrimitive();
-
-            if (long.class.equals(dbType) || Long.class.equals(dbType)) {
-                body.append("$1.getLong(");
-                body.append(i);
-                body.append(")");
-            } else if (int.class.equals(dbType) || Integer.class.equals(dbType)) {
-                body.append("$1.getInt(");
-                body.append(i);
-                body.append(")");
-            } else if (short.class.equals(dbType) || Short.class.equals(dbType)) {
-                body.append("$1.getShort(");
-                body.append(i);
-                body.append(")");
-            } else if (byte.class.equals(dbType) || Byte.class.equals(dbType)) {
-                body.append("$1.getByte(");
-                body.append(i);
-                body.append(")");
-            } else if (boolean.class.equals(dbType) || Boolean.class.equals(dbType)) {
-                body.append("$1.getBoolean(");
-                body.append(i);
-                body.append(")");
-            } else if (byte[].class.equals(dbType)) {
-                body.append("$1.getBytes(");
-                body.append(i);
-                body.append(")");
-                wasNullCheck = false;
-            } else if (String.class.equals(dbType)) {
-                body.append("$1.getString(");
-                body.append(i);
-                body.append(")");
-                wasNullCheck = false;
-            } else if (Date.class.equals(dbType)) {
-                body.append(getName(StandardMappers.class));
-                body.append(".timestampToDate($1.getTimestamp(");
-                body.append(i);
-                body.append("))");
-                wasNullCheck = false;
-            } else {
+            String declarationLine = readDeclarations.get(dbType);
+            if (declarationLine == null) {
                 throw new StorageSetupException("Can't process type " + dbType.getName());
             }
 
-            body.append(";\n");
-            if (wasNullCheck) {
-                body.append("if ($1.wasNull()) { value");
-                body.append(i);
-                body.append(" = null; }\n");
-            }
+            body.append(String.format(declarationLine, i));
 
             if (typeMap != null) {
                 newObject.append("(");

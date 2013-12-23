@@ -154,7 +154,9 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
                     body.append("])");
                 } else if (Date.class.equals(types[i])) {
                     body.append(BuilderUtils.getName(StandardMappers.class));
-                    body.append(".dateToTimestamp($args[");
+                    body.append(".dateToTimestamp((");
+                    body.append(BuilderUtils.getName(Date.class));
+                    body.append(")$args[");
                     body.append(i);
                     body.append("])");
                 } else {

@@ -292,7 +292,7 @@ public class WorkflowTest {
         public final int id;
         public final String name;
 
-        public Element(int id, String name) {
+        public Element(Integer id, String name) {
             this.id = id;
             this.name = name;
         }
