@@ -184,7 +184,15 @@ class BuilderUtils {
      * @return full qualified name of the class in java-source form
      */
     public static String getName(Class<?> clazz) {
-        return StringUtils.replaceChars(clazz.getName(), '$', '.');
+        return StringUtils.replaceChars(checkArray(clazz), '$', '.');
+    }
+
+    protected static String checkArray(Class<?> clazz) {
+        if (!clazz.isArray()) {
+            return clazz.getName();
+        }
+
+        return checkArray(clazz.getComponentType()) + "[]";
     }
 
     /**

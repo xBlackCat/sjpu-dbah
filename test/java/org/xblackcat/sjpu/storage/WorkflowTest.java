@@ -161,6 +161,12 @@ public class WorkflowTest {
 
             Assert.assertEquals(uri, loaded);
         }
+
+        for (IElement<URI> uriElement : uriTest.getList()) {
+            IElement<URI> uri = uriTest.getElement(uriElement.getId());
+
+            Assert.assertEquals(uriElement, uri);
+        }
     }
 
     public static interface IDBInitAH extends IAH {
@@ -264,6 +270,22 @@ public class WorkflowTest {
                      "FROM \"uri\"\n" +
                      "WHERE \"id\" = ?")
         URI get(int id) throws StorageException;
+
+        @Sql("SELECT\n" +
+                     "  \"id\",\n" +
+                     "  \"uri\"\n" +
+                     "FROM \"uri\"\n" +
+                     "WHERE \"id\" = ?")
+        @MapRowTo(Uri.class)
+        IElement<URI> getElement(int id) throws StorageException;
+
+        @Sql("SELECT\n" +
+                     "  \"id\",\n" +
+                     "  \"uri\"\n" +
+                     "FROM \"uri\"\n")
+
+        @MapRowTo(Uri.class)
+        List<IElement<URI>> getList() throws StorageException;
     }
 
     public static class Element implements IElement<String> {
@@ -347,6 +369,51 @@ public class WorkflowTest {
         T getName();
     }
 
+    public static class Uri implements IElement<URI> {
+        public final int id;
+        public final URI name;
+
+        public Uri(int id, URI name) {
+            this.id = id;
+            this.name = name;
+        }
+
+        public int getId() {
+            return id;
+        }
+
+        public URI getName() {
+            return name;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (!(o instanceof Uri)) {
+                return false;
+            }
+
+            Uri uri = (Uri) o;
+
+            if (id != uri.id) {
+                return false;
+            }
+            if (name != null ? !name.equals(uri.name) : uri.name != null) {
+                return false;
+            }
+
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = id;
+            result = 31 * result + (name != null ? name.hashCode() : 0);
+            return result;
+        }
+    }
 
     public static enum Numbers {
         One,
