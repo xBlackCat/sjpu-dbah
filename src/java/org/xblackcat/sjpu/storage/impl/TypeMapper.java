@@ -1,7 +1,6 @@
 package org.xblackcat.sjpu.storage.impl;
 
 import javassist.*;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.xblackcat.sjpu.storage.StorageSetupException;
@@ -61,7 +60,9 @@ class TypeMapper {
                 if (log.isTraceEnabled()) {
                     log.trace("Converter class already exists: " + converterFQN);
                 }
-                return (Class<IToObjectConverter<?>>) aClass;
+                @SuppressWarnings("unchecked")
+                final Class<IToObjectConverter<?>> aClazz = (Class<IToObjectConverter<?>>) aClass;
+                return aClazz;
             } else {
                 throw new StorageSetupException(
                         converterFQN + " class is already exists and it is not implements " + IToObjectConverter.class.getName()
@@ -136,13 +137,14 @@ class TypeMapper {
             log.trace("Initialize subclass with object converter instance");
         }
 
+        @SuppressWarnings("unchecked")
         final Class<IToObjectConverter<?>> converterClass = (Class<IToObjectConverter<?>>) toObjectConverter.toClass();
         toObjectConverter.defrost();
         return converterClass;
     }
 
     private String getTypeMapConverterRef(Class<? extends ITypeMap> typeMap) {
-        return "ToObjectTypeMapConverter_" + mapperId + "_" + StringUtils.replaceChars(BuilderUtils.getName(typeMap), '.', '_');
+        return "ToObjectTypeMapConverter_" + mapperId + "_" + BuilderUtils.asIdentifier(typeMap);
     }
 
     public ITypeMap<?, ?> hasTypeMap(Class<?> objClass) {
@@ -153,19 +155,28 @@ class TypeMapper {
 
         for (IMapFactory<?, ?> typeMapper : mappers) {
             if (typeMapper.isAccepted(objClass)) {
+                @SuppressWarnings("unchecked")
                 final ITypeMap<?, ?> typeMap = typeMapper.mapper((Class) objClass);
 
                 ClassPool pool = ClassPool.getDefault();
-                final String className = "TypeMap_" + mapperId + "_Instance";
+                final String className = nestedClassName(objClass);
 
                 try {
-                    final CtClass toObjectClazz = pool.get(objClass.getName());
+                    final CtClass toObjectClazz = pool.get(getClass().getName());
                     CtClass instanceClass = toObjectClazz.makeNestedClass(className, true);
                     CtField instanceField = CtField.make(
                             "public static " + BuilderUtils.getName(ITypeMap.class) + " I;",
                             instanceClass
                     );
                     instanceClass.addField(instanceField, CtField.Initializer.byExpr("null"));
+
+                    if (log.isTraceEnabled()) {
+                        log.trace(
+                                "Generate instance holder class for type mapper " + typeMap.getClass().getName() +
+                                        " (toString: " + typeMap.toString() + ")."
+                        );
+                    }
+
 
                     final Class aClass = instanceClass.toClass();
                     instanceClass.defrost();
@@ -186,10 +197,10 @@ class TypeMapper {
     }
 
     public String getTypeMapInstanceRef(Class<?> clazz) {
-        return BuilderUtils.getName(clazz) + "." + nestedClassName() + ".I";
+        return getClass().getName() + "." + nestedClassName(clazz) + ".I";
     }
 
-    private String nestedClassName() {
-        return "TypeMap_" + mapperId + "_Instance";
+    private String nestedClassName(Class<?> objClass) {
+        return "TypeMap_" + BuilderUtils.asIdentifier(objClass) + "_" + mapperId + "_Instance";
     }
 }

@@ -290,14 +290,14 @@ class BuilderUtils {
             String suffix
     ) throws NotFoundException, CannotCompileException {
         Class<?> returnType = objectConstructor.getDeclaringClass();
-        final String converterCN = "ToObjectConverter" + suffix;
+        final String converterCN = asIdentifier(returnType) + "Converter" + suffix;
         try {
 
             if (log.isTraceEnabled()) {
                 log.trace("Check if the converter already exists for class " + returnType.getName());
             }
 
-            final String converterFQN = returnType.getName() + "$" + converterCN;
+            final String converterFQN = IToObjectConverter.class.getName() + "$" + converterCN;
             final Class<?> aClass = Class.forName(converterFQN);
 
             if (IToObjectConverter.class.isAssignableFrom(aClass)) {
@@ -414,7 +414,7 @@ class BuilderUtils {
         body.append(newObject);
         body.append("\n);\n}");
 
-        final CtClass baseCtClass = pool.get(returnType.getName());
+        final CtClass baseCtClass = pool.get(IToObjectConverter.class.getName());
         final CtClass toObjectConverter = baseCtClass.makeNestedClass(converterCN, true);
 
         toObjectConverter.addInterface(pool.get(IToObjectConverter.class.getName()));
@@ -448,5 +448,9 @@ class BuilderUtils {
         final Class<IToObjectConverter<?>> converterClass = (Class<IToObjectConverter<?>>) toObjectConverter.toClass();
         toObjectConverter.defrost();
         return converterClass;
+    }
+
+    public static String asIdentifier(Class<?> typeMap) {
+        return StringUtils.replaceChars(getName(typeMap), '.', '_');
     }
 }

@@ -10,6 +10,7 @@ import org.xblackcat.sjpu.storage.impl.IQueryHelper;
 import org.xblackcat.sjpu.storage.impl.Storage;
 import org.xblackcat.sjpu.storage.typemap.EnumToStringMapper;
 
+import java.net.URI;
 import java.util.List;
 
 /**
@@ -49,10 +50,11 @@ public class WorkflowTest {
     @Before
     public void setupDatabase() throws StorageException {
         IQueryHelper helper = StorageUtils.buildQueryHelper(settings);
-        storage = new Storage(helper, new EnumToStringMapper());
+        storage = new Storage(helper, new EnumToStringMapper(), new UriTypeMap());
 
         final IDBInitAH initAH = storage.get(IDBInitAH.class);
         initAH.init1();
+        initAH.init2();
     }
 
     @After
@@ -146,9 +148,27 @@ public class WorkflowTest {
         }
     }
 
+    @Test
+    public void processDefinedClasses() throws StorageException {
+        final IUriTest uriTest = storage.get(IUriTest.class);
+
+        for (int i = 0; i < 10; i++) {
+            URI uri = URI.create("http://example.org/test/" + i);
+
+            int id = uriTest.putUri(uri);
+
+            URI loaded = uriTest.get(id);
+
+            Assert.assertEquals(uri, loaded);
+        }
+    }
+
     public static interface IDBInitAH extends IAH {
         @Sql("CREATE TABLE \"list\" (\"id\" INT, \"name\" TEXT, PRIMARY KEY (\"id\"))")
         void init1() throws StorageException;
+
+        @Sql("CREATE TABLE \"uri\" (\"id\" INT AUTO_INCREMENT, \"uri\" TEXT, PRIMARY KEY (\"id\"))")
+        void init2() throws StorageException;
     }
 
     public static interface IDataAH extends IAH {
@@ -233,6 +253,17 @@ public class WorkflowTest {
 
         @Sql("DELETE FROM \"list\"")
         void dropElements() throws StorageException;
+    }
+
+    public static interface IUriTest extends IAH {
+        @Sql("INSERT INTO \"uri\" (\"uri\") VALUES (?)")
+        int putUri(URI uri) throws StorageException;
+
+        @Sql("SELECT\n" +
+                     "  \"uri\"\n" +
+                     "FROM \"uri\"\n" +
+                     "WHERE \"id\" = ?")
+        URI get(int id) throws StorageException;
     }
 
     public static class Element implements IElement<String> {
