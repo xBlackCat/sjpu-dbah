@@ -79,14 +79,28 @@ public class WorkflowTest {
             Assert.assertNotNull(element);
             Assert.assertEquals(n.name(), element.name);
             Assert.assertEquals(n.ordinal(), element.id);
+
+            final IElement<String> iElement = dataAH.getIElement(n.ordinal());
+            Assert.assertNotNull(iElement);
+            Assert.assertEquals(n.name(), iElement.getName());
+            Assert.assertEquals(n.ordinal(), iElement.getId());
         }
 
-        final List<Element> list = dataAH.getListElement();
-        for (Element el : list) {
-            Assert.assertNotNull(list);
-            Assert.assertEquals(Numbers.values()[el.id].name(), el.name);
+        {
+            final List<Element> list = dataAH.getListElement();
+            for (Element el : list) {
+                Assert.assertNotNull(list);
+                Assert.assertEquals(Numbers.values()[el.id].name(), el.name);
+            }
         }
 
+        {
+            final List<IElement<String>> list = dataAH.getListIElement();
+            for (IElement<String> el : list) {
+                Assert.assertNotNull(list);
+                Assert.assertEquals(Numbers.values()[el.getId()].name(), el.getName());
+            }
+        }
     }
 
     @Test
@@ -108,14 +122,28 @@ public class WorkflowTest {
             Assert.assertNotNull(element);
             Assert.assertEquals(n, element.name);
             Assert.assertEquals(n.ordinal(), element.id);
+
+            final IElement<Numbers> iElement = dataAH.getIElement(n.ordinal());
+            Assert.assertNotNull(iElement);
+            Assert.assertEquals(n, iElement.getName());
+            Assert.assertEquals(n.ordinal(), iElement.getId());
         }
 
-        final List<ElementNumber> list = dataAH.getListElement();
-        for (ElementNumber el : list) {
-            Assert.assertNotNull(list);
-            Assert.assertEquals(Numbers.values()[el.id], el.name);
+        {
+            final List<ElementNumber> list = dataAH.getListElement();
+            for (ElementNumber el : list) {
+                Assert.assertNotNull(list);
+                Assert.assertEquals(Numbers.values()[el.id], el.name);
+            }
         }
 
+        {
+            final List<IElement<Numbers>> list = dataAH.getListIElement();
+            for (IElement<Numbers> el : list) {
+                Assert.assertNotNull(list);
+                Assert.assertEquals(Numbers.values()[el.getId()], el.getName());
+            }
+        }
     }
 
     public static interface IDBInitAH extends IAH {
@@ -141,9 +169,22 @@ public class WorkflowTest {
 
         @Sql("SELECT\n" +
                      "  \"id\", \"name\"\n" +
+                     "FROM \"list\"\n" +
+                     "WHERE \"id\" = ?")
+        @MapRowTo(Element.class)
+        IElement<String> getIElement(int id) throws StorageException;
+
+        @Sql("SELECT\n" +
+                     "  \"id\", \"name\"\n" +
                      "FROM \"list\"")
         @MapRowTo(Element.class)
         List<Element> getListElement() throws StorageException;
+
+        @Sql("SELECT\n" +
+                     "  \"id\", \"name\"\n" +
+                     "FROM \"list\"")
+        @MapRowTo(Element.class)
+        List<IElement<String>> getListIElement() throws StorageException;
 
         @Sql("DELETE FROM \"list\"")
         void dropElements() throws StorageException;
@@ -167,6 +208,13 @@ public class WorkflowTest {
 
         @Sql("SELECT\n" +
                      "  \"id\", \"name\"\n" +
+                     "FROM \"list\"\n" +
+                     "WHERE \"id\" = ?")
+        @MapRowTo(ElementNumber.class)
+        IElement<Numbers> getIElement(int id) throws StorageException;
+
+        @Sql("SELECT\n" +
+                     "  \"id\", \"name\"\n" +
                      "FROM \"list\"")
         @MapRowTo(ElementNumber.class)
         List<ElementNumber> getListElement() throws StorageException;
@@ -177,17 +225,31 @@ public class WorkflowTest {
         @MapRowTo(Numbers.class)
         List<Numbers> getList() throws StorageException;
 
+        @Sql("SELECT\n" +
+                     "  \"id\", \"name\"\n" +
+                     "FROM \"list\"")
+        @MapRowTo(ElementNumber.class)
+        List<IElement<Numbers>> getListIElement() throws StorageException;
+
         @Sql("DELETE FROM \"list\"")
         void dropElements() throws StorageException;
     }
 
-    public static class Element {
+    public static class Element implements IElement<String> {
         public final int id;
         public final String name;
 
         public Element(int id, String name) {
             this.id = id;
             this.name = name;
+        }
+
+        public int getId() {
+            return id;
+        }
+
+        public String getName() {
+            return name;
         }
 
         @Override
@@ -211,13 +273,21 @@ public class WorkflowTest {
         }
     }
 
-    public static class ElementNumber {
+    public static class ElementNumber implements IElement<Numbers> {
         public final int id;
         public final Numbers name;
 
         public ElementNumber(int id, Numbers name) {
             this.id = id;
             this.name = name;
+        }
+
+        public int getId() {
+            return id;
+        }
+
+        public Numbers getName() {
+            return name;
         }
 
         @Override
@@ -239,6 +309,13 @@ public class WorkflowTest {
             return name != null ? name.hashCode() : 0;
         }
     }
+
+    public static interface IElement<T> {
+        int getId();
+
+        T getName();
+    }
+
 
     public static enum Numbers {
         One,
