@@ -23,7 +23,8 @@ final class SingleConnectionQueryHelper implements IQueryHelper {
     @Override
     public <T> List<T> execute(IToObjectConverter<T> c, String sql, Object... parameters) throws StorageException {
         try {
-            try (PreparedStatement st = QueryHelperUtils.constructSql(con, sql, Statement.NO_GENERATED_KEYS, parameters)) {
+            try (PreparedStatement st = con.prepareStatement(sql, Statement.NO_GENERATED_KEYS)) {
+                QueryHelperUtils.fillStatement(st, parameters);
                 try (ResultSet rs = st.executeQuery()) {
                     List<T> res = new ArrayList<>();
                     while (rs.next()) {
@@ -54,7 +55,8 @@ final class SingleConnectionQueryHelper implements IQueryHelper {
     @Override
     public int update(String sql, Object... parameters) throws StorageException {
         try {
-            try (PreparedStatement st = QueryHelperUtils.constructSql(con, sql, Statement.NO_GENERATED_KEYS, parameters)) {
+            try (PreparedStatement st = con.prepareStatement(sql, Statement.NO_GENERATED_KEYS)) {
+                QueryHelperUtils.fillStatement(st, parameters);
                 return st.executeUpdate();
             }
         } catch (SQLException e) {
@@ -66,17 +68,16 @@ final class SingleConnectionQueryHelper implements IQueryHelper {
     @Override
     public <T> T insert(IToObjectConverter<T> c, String sql, Object... parameters) throws StorageException {
         try {
-            try (PreparedStatement st = QueryHelperUtils.constructSql(
-                    con,
-                    sql,
-                    c == null ? Statement.NO_GENERATED_KEYS : Statement.RETURN_GENERATED_KEYS,
-                    parameters
-            )) {
+            int keys = c == null ? Statement.NO_GENERATED_KEYS : Statement.RETURN_GENERATED_KEYS;
+
+            try (PreparedStatement st = con.prepareStatement(sql, keys)) {
+                QueryHelperUtils.fillStatement(st, parameters);
+
                 st.executeUpdate();
                 if (c != null) {
-                    try (ResultSet keys = st.getGeneratedKeys()) {
-                        if (keys.next()) {
-                            return c.convert(keys);
+                    try (ResultSet genKeys = st.getGeneratedKeys()) {
+                        if (genKeys.next()) {
+                            return c.convert(genKeys);
                         }
                     }
                 }

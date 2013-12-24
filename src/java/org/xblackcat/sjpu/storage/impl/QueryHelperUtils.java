@@ -1,9 +1,9 @@
 package org.xblackcat.sjpu.storage.impl;
 
-import java.sql.Connection;
+import org.xblackcat.sjpu.storage.converter.StandardMappers;
+
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.util.Date;
 import java.util.regex.Matcher;
 
@@ -13,26 +13,14 @@ import java.util.regex.Matcher;
  * @author xBlackCat
  */
 public class QueryHelperUtils {
-    protected static PreparedStatement constructSql(
-            Connection con,
-            String sql,
-            int keys,
-            Object... parameters
-    ) throws SQLException {
-        @SuppressWarnings("MagicConstant") PreparedStatement pstmt = con.prepareStatement(sql, keys);
-        fillStatement(pstmt, parameters);
-
-        return pstmt;
-    }
-
     protected static void fillStatement(PreparedStatement pstmt, Object... parameters) throws SQLException {
         // Fill parameters if any
         if (parameters != null) {
             for (int i = 0; i < parameters.length; i++) {
                 if (parameters[i] instanceof Boolean) {
-                    pstmt.setInt(i + 1, ((Boolean) (parameters[i])) ? 1 : 0);
+                    pstmt.setBoolean(i + 1, (Boolean) (parameters[i]));
                 } else if (parameters[i] instanceof Date) {
-                    pstmt.setTimestamp(i + 1, new Timestamp(((Date) parameters[i]).getTime()));
+                    pstmt.setTimestamp(i + 1, StandardMappers.dateToTimestamp((Date) parameters[i]));
                 } else {
                     pstmt.setObject(i + 1, parameters[i]);
                 }
