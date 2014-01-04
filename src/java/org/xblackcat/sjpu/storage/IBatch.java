@@ -11,9 +11,9 @@ package org.xblackcat.sjpu.storage;
  * <code><pre>
  * try (IBatch tx = s.openTransaction()) {
  *   ISimpleAH ah = tx.get(ISimpleAH.class);
- *
+ * <p/>
  *   // do action
- *
+ * <p/>
  *   tx.commit();
  * }
  * </pre></code>
@@ -25,4 +25,7 @@ public interface IBatch extends IAHFactory, AutoCloseable {
     void commit() throws StorageException;
 
     void rollback() throws StorageException;
+
+    @Override
+    public void close() throws StorageException;
 }

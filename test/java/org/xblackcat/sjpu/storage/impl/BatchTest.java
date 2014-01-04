@@ -49,7 +49,7 @@ public class BatchTest {
     }
 
     @Test
-    public void checkData() throws Exception {
+    public void checkData() throws StorageException {
         DBAH dbah = storage.get(DBAH.class);
         dbah.createDB();
         for (int i = 0; i < 10; i++) {
@@ -86,7 +86,7 @@ public class BatchTest {
     }
 
     @Test
-    public void returnKeysSet() throws Exception {
+    public void returnKeysSet() throws StorageException {
         DBAutoIncAH dbAH = storage.get(DBAutoIncAH.class);
 
         dbAH.createDB();
