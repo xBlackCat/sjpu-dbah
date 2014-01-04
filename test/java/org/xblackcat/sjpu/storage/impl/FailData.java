@@ -1,6 +1,6 @@
 package org.xblackcat.sjpu.storage.impl;
 
-import org.xblackcat.sjpu.storage.DefaultRowMap;
+import org.xblackcat.sjpu.storage.ann.DefaultRowMap;
 
 /**
  * 11.12.13 15:01

@@ -3,6 +3,7 @@ package org.xblackcat.sjpu.storage.impl;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.xblackcat.sjpu.storage.IBatch;
+import org.xblackcat.sjpu.storage.IQueryHelper;
 import org.xblackcat.sjpu.storage.StorageException;
 
 import java.sql.Connection;

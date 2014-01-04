@@ -1,4 +1,4 @@
-package org.xblackcat.sjpu.storage;
+package org.xblackcat.sjpu.storage.ann;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -11,7 +11,7 @@ import java.lang.annotation.Target;
  * @author xBlackCat
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD})
-public @interface MapRowTo {
-    Class<?> value();
+@Target({ElementType.METHOD, ElementType.PARAMETER})
+public @interface Offset {
+    int value() default 0;
 }

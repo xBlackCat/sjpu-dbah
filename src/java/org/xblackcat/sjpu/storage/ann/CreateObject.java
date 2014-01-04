@@ -1,4 +1,4 @@
-package org.xblackcat.sjpu.storage;
+package org.xblackcat.sjpu.storage.ann;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -12,7 +12,7 @@ import java.lang.annotation.Target;
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD})
-public @interface UpdateObject {
+public @interface CreateObject {
     /**
      * Object's base table name
      *
@@ -21,6 +21,4 @@ public @interface UpdateObject {
     String value();
 
     SetField[] fields() default {};
-
-    SetField[] filterBy() default {};
 }

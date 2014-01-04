@@ -1,6 +1,7 @@
 package org.xblackcat.sjpu.storage.impl;
 
 import org.xblackcat.sjpu.storage.IAH;
+import org.xblackcat.sjpu.storage.IQueryHelper;
 
 /**
  * @author xBlackCat Date: 27.07.11

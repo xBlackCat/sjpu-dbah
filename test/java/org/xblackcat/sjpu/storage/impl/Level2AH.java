@@ -1,7 +1,8 @@
 package org.xblackcat.sjpu.storage.impl;
 
-import org.xblackcat.sjpu.storage.Sql;
+import org.xblackcat.sjpu.storage.IQueryHelper;
 import org.xblackcat.sjpu.storage.StorageException;
+import org.xblackcat.sjpu.storage.ann.Sql;
 
 /**
  * 13.12.13 16:33

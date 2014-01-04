@@ -2,8 +2,8 @@ package org.xblackcat.sjpu.storage.impl;
 
 import javassist.*;
 import org.apache.commons.lang3.StringEscapeUtils;
-import org.xblackcat.sjpu.storage.Sql;
 import org.xblackcat.sjpu.storage.StorageSetupException;
+import org.xblackcat.sjpu.storage.ann.Sql;
 import org.xblackcat.sjpu.storage.converter.IToObjectConverter;
 import org.xblackcat.sjpu.storage.converter.StandardMappers;
 import org.xblackcat.sjpu.storage.typemap.ITypeMap;

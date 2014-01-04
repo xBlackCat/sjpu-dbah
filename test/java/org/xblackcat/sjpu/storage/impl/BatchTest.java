@@ -5,6 +5,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.xblackcat.sjpu.storage.*;
+import org.xblackcat.sjpu.storage.ann.Sql;
 import org.xblackcat.sjpu.storage.connection.IDatabaseSettings;
 
 /**

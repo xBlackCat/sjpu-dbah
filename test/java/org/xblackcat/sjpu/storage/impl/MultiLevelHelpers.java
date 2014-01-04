@@ -4,6 +4,7 @@ import org.h2.Driver;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.xblackcat.sjpu.storage.IQueryHelper;
 import org.xblackcat.sjpu.storage.StorageException;
 import org.xblackcat.sjpu.storage.StorageUtils;
 import org.xblackcat.sjpu.storage.connection.IDatabaseSettings;

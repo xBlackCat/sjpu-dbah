@@ -2,7 +2,6 @@ package org.xblackcat.sjpu.storage;
 
 import org.xblackcat.sjpu.storage.connection.IDatabaseSettings;
 import org.xblackcat.sjpu.storage.connection.SimplePooledConnectionFactory;
-import org.xblackcat.sjpu.storage.impl.IQueryHelper;
 import org.xblackcat.sjpu.storage.impl.QueryHelper;
 
 /**

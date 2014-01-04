@@ -1,6 +1,5 @@
-package org.xblackcat.sjpu.storage.impl;
+package org.xblackcat.sjpu.storage;
 
-import org.xblackcat.sjpu.storage.StorageException;
 import org.xblackcat.sjpu.storage.converter.IToObjectConverter;
 
 import java.sql.Connection;

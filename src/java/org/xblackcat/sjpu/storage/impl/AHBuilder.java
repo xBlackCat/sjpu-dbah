@@ -4,8 +4,8 @@ import javassist.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.xblackcat.sjpu.storage.IAH;
-import org.xblackcat.sjpu.storage.Sql;
 import org.xblackcat.sjpu.storage.StorageSetupException;
+import org.xblackcat.sjpu.storage.ann.Sql;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;

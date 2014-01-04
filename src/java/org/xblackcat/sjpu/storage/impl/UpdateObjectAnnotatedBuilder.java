@@ -2,7 +2,8 @@ package org.xblackcat.sjpu.storage.impl;
 
 import javassist.*;
 import org.apache.commons.lang3.StringEscapeUtils;
-import org.xblackcat.sjpu.storage.*;
+import org.xblackcat.sjpu.storage.StorageSetupException;
+import org.xblackcat.sjpu.storage.ann.*;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;

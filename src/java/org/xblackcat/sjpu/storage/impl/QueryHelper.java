@@ -1,5 +1,6 @@
 package org.xblackcat.sjpu.storage.impl;
 
+import org.xblackcat.sjpu.storage.IQueryHelper;
 import org.xblackcat.sjpu.storage.StorageException;
 import org.xblackcat.sjpu.storage.connection.IConnectionFactory;
 import org.xblackcat.sjpu.storage.converter.IToObjectConverter;

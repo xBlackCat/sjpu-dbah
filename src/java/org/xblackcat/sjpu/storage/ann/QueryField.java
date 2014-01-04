@@ -1,4 +1,4 @@
-package org.xblackcat.sjpu.storage;
+package org.xblackcat.sjpu.storage.ann;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -6,11 +6,17 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * 11.12.13 12:39
+ * 07.03.13 12:12
  *
  * @author xBlackCat
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.CONSTRUCTOR})
-public @interface DefaultRowMap {
+@Target({ElementType.PARAMETER})
+public @interface QueryField {
+    /**
+     * Reference to field name of the table
+     *
+     * @return fieldName
+     */
+    String value();
 }
