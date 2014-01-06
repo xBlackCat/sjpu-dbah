@@ -5,19 +5,19 @@ package org.xblackcat.sjpu.storage.typemap;
  *
  * @author xBlackCat
  */
-public class EnumToStringMapper implements IMapFactory<Enum, String> {
+public class EnumToStringMapper<T extends Enum<T>> implements IMapFactory<T, String> {
     @Override
     public boolean isAccepted(Class<?> obj) {
         return Enum.class.isAssignableFrom(obj);
     }
 
     @Override
-    public ITypeMap<Enum, String> mapper(Class<Enum> clazz) {
+    public ITypeMap<T, String> mapper(Class<T> clazz) {
         return new EnumStringATypeMap(clazz);
     }
 
-    private static class EnumStringATypeMap extends ATypeMap<Enum, String> {
-        public EnumStringATypeMap(Class<Enum> clazz) {
+    private class EnumStringATypeMap extends ATypeMap<T, String> {
+        public EnumStringATypeMap(Class<T> clazz) {
             super(clazz, String.class);
         }
 
@@ -31,7 +31,7 @@ public class EnumToStringMapper implements IMapFactory<Enum, String> {
         }
 
         @Override
-        public Enum forRead(String obj) {
+        public T forRead(String obj) {
             if (obj == null) {
                 return null;
             }
