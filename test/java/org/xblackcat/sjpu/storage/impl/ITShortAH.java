@@ -9,18 +9,18 @@ import org.xblackcat.sjpu.storage.ann.Sql;
  *
  * @author xBlackCat
  */
-public interface ITestBooleanAH extends IAH {
+public interface ITShortAH extends IAH {
     @Sql("SELECT 1")
-    boolean getBoolean() throws StorageException;
+    short getShort() throws StorageException;
 
     @Sql("SELECT 1")
-    Boolean getBooleanObject() throws StorageException;
+    Short getShortObject() throws StorageException;
 
 /*
     @GetObject(value = "none", fields = {@QueryField("none")})
-    boolean getBoolean2() throws StorageException;
+    short getShort2() throws StorageException;
 
     @GetObject(value = "none", fields = {@QueryField("none")})
-    Boolean getBooleanObject2() throws StorageException;
+    Short getShortObject2() throws StorageException;
 */
 }

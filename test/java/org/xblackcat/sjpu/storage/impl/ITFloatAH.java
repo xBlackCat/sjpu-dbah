@@ -9,18 +9,18 @@ import org.xblackcat.sjpu.storage.ann.Sql;
  *
  * @author xBlackCat
  */
-public interface ITestByteAH extends IAH {
+public interface ITFloatAH extends IAH {
     @Sql("SELECT 1")
-    byte getByte() throws StorageException;
+    float getFloat() throws StorageException;
 
     @Sql("SELECT 1")
-    Byte getByteObject() throws StorageException;
+    Float getFloatObject() throws StorageException;
 
 /*
     @GetObject(value = "none", fields = {@QueryField("none")})
-    byte getByte2() throws StorageException;
+    float getFloat2() throws StorageException;
 
     @GetObject(value = "none", fields = {@QueryField("none")})
-    Byte getByteObject2() throws StorageException;
+    Float getFloatObject2() throws StorageException;
 */
 }

@@ -9,7 +9,7 @@ import org.xblackcat.sjpu.storage.ann.Sql;
  *
  * @author xBlackCat
  */
-public interface ITestLongAH extends IAH {
+public interface ITLongAH extends IAH {
     @Sql("SELECT 1")
     long getLong() throws StorageException;
 

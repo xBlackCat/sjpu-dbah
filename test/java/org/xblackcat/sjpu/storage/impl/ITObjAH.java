@@ -10,7 +10,7 @@ import org.xblackcat.sjpu.storage.ann.Sql;
  *
  * @author xBlackCat
  */
-public interface ITestObjAH extends IAH {
+public interface ITObjAH extends IAH {
     @Sql("SELECT 1")
     SimpleRowData couldBeUsedWithoutAnnotations() throws StorageException;
 

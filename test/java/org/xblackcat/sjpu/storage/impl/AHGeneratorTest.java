@@ -56,7 +56,7 @@ public class AHGeneratorTest {
 
             {
                 IAHFactory storage = new Storage(new QueryHelperStub(1l, 2l, 3l));
-                final ITestLongAH testAH = storage.get(ITestLongAH.class);
+                final ITLongAH testAH = storage.get(ITLongAH.class);
                 Assert.assertEquals(one, testAH.getLong());
                 Assert.assertEquals(Long.valueOf(one), testAH.getLongObject());
 /*
@@ -67,7 +67,7 @@ public class AHGeneratorTest {
 
             {
                 IAHFactory storage = new Storage(new QueryHelperStub(1, 2, 3));
-                final ITestIntAH testAH = storage.get(ITestIntAH.class);
+                final ITIntAH testAH = storage.get(ITIntAH.class);
                 Assert.assertEquals(one, testAH.getInt());
                 Assert.assertEquals(Integer.valueOf(one), testAH.getInteger());
 /*
@@ -78,7 +78,7 @@ public class AHGeneratorTest {
 
             {
                 IAHFactory storage = new Storage(new QueryHelperStub((short) 1, (short) 2, (short) 3));
-                final ITestShortAH testAH = storage.get(ITestShortAH.class);
+                final ITShortAH testAH = storage.get(ITShortAH.class);
                 Assert.assertEquals(one, testAH.getShort());
                 Assert.assertEquals(Short.valueOf(one), testAH.getShortObject());
 /*
@@ -89,7 +89,7 @@ public class AHGeneratorTest {
 
             {
                 IAHFactory storage = new Storage(new QueryHelperStub((byte) 1, (byte) 2, (byte) 3));
-                final ITestByteAH testAH = storage.get(ITestByteAH.class);
+                final ITByteAH testAH = storage.get(ITByteAH.class);
                 Assert.assertEquals(one, testAH.getByte());
                 Assert.assertEquals(Byte.valueOf(one), testAH.getByteObject());
 /*
@@ -100,7 +100,7 @@ public class AHGeneratorTest {
 
             {
                 IAHFactory storage = new Storage(new QueryHelperStub(true, false, true));
-                final ITestBooleanAH testAH = storage.get(ITestBooleanAH.class);
+                final ITBooleanAH testAH = storage.get(ITBooleanAH.class);
                 Assert.assertEquals(true, testAH.getBoolean());
                 Assert.assertEquals(Boolean.TRUE, testAH.getBooleanObject());
 /*
@@ -111,7 +111,7 @@ public class AHGeneratorTest {
 
             {
                 IAHFactory storage = new Storage(new QueryHelperStub(1.f, 2.f, 3.f));
-                final ITestFloatAH testAH = storage.get(ITestFloatAH.class);
+                final ITFloatAH testAH = storage.get(ITFloatAH.class);
                 Assert.assertEquals(1.f, testAH.getFloat(), 0);
                 Assert.assertEquals(Float.valueOf(1.f), testAH.getFloatObject());
 /*
@@ -122,7 +122,7 @@ public class AHGeneratorTest {
 
             {
                 IAHFactory storage = new Storage(new QueryHelperStub(1., 2., 3.));
-                final ITestDoubleAH testAH = storage.get(ITestDoubleAH.class);
+                final ITDoubleAH testAH = storage.get(ITDoubleAH.class);
                 Assert.assertEquals(1., testAH.getDouble(), 0.0000000001);
                 Assert.assertEquals(Double.valueOf(1.), testAH.getDoubleObject());
 /*
@@ -137,20 +137,63 @@ public class AHGeneratorTest {
     public void generateToObjConverter() throws StorageException {
         IAHFactory storage = new Storage(new QueryHelperStub("1", "2", "3", "4"));
 
-        storage.get(ITestObjAH.class);
+        storage.get(ITObjAH.class);
 
         try {
-            storage.get(ITestObjFailAH.class);
+            storage.get(ITObjFailAH.class);
             Assert.fail("Exception expected");
         } catch (Exception e) {
             e.printStackTrace();
         }
 
         try {
-            storage.get(ITestObjFail2AH.class);
+            storage.get(ITObjFail2AH.class);
             Assert.fail("Exception expected");
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    @Test
+    public void generateComplexAH() throws StorageException {
+        final byte one = (byte) 1;
+
+        IAHFactory storage;
+        IComplexAH testAH;
+
+        storage = new Storage(new QueryHelperStub(1l, 2l, 3l));
+        testAH = storage.get(IComplexAH.class);
+        Assert.assertEquals(one, testAH.getLong());
+        Assert.assertEquals(Long.valueOf(one), testAH.getLongObject());
+
+        storage = new Storage(new QueryHelperStub(1, 2, 3));
+        testAH = storage.get(IComplexAH.class);
+        Assert.assertEquals(one, testAH.getInt());
+        Assert.assertEquals(Integer.valueOf(one), testAH.getInteger());
+
+        storage = new Storage(new QueryHelperStub((short) 1, (short) 2, (short) 3));
+        testAH = storage.get(IComplexAH.class);
+        Assert.assertEquals(one, testAH.getShort());
+        Assert.assertEquals(Short.valueOf(one), testAH.getShortObject());
+
+        storage = new Storage(new QueryHelperStub((byte) 1, (byte) 2, (byte) 3));
+        testAH = storage.get(IComplexAH.class);
+        Assert.assertEquals(one, testAH.getByte());
+        Assert.assertEquals(Byte.valueOf(one), testAH.getByteObject());
+
+        storage = new Storage(new QueryHelperStub(true, false, false));
+        testAH = storage.get(IComplexAH.class);
+        Assert.assertEquals(true, testAH.getBoolean());
+        Assert.assertEquals(Boolean.TRUE, testAH.getBooleanObject());
+
+        storage = new Storage(new QueryHelperStub(1.f, 2.f, 3.f));
+        testAH = storage.get(IComplexAH.class);
+        Assert.assertEquals(1.f, testAH.getFloat(), 0);
+        Assert.assertEquals(Float.valueOf(1.f), testAH.getFloatObject());
+
+        storage = new Storage(new QueryHelperStub(1., 2., 3.));
+        testAH = storage.get(IComplexAH.class);
+        Assert.assertEquals(1., testAH.getDouble(), 0.0000000001);
+        Assert.assertEquals(Double.valueOf(1.), testAH.getDoubleObject());
     }
 }

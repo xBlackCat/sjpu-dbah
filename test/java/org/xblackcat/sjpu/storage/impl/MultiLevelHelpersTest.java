@@ -14,7 +14,7 @@ import org.xblackcat.sjpu.storage.connection.IDatabaseSettings;
  *
  * @author xBlackCat
  */
-public class MultiLevelHelpers {
+public class MultiLevelHelpersTest {
     private static IDatabaseSettings settings = new IDatabaseSettings() {
         @Override
         public String getDbJdbcDriverClass() {
