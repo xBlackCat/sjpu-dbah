@@ -178,40 +178,37 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
         body.append(BuilderUtils.getName(consumerClass));
     }
 
-    protected void appendArgumentList(Class<?>[] types, StringBuilder body) {
+    protected void appendArgumentList(List<ConverterInfo.Arg> types, StringBuilder body) {
         body.append("new Object[");
-        int typesLength = types.length;
 
-        if (typesLength == 0) {
+        if (types.isEmpty()) {
             body.append("0]");
         } else {
             body.append("]{\n");
-            int i = 0;
 
-            while (i < typesLength) {
-                Class<?> type = types[i];
+            for (ConverterInfo.Arg arg: types) {
+                Class<?> type = arg.clazz;
                 final ITypeMap<?, ?> typeMap = typeMapper.hasTypeMap(type);
 
                 String mapperInstanceRef = typeMap == null ? null : typeMapper.getTypeMapInstanceRef(type);
                 if (mapperInstanceRef != null) {
                     body.append(mapperInstanceRef);
                     body.append(".forStore($args[");
-                    body.append(i);
+                    body.append(arg.idx);
                     body.append("])");
                 } else if (Date.class.equals(type)) {
                     body.append(BuilderUtils.getName(StandardMappers.class));
                     body.append(".dateToTimestamp((");
                     body.append(BuilderUtils.getName(Date.class));
                     body.append(")$args[");
-                    body.append(i);
+                    body.append(arg.idx);
                     body.append("])");
                 } else {
                     body.append("$args[");
-                    body.append(i);
+                    body.append(arg.idx);
                     body.append("]");
                 }
 
-                i++;
                 body.append(",\n");
             }
             body.setLength(body.length() - 2);

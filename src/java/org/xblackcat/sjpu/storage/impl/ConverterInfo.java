@@ -30,20 +30,20 @@ class ConverterInfo {
     private final Class<? extends IToObjectConverter<?>> converter;
     private final boolean useFieldList;
     private final Integer consumeIndex;
-    private final Class<?>[] argumentList;
+    private final List<Arg> argumentList;
 
     ConverterInfo(
             Class<?> realReturnType,
             Class<? extends IToObjectConverter<?>> converter,
             boolean useFieldList,
             Integer consumeIndex,
-            List<Class<?>> argumentList
+            List<Arg> argumentList
     ) {
         this.realReturnType = realReturnType;
         this.converter = converter;
         this.useFieldList = useFieldList;
         this.consumeIndex = consumeIndex;
-        this.argumentList = argumentList.toArray(new Class<?>[argumentList.size()]);
+        this.argumentList = argumentList;
     }
 
     static ConverterInfo analyse(
@@ -57,7 +57,7 @@ class ConverterInfo {
         final Class<?> realReturnType;
         Integer consumerParamIdx = null;
 
-        List<Class<?>> parameterTypes = new ArrayList<>();
+        List<Arg> parameterTypes = new ArrayList<>();
         Class<?>[] types = m.getParameterTypes();
         {
             int i = 0;
@@ -70,7 +70,7 @@ class ConverterInfo {
 
                     consumerParamIdx = i;
                 } else {
-                    parameterTypes.add(t);
+                    parameterTypes.add(new Arg(t, i));
                 }
                 i++;
             }
@@ -224,7 +224,17 @@ class ConverterInfo {
         return consumeIndex;
     }
 
-    public Class<?>[] getArgumentList() {
+    public List<Arg> getArgumentList() {
         return argumentList;
+    }
+
+    public static final class Arg {
+        public final Class<?> clazz;
+        public final int idx;
+
+        public Arg(Class<?> clazz, int idx) {
+            this.clazz = clazz;
+            this.idx = idx;
+        }
     }
 }
