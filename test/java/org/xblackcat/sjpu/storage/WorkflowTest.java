@@ -173,6 +173,34 @@ public class WorkflowTest {
                 Assert.assertEquals(Numbers.values()[el.getId()], el.getName());
             }
         }
+
+        {
+            IRowConsumer<ElementNumber> consumer = new IRowConsumer<ElementNumber>() {
+                @Override
+                public boolean consume(ElementNumber o) throws ConsumeException {
+                    Assert.assertEquals(Numbers.values()[o.getId()], o.getName());
+                    return false;
+                }
+            };
+            dataAH.getListElement(consumer);
+            dataAH.getListElement(consumer, 0);
+            dataAH.getListElement(0, consumer);
+        }
+
+        {
+            IRowConsumer<IElement<Numbers>> consumer = new IRowConsumer<IElement<Numbers>>() {
+                @Override
+                public boolean consume(IElement<Numbers> o) throws ConsumeException {
+                    Assert.assertEquals(Numbers.values()[o.getId()], o.getName());
+                    return false;
+                }
+            };
+            dataAH.getListIElement(consumer);
+            dataAH.getListIElement(consumer, 0);
+            dataAH.getListIElement(0, consumer);
+        }
+
+
     }
 
     @Test
@@ -311,12 +339,6 @@ public class WorkflowTest {
         IElement<Numbers> getIElement(int id) throws StorageException;
 
         @Sql("SELECT\n" +
-                     "  \"id\", \"name\"\n" +
-                     "FROM \"list\"")
-        @MapRowTo(ElementNumber.class)
-        List<ElementNumber> getListElement() throws StorageException;
-
-        @Sql("SELECT\n" +
                      "  \"name\"\n" +
                      "FROM \"list\"")
         @MapRowTo(Numbers.class)
@@ -326,7 +348,57 @@ public class WorkflowTest {
                      "  \"id\", \"name\"\n" +
                      "FROM \"list\"")
         @MapRowTo(ElementNumber.class)
+        List<ElementNumber> getListElement() throws StorageException;
+
+        @Sql("SELECT\n" +
+                     "  \"id\", \"name\"\n" +
+                     "FROM \"list\"")
+        @MapRowTo(ElementNumber.class)
         List<IElement<Numbers>> getListIElement() throws StorageException;
+
+        @Sql("SELECT\n" +
+                     "  \"id\", \"name\"\n" +
+                     "FROM \"list\"\n")
+        @MapRowTo(ElementNumber.class)
+        void getListElement(IRowConsumer<ElementNumber> consumer) throws StorageException;
+
+        @Sql("SELECT\n" +
+                     "  \"id\", \"name\"\n" +
+                     "FROM \"list\"\n")
+        @MapRowTo(ElementNumber.class)
+        void getListIElement(IRowConsumer<IElement<Numbers>> consumer) throws StorageException;
+
+        @Sql("SELECT\n" +
+                     "  \"id\", \"name\"\n" +
+                     "FROM \"list\"\n" +
+                     "WHERE\n" +
+                     "  \"id\" >= ?")
+        @MapRowTo(ElementNumber.class)
+        void getListElement(IRowConsumer<ElementNumber> consumer, int idx) throws StorageException;
+
+        @Sql("SELECT\n" +
+                     "  \"id\", \"name\"\n" +
+                     "FROM \"list\"\n" +
+                     "WHERE\n" +
+                     "  \"id\" >= ?")
+        @MapRowTo(ElementNumber.class)
+        void getListIElement(IRowConsumer<IElement<Numbers>> consumer, int idx) throws StorageException;
+
+        @Sql("SELECT\n" +
+                     "  \"id\", \"name\"\n" +
+                     "FROM \"list\"\n" +
+                     "WHERE\n" +
+                     "  \"id\" >= ?")
+        @MapRowTo(ElementNumber.class)
+        void getListElement(int idx, IRowConsumer<ElementNumber> consumer) throws StorageException;
+
+        @Sql("SELECT\n" +
+                     "  \"id\", \"name\"\n" +
+                     "FROM \"list\"\n" +
+                     "WHERE\n" +
+                     "  \"id\" >= ?")
+        @MapRowTo(ElementNumber.class)
+        void getListIElement(int idx, IRowConsumer<IElement<Numbers>> consumer) throws StorageException;
 
         @Sql("DELETE FROM \"list\"")
         void dropElements() throws StorageException;
