@@ -2,6 +2,7 @@ package org.xblackcat.sjpu.storage.impl;
 
 import javassist.*;
 import org.apache.commons.lang3.StringEscapeUtils;
+import org.xblackcat.sjpu.storage.IRowConsumer;
 import org.xblackcat.sjpu.storage.StorageSetupException;
 import org.xblackcat.sjpu.storage.ann.Sql;
 import org.xblackcat.sjpu.storage.converter.IToObjectConverter;
@@ -9,6 +10,8 @@ import org.xblackcat.sjpu.storage.converter.StandardMappers;
 import org.xblackcat.sjpu.storage.typemap.ITypeMap;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -35,8 +38,6 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
         final Class<?> realReturnType = converterInfo.getRealReturnType();
         Class<? extends IToObjectConverter<?>> converter = converterInfo.getConverter();
 
-        final StringBuilder body = new StringBuilder();
-
         final String sql = annotation.value();
         final QueryType type;
         {
@@ -62,7 +63,25 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
         }
 
         CtClass ctRealReturnType = pool.get(returnType.getName());
-        body.append("{\n");
+        final StringBuilder body = new StringBuilder("{\n");
+
+        Integer consumerParamIdx = null;
+        List<Class<?>> parameterTypes = new ArrayList<>();
+        Class<?>[] types = m.getParameterTypes();
+        int i = 0;
+        while (i < types.length) {
+            Class<?> t = types[i];
+            if (IRowConsumer.class.isAssignableFrom(t)) {
+                if (consumerParamIdx != null) {
+                    throw new StorageSetupException("Only one consumer could be specified for method. " + m.toString());
+                }
+
+                consumerParamIdx = i;
+            } else {
+                parameterTypes.add(t);
+            }
+            i++;
+        }
 
         final CtClass targetReturnType;
 
@@ -128,31 +147,32 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
         body.append(StringEscapeUtils.escapeJava(sql));
         body.append("\",\n");
 
-        appendArgumentList(m.getParameterTypes(), body);
+        appendArgumentList(parameterTypes, body);
 
         body.append("\n);\n}");
 
         addMethod(accessHelper, m, ctRealReturnType, targetReturnType, body.toString());
     }
 
-    protected void appendArgumentList(Class<?>[] types, StringBuilder body) {
-        int typesAmount = types.length;
+    protected void appendArgumentList(Collection<Class<?>> types, StringBuilder body) {
         body.append("new Object[");
 
-        if (typesAmount > 0) {
+        if (types.isEmpty()) {
+            body.append("0]");
+        } else {
             body.append("]{\n");
             int i = 0;
 
-            while (i < typesAmount) {
-                final ITypeMap<?, ?> typeMap = typeMapper.hasTypeMap(types[i]);
+            for (Class<?> type : types) {
+                final ITypeMap<?, ?> typeMap = typeMapper.hasTypeMap(type);
 
-                String mapperInstanceRef = typeMap == null ? null : typeMapper.getTypeMapInstanceRef(types[i]);
+                String mapperInstanceRef = typeMap == null ? null : typeMapper.getTypeMapInstanceRef(type);
                 if (mapperInstanceRef != null) {
                     body.append(mapperInstanceRef);
                     body.append(".forStore($args[");
                     body.append(i);
                     body.append("])");
-                } else if (Date.class.equals(types[i])) {
+                } else if (Date.class.equals(type)) {
                     body.append(BuilderUtils.getName(StandardMappers.class));
                     body.append(".dateToTimestamp((");
                     body.append(BuilderUtils.getName(Date.class));
@@ -166,15 +186,10 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
                 }
 
                 i++;
-
-                if (i < typesAmount) {
-                    body.append(",");
-                }
-                body.append("\n");
+                body.append(",\n");
             }
-            body.append("}");
-        } else {
-            body.append("0]");
+            body.setLength(body.length() - 2);
+            body.append("\n}");
         }
     }
 

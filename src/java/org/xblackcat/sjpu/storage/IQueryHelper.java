@@ -14,6 +14,8 @@ import java.util.List;
 public interface IQueryHelper {
     <T> List<T> execute(IToObjectConverter<T> c, String sql, Object... parameters) throws StorageException;
 
+    <T> void execute(IRowConsumer<T> consumer, IToObjectConverter<T> c, String sql, Object... parameters) throws StorageException;
+
     <T> T executeSingle(IToObjectConverter<T> c, String sql, Object... parameters) throws StorageException;
 
     int update(String sql, Object... parameters) throws StorageException;
