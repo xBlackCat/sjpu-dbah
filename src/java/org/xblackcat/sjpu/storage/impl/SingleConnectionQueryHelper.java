@@ -12,7 +12,7 @@ import java.sql.*;
  * @author ASUS
  */
 
-final class SingleConnectionQueryHelper extends AQueryHelper {
+final class SingleConnectionQueryHelper implements IQueryHelper {
     private final Connection con;
 
     public SingleConnectionQueryHelper(IQueryHelper parentHelper) throws SQLException {

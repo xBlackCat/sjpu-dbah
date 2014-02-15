@@ -41,15 +41,30 @@ class BuilderUtils {
 
     static {
         readDeclarations.put(long.class, "long value%1$d = $1.getLong(%1$d);\n");
-        readDeclarations.put(Long.class, "long tmp%1$d = $1.getLong(%1$d);\njava.lang.Long value%1$d = $1.wasNull() ? null : java.lang.Long.valueOf(tmp%1$d);\n");
+        readDeclarations.put(
+                Long.class,
+                "long tmp%1$d = $1.getLong(%1$d);\njava.lang.Long value%1$d = $1.wasNull() ? null : java.lang.Long.valueOf(tmp%1$d);\n"
+        );
         readDeclarations.put(int.class, "int value%1$d = $1.getInt(%1$d);\n");
-        readDeclarations.put(Integer.class, "int tmp%1$d = $1.getInt(%1$d);\njava.lang.Integer value%1$d = $1.wasNull() ? null : java.lang.Integer.valueOf(tmp%1$d);\n");
+        readDeclarations.put(
+                Integer.class,
+                "int tmp%1$d = $1.getInt(%1$d);\njava.lang.Integer value%1$d = $1.wasNull() ? null : java.lang.Integer.valueOf(tmp%1$d);\n"
+        );
         readDeclarations.put(short.class, "short value%1$d = $1.getShort(%1$d);\n");
-        readDeclarations.put(Short.class, "short tmp%1$d = $1.getShort(%1$d);\njava.lang.Short value%1$d = $1.wasNull() ? null : java.lang.Short.valueOf(tmp%1$d);\n");
+        readDeclarations.put(
+                Short.class,
+                "short tmp%1$d = $1.getShort(%1$d);\njava.lang.Short value%1$d = $1.wasNull() ? null : java.lang.Short.valueOf(tmp%1$d);\n"
+        );
         readDeclarations.put(byte.class, "byte value%1$d = $1.getByte(%1$d);\n");
-        readDeclarations.put(Byte.class, "byte tmp%1$d = $1.getByte(%1$d);\njava.lang.Byte value%1$d = $1.wasNull() ? null : java.lang.Byte.valueOf(tmp%1$d);\n");
+        readDeclarations.put(
+                Byte.class,
+                "byte tmp%1$d = $1.getByte(%1$d);\njava.lang.Byte value%1$d = $1.wasNull() ? null : java.lang.Byte.valueOf(tmp%1$d);\n"
+        );
         readDeclarations.put(boolean.class, "boolean value%1$d = $1.getBoolean(%1$d);\n");
-        readDeclarations.put(Boolean.class, "boolean tmp%1$d = $1.getBoolean(%1$d);\njava.lang.Boolean value%1$d = $1.wasNull() ? null : java.lang.Boolean.valueOf(tmp%1$d);\n");
+        readDeclarations.put(
+                Boolean.class,
+                "boolean tmp%1$d = $1.getBoolean(%1$d);\njava.lang.Boolean value%1$d = $1.wasNull() ? null : java.lang.Boolean.valueOf(tmp%1$d);\n"
+        );
         readDeclarations.put(byte[].class, "byte[] value%1$d = $1.getBytes(%1$d);\n");
         readDeclarations.put(String.class, String.class.getName() + " value%1$d = $1.getString(%1$d);\n");
         readDeclarations.put(
@@ -149,7 +164,7 @@ class BuilderUtils {
         }
     }
 
-    private static void checkConverterInstance(
+    static void checkConverterInstance(
             ClassPool pool,
             Class<? extends IToObjectConverter<?>> converter
     ) throws NotFoundException, CannotCompileException {

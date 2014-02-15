@@ -5,6 +5,7 @@ import javassist.ClassPool;
 import javassist.Modifier;
 import javassist.NotFoundException;
 import org.apache.commons.lang3.ArrayUtils;
+import org.xblackcat.sjpu.storage.IRowConsumer;
 import org.xblackcat.sjpu.storage.StorageSetupException;
 import org.xblackcat.sjpu.storage.ann.DefaultRowMap;
 import org.xblackcat.sjpu.storage.ann.MapRowTo;
@@ -15,6 +16,7 @@ import org.xblackcat.sjpu.storage.converter.IToObjectConverter;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.sql.ResultSet;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -27,25 +29,52 @@ class ConverterInfo {
     private final Class<?> realReturnType;
     private final Class<? extends IToObjectConverter<?>> converter;
     private final boolean useFieldList;
+    private final Integer consumeIndex;
+    private final Class<?>[] argumentList;
 
     ConverterInfo(
             Class<?> realReturnType,
             Class<? extends IToObjectConverter<?>> converter,
-            boolean useFieldList
+            boolean useFieldList,
+            Integer consumeIndex,
+            List<Class<?>> argumentList
     ) {
         this.realReturnType = realReturnType;
         this.converter = converter;
         this.useFieldList = useFieldList;
+        this.consumeIndex = consumeIndex;
+        this.argumentList = argumentList.toArray(new Class<?>[argumentList.size()]);
     }
 
     static ConverterInfo analyse(
             ClassPool pool,
-            TypeMapper typeMapper, Method m
+            TypeMapper typeMapper,
+            Method m
     ) throws ReflectiveOperationException, NotFoundException, CannotCompileException {
         final Class<?> returnType = m.getReturnType();
         final Class<? extends IToObjectConverter<?>> converter;
         final boolean useFieldList;
         final Class<?> realReturnType;
+        Integer consumerParamIdx = null;
+
+        List<Class<?>> parameterTypes = new ArrayList<>();
+        Class<?>[] types = m.getParameterTypes();
+        {
+            int i = 0;
+            while (i < types.length) {
+                Class<?> t = types[i];
+                if (IRowConsumer.class.isAssignableFrom(t)) {
+                    if (consumerParamIdx != null) {
+                        throw new StorageSetupException("Only one consumer could be specified for method. " + m.toString());
+                    }
+
+                    consumerParamIdx = i;
+                } else {
+                    parameterTypes.add(t);
+                }
+                i++;
+            }
+        }
 
         final ToObjectConverter converterAnn = m.getAnnotation(ToObjectConverter.class);
         final MapRowTo mapRowTo = m.getAnnotation(MapRowTo.class);
@@ -62,12 +91,7 @@ class ConverterInfo {
         } else {
             if (mapRowTo == null) {
                 if (List.class.isAssignableFrom(returnType)) {
-                    throw new StorageSetupException(
-                            "Set target class with annotation " +
-                                    MapRowTo.class +
-                                    " for method " +
-                                    m
-                    );
+                    throw new StorageSetupException("Set target class with annotation " + MapRowTo.class + " for method " + m);
                 } else {
                     realReturnType = returnType;
                 }
@@ -76,12 +100,8 @@ class ConverterInfo {
                 if (!List.class.isAssignableFrom(returnType) &&
                         !returnType.isAssignableFrom(realReturnType)) {
                     throw new StorageSetupException(
-                            "Mapped object " +
-                                    realReturnType.getName() +
-                                    " can not be returned as " +
-                                    returnType.getName() +
-                                    " from method " +
-                                    m
+                            "Mapped object " + realReturnType.getName() + " can not be returned as " + returnType.getName() +
+                                    " from method " + m
                     );
                 }
             }
@@ -180,7 +200,7 @@ class ConverterInfo {
                 }
             }
         }
-        return new ConverterInfo(realReturnType, converter, useFieldList);
+        return new ConverterInfo(realReturnType, converter, useFieldList, consumerParamIdx, parameterTypes);
     }
 
     public Class<?> getRealReturnType() {
@@ -195,4 +215,11 @@ class ConverterInfo {
         return useFieldList;
     }
 
+    public Integer getConsumeIndex() {
+        return consumeIndex;
+    }
+
+    public Class<?>[] getArgumentList() {
+        return argumentList;
+    }
 }

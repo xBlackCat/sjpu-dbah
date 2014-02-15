@@ -2,6 +2,7 @@ package org.xblackcat.sjpu.storage.impl;
 
 
 import org.xblackcat.sjpu.storage.ConsumeException;
+import org.xblackcat.sjpu.storage.IQueryHelper;
 import org.xblackcat.sjpu.storage.IRowConsumer;
 import org.xblackcat.sjpu.storage.StorageException;
 import org.xblackcat.sjpu.storage.converter.IToObjectConverter;
@@ -16,7 +17,7 @@ import java.util.List;
  * @author xBlackCat
  */
 @SuppressWarnings("unchecked")
-public class QueryHelperStub extends AQueryHelper {
+public class QueryHelperStub implements IQueryHelper {
     private final List data;
 
     public QueryHelperStub(Object... data) {

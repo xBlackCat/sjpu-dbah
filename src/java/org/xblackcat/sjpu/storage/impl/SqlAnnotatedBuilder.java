@@ -10,8 +10,6 @@ import org.xblackcat.sjpu.storage.converter.StandardMappers;
 import org.xblackcat.sjpu.storage.typemap.ITypeMap;
 
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -34,9 +32,9 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
 
         final Class<?> returnType = m.getReturnType();
 
-        ConverterInfo converterInfo = ConverterInfo.analyse(pool, typeMapper, m);
-        final Class<?> realReturnType = converterInfo.getRealReturnType();
-        Class<? extends IToObjectConverter<?>> converter = converterInfo.getConverter();
+        ConverterInfo info = ConverterInfo.analyse(pool, typeMapper, m);
+        final Class<?> realReturnType = info.getRealReturnType();
+        Class<? extends IToObjectConverter<?>> converter = info.getConverter();
 
         final String sql = annotation.value();
         final QueryType type;
@@ -65,24 +63,6 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
         CtClass ctRealReturnType = pool.get(returnType.getName());
         final StringBuilder body = new StringBuilder("{\n");
 
-        Integer consumerParamIdx = null;
-        List<Class<?>> parameterTypes = new ArrayList<>();
-        Class<?>[] types = m.getParameterTypes();
-        int i = 0;
-        while (i < types.length) {
-            Class<?> t = types[i];
-            if (IRowConsumer.class.isAssignableFrom(t)) {
-                if (consumerParamIdx != null) {
-                    throw new StorageSetupException("Only one consumer could be specified for method. " + m.toString());
-                }
-
-                consumerParamIdx = i;
-            } else {
-                parameterTypes.add(t);
-            }
-            i++;
-        }
-
         final CtClass targetReturnType;
 
         final boolean generateWrapper = (type == QueryType.Select || type == QueryType.Insert) &&
@@ -95,15 +75,45 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
             targetReturnType = ctRealReturnType;
         }
 
+        final String returnString;
         if (type == QueryType.Select) {
             if (log.isDebugEnabled()) {
                 log.debug("Generate SELECT method " + m);
             }
 
-            boolean returnList = returnType.isAssignableFrom(List.class) &&
-                    !realReturnType.isAssignableFrom(List.class);
+            if (info.getConsumeIndex() == null && info.getRealReturnType() == void.class) {
+                throw new StorageSetupException("Consumer should be specified for select method with void return type: " + m.toString());
+            } else if (info.getConsumeIndex() != null && info.getRealReturnType() != void.class) {
+                throw new StorageSetupException("Consumer can't be used with non-void return type: " + m.toString());
+            }
 
-            BuilderUtils.initSelectReturn(pool, targetReturnType, converter, returnList, body);
+            if (info.getConsumeIndex() == null) {
+                boolean returnList = returnType.isAssignableFrom(List.class) &&
+                        !realReturnType.isAssignableFrom(List.class);
+
+                if (returnList) {
+                    appendConsumerInit(body, ToListConsumer.class);
+
+                    returnString = "return consumer.getList();\n";
+                } else {
+                    appendConsumerInit(body, SingletonConsumer.class);
+
+                    returnString = "return (" + BuilderUtils.getName(targetReturnType) + ") consumer.getObject();\n";
+                }
+                body.append("()");
+            } else {
+                body.append(BuilderUtils.getName(IRowConsumer.class));
+                body.append(" consumer = $");
+                body.append(info.getConsumeIndex());
+
+                returnString = "";
+            }
+            body.append(";\nhelper.execute(\nconsumer,\n");
+
+            BuilderUtils.checkConverterInstance(pool, converter);
+
+            body.append(BuilderUtils.getName(converter));
+            body.append(".Instance.I,\n");
         } else if (type == QueryType.Insert) {
             if (log.isDebugEnabled()) {
                 log.debug("Generate INSERT method " + m);
@@ -112,16 +122,15 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
             if (returnType.isAssignableFrom(List.class) &&
                     !realReturnType.isAssignableFrom(List.class)) {
                 throw new StorageSetupException(
-                        "Invalid return type for insert in method " +
-                                methodName +
-                                "(...): " +
-                                returnType.getName()
+                        "Invalid return type for insert in method " + methodName + "(...): " + returnType.getName()
                 );
             }
 
             // Real return type for insert
             final CtClass rrt = returnType == void.class ? null : targetReturnType;
             BuilderUtils.initInsertReturn(pool, rrt, converter, body);
+
+            returnString = "";
         } else {
             if (log.isDebugEnabled()) {
                 log.debug("Generate UPDATE method " + m);
@@ -141,29 +150,41 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
                                 returnType.getName()
                 );
             }
+
+            returnString = "";
         }
 
         body.append("\"");
         body.append(StringEscapeUtils.escapeJava(sql));
         body.append("\",\n");
 
-        appendArgumentList(parameterTypes, body);
+        appendArgumentList(info.getArgumentList(), body);
 
-        body.append("\n);\n}");
+        body.append("\n);\n");
+        body.append(returnString);
+        body.append("}");
 
         addMethod(accessHelper, m, ctRealReturnType, targetReturnType, body.toString());
     }
 
-    protected void appendArgumentList(Collection<Class<?>> types, StringBuilder body) {
-        body.append("new Object[");
+    private static void appendConsumerInit(StringBuilder body, Class<? extends IRowConsumer> consumerClass) {
+        body.append(BuilderUtils.getName(consumerClass));
+        body.append(" consumer = new ");
+        body.append(BuilderUtils.getName(consumerClass));
+    }
 
-        if (types.isEmpty()) {
+    protected void appendArgumentList(Class<?>[] types, StringBuilder body) {
+        body.append("new Object[");
+        int typesLength = types.length;
+
+        if (typesLength == 0) {
             body.append("0]");
         } else {
             body.append("]{\n");
             int i = 0;
 
-            for (Class<?> type : types) {
+            while (i < typesLength) {
+                Class<?> type = types[i];
                 final ITypeMap<?, ?> typeMap = typeMapper.hasTypeMap(type);
 
                 String mapperInstanceRef = typeMap == null ? null : typeMapper.getTypeMapInstanceRef(type);
