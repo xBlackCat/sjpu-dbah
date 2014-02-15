@@ -7,9 +7,7 @@ import org.xblackcat.sjpu.storage.StorageException;
 import org.xblackcat.sjpu.storage.converter.IToObjectConverter;
 
 import java.sql.Connection;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 
 /**
@@ -23,20 +21,6 @@ public class QueryHelperStub extends AQueryHelper {
 
     public QueryHelperStub(Object... data) {
         this.data = Arrays.asList(data);
-    }
-
-    @Override
-    public <T> List<T> execute(
-            IToObjectConverter<T> c, String sql, Object... parameters
-    ) throws StorageException {
-        return new ArrayList<>((Collection<? extends T>) data);
-    }
-
-    @Override
-    public <T> T executeSingle(
-            IToObjectConverter<T> c, String sql, Object... parameters
-    ) throws StorageException {
-        return data.size() == 0 ? null : (T) data.get(0);
     }
 
     @Override
