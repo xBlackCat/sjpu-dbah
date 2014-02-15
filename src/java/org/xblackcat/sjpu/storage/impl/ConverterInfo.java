@@ -90,6 +90,10 @@ class ConverterInfo {
             useFieldList = true;
         } else {
             if (mapRowTo == null) {
+                if (consumerParamIdx != null) {
+                    throw new StorageSetupException("Set target class with annotation " + MapRowTo.class + " for method " + m);
+                }
+
                 if (List.class.isAssignableFrom(returnType)) {
                     throw new StorageSetupException("Set target class with annotation " + MapRowTo.class + " for method " + m);
                 } else {
@@ -97,7 +101,8 @@ class ConverterInfo {
                 }
             } else {
                 realReturnType = mapRowTo.value();
-                if (!List.class.isAssignableFrom(returnType) &&
+                if (consumerParamIdx == null &&
+                        !List.class.isAssignableFrom(returnType) &&
                         !returnType.isAssignableFrom(realReturnType)) {
                     throw new StorageSetupException(
                             "Mapped object " + realReturnType.getName() + " can not be returned as " + returnType.getName() +

@@ -59,6 +59,7 @@ public class AHGeneratorTest {
                 final ITLongAH testAH = storage.get(ITLongAH.class);
                 Assert.assertEquals(one, testAH.getLong());
                 Assert.assertEquals(Long.valueOf(one), testAH.getLongObject());
+                testAH.getLongObject(new AssertConsumer<>(Long.valueOf(one)));
 /*
                 Assert.assertEquals(one, testAH.getLong2());
                 Assert.assertEquals(Long.valueOf(one), testAH.getLongObject2());

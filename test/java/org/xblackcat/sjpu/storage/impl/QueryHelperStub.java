@@ -29,8 +29,9 @@ public class QueryHelperStub implements IQueryHelper {
             IRowConsumer<T> consumer, IToObjectConverter<T> c, String sql, Object... parameters
     ) throws StorageException {
         try {
-            for (T row : (Iterable<? extends T>) data) {
-                consumer.consume(row);
+            for (Object row : data) {
+                T obj = (T) row;
+                consumer.consume(obj);
             }
         } catch (ConsumeException | RuntimeException e) {
             throw new StorageException("Can not consume result for query " + QueryHelperUtils.constructDebugSQL(sql, parameters), e);

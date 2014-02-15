@@ -81,13 +81,13 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
                 log.debug("Generate SELECT method " + m);
             }
 
-            if (info.getConsumeIndex() == null && info.getRealReturnType() == void.class) {
-                throw new StorageSetupException("Consumer should be specified for select method with void return type: " + m.toString());
-            } else if (info.getConsumeIndex() != null && info.getRealReturnType() != void.class) {
-                throw new StorageSetupException("Consumer can't be used with non-void return type: " + m.toString());
-            }
-
             if (info.getConsumeIndex() == null) {
+                if (returnType == void.class) {
+                    throw new StorageSetupException(
+                            "Consumer should be specified for select method with void return type: " + m.toString()
+                    );
+                }
+
                 boolean returnList = returnType.isAssignableFrom(List.class) &&
                         !realReturnType.isAssignableFrom(List.class);
 
@@ -102,9 +102,14 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
                 }
                 body.append("()");
             } else {
+                if (returnType != void.class) {
+                    throw new StorageSetupException("Consumer can't be used with non-void return type: " + m.toString());
+                }
+
                 body.append(BuilderUtils.getName(IRowConsumer.class));
-                body.append(" consumer = $");
+                body.append(" consumer = $args[");
                 body.append(info.getConsumeIndex());
+                body.append("]");
 
                 returnString = "";
             }
