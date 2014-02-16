@@ -5,9 +5,11 @@ import org.apache.commons.logging.LogFactory;
 import org.xblackcat.sjpu.storage.IBatch;
 import org.xblackcat.sjpu.storage.IQueryHelper;
 import org.xblackcat.sjpu.storage.StorageException;
+import org.xblackcat.sjpu.storage.consumer.IRowSetConsumer;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Map;
 
 /**
  * 15.11.13 14:06
@@ -20,8 +22,13 @@ class BatchHelper extends AnAHFactory implements IBatch {
     private boolean rollbackOnClose = true;
     private boolean transactionDone = false;
 
-    BatchHelper(IQueryHelper helper, int transactionIsolationLevel, TypeMapper typeMapper) throws SQLException {
-        super(new SingleConnectionQueryHelper(helper), typeMapper);
+    BatchHelper(
+            IQueryHelper helper,
+            int transactionIsolationLevel,
+            TypeMapper typeMapper,
+            Map<Class<?>, Class<? extends IRowSetConsumer>> rowSetConsumers
+    ) throws SQLException {
+        super(new SingleConnectionQueryHelper(helper), typeMapper, rowSetConsumers);
         final Connection con = queryHelper.getConnection();
         con.setAutoCommit(false);
         if (transactionIsolationLevel != -1) {

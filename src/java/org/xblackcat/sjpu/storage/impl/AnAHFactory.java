@@ -4,6 +4,7 @@ import org.xblackcat.sjpu.storage.IAH;
 import org.xblackcat.sjpu.storage.IAHFactory;
 import org.xblackcat.sjpu.storage.IQueryHelper;
 import org.xblackcat.sjpu.storage.StorageSetupException;
+import org.xblackcat.sjpu.storage.consumer.IRowSetConsumer;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -14,18 +15,23 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  *
  * @author xBlackCat
  */
-public abstract class AnAHFactory implements IAHFactory {
+abstract class AnAHFactory implements IAHFactory {
     protected final IAHBuilder<IQueryHelper> ahBuilder;
 
     protected final Map<Class<? extends IAH>, IAH> helpers = new HashMap<>();
     protected final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
     protected final IQueryHelper queryHelper;
     protected final TypeMapper typeMapper;
+    protected final Map<Class<?>, Class<? extends IRowSetConsumer>> rowSetConsumers;
 
-    public AnAHFactory(IQueryHelper queryHelper, TypeMapper typeMapper) {
+    AnAHFactory(IQueryHelper queryHelper, TypeMapper typeMapper, Map<Class<?>, Class<? extends IRowSetConsumer>> rowSetConsumers) {
+        if (rowSetConsumers == null) {
+            throw new NullPointerException("RowSet consumer map can't be null");
+        }
         this.queryHelper = queryHelper;
         this.typeMapper = typeMapper;
-        ahBuilder = new AHBuilder<>(typeMapper, new Definer<>(AnAH.class, IQueryHelper.class));
+        this.rowSetConsumers = rowSetConsumers;
+        ahBuilder = new AHBuilder<>(typeMapper, new Definer<>(AnAH.class, IQueryHelper.class), rowSetConsumers);
     }
 
     public <T extends IAH> T get(Class<T> clazz) throws StorageSetupException {

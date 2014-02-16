@@ -4,10 +4,12 @@ import javassist.*;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.xblackcat.sjpu.storage.StorageSetupException;
 import org.xblackcat.sjpu.storage.ann.*;
+import org.xblackcat.sjpu.storage.consumer.IRowSetConsumer;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -16,8 +18,8 @@ import java.util.Set;
  * @author xBlackCat
  */
 class UpdateObjectAnnotatedBuilder extends AMethodBuilder<UpdateObject> {
-    UpdateObjectAnnotatedBuilder(TypeMapper typeMapper, ClassPool pool) {
-        super(typeMapper, pool);
+    UpdateObjectAnnotatedBuilder(TypeMapper typeMapper, ClassPool pool, Map<Class<?>, Class<? extends IRowSetConsumer>> rowSetConsumers) {
+        super(typeMapper, pool, rowSetConsumers);
     }
 
     @Override

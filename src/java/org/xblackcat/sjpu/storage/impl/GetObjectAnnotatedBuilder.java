@@ -4,6 +4,7 @@ import javassist.*;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.xblackcat.sjpu.storage.StorageSetupException;
 import org.xblackcat.sjpu.storage.ann.*;
+import org.xblackcat.sjpu.storage.consumer.IRowSetConsumer;
 import org.xblackcat.sjpu.storage.converter.IToObjectConverter;
 
 import java.lang.annotation.Annotation;
@@ -11,6 +12,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 /**
  * 11.03.13 13:21
@@ -18,8 +20,8 @@ import java.util.Locale;
  * @author xBlackCat
  */
 class GetObjectAnnotatedBuilder extends AMethodBuilder<GetObject> {
-    GetObjectAnnotatedBuilder(TypeMapper typeMapper, ClassPool pool) {
-        super(typeMapper, pool);
+    GetObjectAnnotatedBuilder(TypeMapper typeMapper, ClassPool pool, Map<Class<?>, Class<? extends IRowSetConsumer>> rowSetConsumers) {
+        super(typeMapper, pool, rowSetConsumers);
     }
 
     @Override

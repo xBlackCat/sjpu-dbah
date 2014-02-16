@@ -6,6 +6,7 @@ import org.apache.commons.logging.LogFactory;
 import org.xblackcat.sjpu.storage.IAH;
 import org.xblackcat.sjpu.storage.StorageSetupException;
 import org.xblackcat.sjpu.storage.ann.Sql;
+import org.xblackcat.sjpu.storage.consumer.IRowSetConsumer;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -20,16 +21,14 @@ class AHBuilder<B, P> implements IAHBuilder<P> {
     private final Map<Class<? extends Annotation>, IMethodBuilder> methodBuilders = new LinkedHashMap<>();
 
     protected final ClassPool pool;
-    protected final TypeMapper typeMapper;
     protected final Definer<B, P> definer;
     protected final Log log = LogFactory.getLog(getClass());
 
-    protected AHBuilder(TypeMapper typeMapper, Definer<B, P> definer) {
+    protected AHBuilder(TypeMapper typeMapper, Definer<B, P> definer, Map<Class<?>, Class<? extends IRowSetConsumer>> rowSetConsumers) {
         pool = ClassPool.getDefault();
-        this.typeMapper = typeMapper;
         this.definer = definer;
 
-        methodBuilders.put(Sql.class, new SqlAnnotatedBuilder(pool, typeMapper));
+        methodBuilders.put(Sql.class, new SqlAnnotatedBuilder(pool, typeMapper, rowSetConsumers));
 //        methodBuilders.put(GetObject.class, new GetObjectAnnotatedBuilder(pool, typeMapper));
 //        methodBuilders.put(UpdateObject.class, new UpdateObjectAnnotatedBuilder(pool, typeMapper));
     }

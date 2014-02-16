@@ -7,7 +7,6 @@ import org.xblackcat.sjpu.storage.ann.Sql;
 import org.xblackcat.sjpu.storage.consumer.IRowConsumer;
 import org.xblackcat.sjpu.storage.consumer.IRowSetConsumer;
 import org.xblackcat.sjpu.storage.consumer.SingletonConsumer;
-import org.xblackcat.sjpu.storage.consumer.ToListConsumer;
 import org.xblackcat.sjpu.storage.converter.IToObjectConverter;
 import org.xblackcat.sjpu.storage.converter.StandardMappers;
 import org.xblackcat.sjpu.storage.typemap.ITypeMap;
@@ -15,6 +14,7 @@ import org.xblackcat.sjpu.storage.typemap.ITypeMap;
 import java.lang.reflect.Method;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 
 /**
@@ -23,8 +23,8 @@ import java.util.regex.Matcher;
  * @author xBlackCat
  */
 class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
-    public SqlAnnotatedBuilder(ClassPool pool, TypeMapper typeMapper) {
-        super(typeMapper, pool);
+    public SqlAnnotatedBuilder(ClassPool pool, TypeMapper typeMapper, Map<Class<?>, Class<? extends IRowSetConsumer>> rowSetConsumers) {
+        super(typeMapper, pool, rowSetConsumers);
     }
 
     @Override
@@ -91,16 +91,14 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
                     );
                 }
 
-                boolean returnList = returnType.isAssignableFrom(List.class) &&
-                        !realReturnType.isAssignableFrom(List.class);
+                Class<? extends IRowSetConsumer> rowSetConsumer = hasRowSetConsumer(returnType, realReturnType);
+                if (rowSetConsumer == null) {
+                    rowSetConsumer = SingletonConsumer.class;
+                }
 
                 body.append(BuilderUtils.getName(IRowSetConsumer.class));
                 body.append(" consumer = new ");
-                if (returnList) {
-                    body.append(BuilderUtils.getName(ToListConsumer.class));
-                } else {
-                    body.append(BuilderUtils.getName(SingletonConsumer.class));
-                }
+                body.append(BuilderUtils.getName(rowSetConsumer));
                 body.append("()");
 
                 returnString = "return (" + BuilderUtils.getName(targetReturnType) + ") consumer.getRowsHolder();\n";

@@ -1,12 +1,11 @@
 package org.xblackcat.sjpu.storage.impl;
 
-import org.xblackcat.sjpu.storage.IBatch;
-import org.xblackcat.sjpu.storage.IQueryHelper;
-import org.xblackcat.sjpu.storage.IStorage;
-import org.xblackcat.sjpu.storage.StorageException;
+import org.xblackcat.sjpu.storage.*;
+import org.xblackcat.sjpu.storage.consumer.IRowSetConsumer;
 import org.xblackcat.sjpu.storage.typemap.IMapFactory;
 
 import java.sql.SQLException;
+import java.util.Map;
 
 /**
  * 30.01.12 12:47
@@ -15,7 +14,15 @@ import java.sql.SQLException;
  */
 public class Storage extends AnAHFactory implements IStorage {
     public Storage(IQueryHelper queryHelper, IMapFactory<?, ?>... mappers) {
-        super(queryHelper, new TypeMapper(mappers));
+        this(queryHelper, StorageUtils.DEFAULT_ROWSET_CONSUMERS, mappers);
+    }
+
+    public Storage(
+            IQueryHelper queryHelper,
+            Map<Class<?>, Class<? extends IRowSetConsumer>> rowSetConsumers,
+            IMapFactory<?, ?>... mappers
+    ) {
+        super(queryHelper, new TypeMapper(mappers), rowSetConsumers);
     }
 
     @Override
@@ -26,7 +33,7 @@ public class Storage extends AnAHFactory implements IStorage {
     @Override
     public IBatch openTransaction(int transactionIsolationLevel) throws StorageException {
         try {
-            return new BatchHelper(queryHelper, transactionIsolationLevel, typeMapper);
+            return new BatchHelper(queryHelper, transactionIsolationLevel, typeMapper, rowSetConsumers);
         } catch (SQLException e) {
             throw new StorageException("An exception occurs while starting a transaction", e);
         }
