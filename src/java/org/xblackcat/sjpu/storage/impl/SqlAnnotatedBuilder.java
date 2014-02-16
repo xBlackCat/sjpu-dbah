@@ -2,9 +2,12 @@ package org.xblackcat.sjpu.storage.impl;
 
 import javassist.*;
 import org.apache.commons.lang3.StringEscapeUtils;
-import org.xblackcat.sjpu.storage.IRowConsumer;
 import org.xblackcat.sjpu.storage.StorageSetupException;
 import org.xblackcat.sjpu.storage.ann.Sql;
+import org.xblackcat.sjpu.storage.consumer.IRowConsumer;
+import org.xblackcat.sjpu.storage.consumer.IRowSetConsumer;
+import org.xblackcat.sjpu.storage.consumer.SingletonConsumer;
+import org.xblackcat.sjpu.storage.consumer.ToListConsumer;
 import org.xblackcat.sjpu.storage.converter.IToObjectConverter;
 import org.xblackcat.sjpu.storage.converter.StandardMappers;
 import org.xblackcat.sjpu.storage.typemap.ITypeMap;
@@ -91,16 +94,16 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
                 boolean returnList = returnType.isAssignableFrom(List.class) &&
                         !realReturnType.isAssignableFrom(List.class);
 
+                body.append(BuilderUtils.getName(IRowSetConsumer.class));
+                body.append(" consumer = new ");
                 if (returnList) {
-                    appendConsumerInit(body, ToListConsumer.class);
-
-                    returnString = "return consumer.getList();\n";
+                    body.append(BuilderUtils.getName(ToListConsumer.class));
                 } else {
-                    appendConsumerInit(body, SingletonConsumer.class);
-
-                    returnString = "return (" + BuilderUtils.getName(targetReturnType) + ") consumer.getObject();\n";
+                    body.append(BuilderUtils.getName(SingletonConsumer.class));
                 }
                 body.append("()");
+
+                returnString = "return (" + BuilderUtils.getName(targetReturnType) + ") consumer.getRowsHolder();\n";
             } else {
                 if (returnType != void.class) {
                     throw new StorageSetupException("Consumer can't be used with non-void return type: " + m.toString());
@@ -172,12 +175,6 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
         addMethod(accessHelper, m, ctRealReturnType, targetReturnType, body.toString());
     }
 
-    private static void appendConsumerInit(StringBuilder body, Class<? extends IRowConsumer> consumerClass) {
-        body.append(BuilderUtils.getName(consumerClass));
-        body.append(" consumer = new ");
-        body.append(BuilderUtils.getName(consumerClass));
-    }
-
     protected void appendArgumentList(List<ConverterInfo.Arg> types, StringBuilder body) {
         body.append("new Object[");
 
@@ -186,7 +183,7 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
         } else {
             body.append("]{\n");
 
-            for (ConverterInfo.Arg arg: types) {
+            for (ConverterInfo.Arg arg : types) {
                 Class<?> type = arg.clazz;
                 final ITypeMap<?, ?> typeMap = typeMapper.hasTypeMap(type);
 

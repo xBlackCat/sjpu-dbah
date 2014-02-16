@@ -2,8 +2,8 @@ package org.xblackcat.sjpu.storage.impl;
 
 import org.xblackcat.sjpu.storage.ConsumeException;
 import org.xblackcat.sjpu.storage.IQueryHelper;
-import org.xblackcat.sjpu.storage.IRowConsumer;
 import org.xblackcat.sjpu.storage.StorageException;
+import org.xblackcat.sjpu.storage.consumer.IRowConsumer;
 import org.xblackcat.sjpu.storage.converter.IToObjectConverter;
 
 import java.sql.*;

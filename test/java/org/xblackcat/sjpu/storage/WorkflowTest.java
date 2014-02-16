@@ -8,6 +8,7 @@ import org.junit.Test;
 import org.xblackcat.sjpu.storage.ann.MapRowTo;
 import org.xblackcat.sjpu.storage.ann.Sql;
 import org.xblackcat.sjpu.storage.connection.IDatabaseSettings;
+import org.xblackcat.sjpu.storage.consumer.IRowConsumer;
 import org.xblackcat.sjpu.storage.impl.Storage;
 import org.xblackcat.sjpu.storage.typemap.EnumToStringMapper;
 

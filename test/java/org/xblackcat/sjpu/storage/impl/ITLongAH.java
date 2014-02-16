@@ -1,10 +1,10 @@
 package org.xblackcat.sjpu.storage.impl;
 
 import org.xblackcat.sjpu.storage.IAH;
-import org.xblackcat.sjpu.storage.IRowConsumer;
 import org.xblackcat.sjpu.storage.StorageException;
 import org.xblackcat.sjpu.storage.ann.MapRowTo;
 import org.xblackcat.sjpu.storage.ann.Sql;
+import org.xblackcat.sjpu.storage.consumer.IRowConsumer;
 
 /**
  * 16.08.13 14:53

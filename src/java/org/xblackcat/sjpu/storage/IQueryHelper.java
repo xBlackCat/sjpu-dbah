@@ -1,5 +1,6 @@
 package org.xblackcat.sjpu.storage;
 
+import org.xblackcat.sjpu.storage.consumer.IRowConsumer;
 import org.xblackcat.sjpu.storage.converter.IToObjectConverter;
 
 import java.sql.Connection;

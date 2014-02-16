@@ -5,12 +5,12 @@ import javassist.ClassPool;
 import javassist.Modifier;
 import javassist.NotFoundException;
 import org.apache.commons.lang3.ArrayUtils;
-import org.xblackcat.sjpu.storage.IRowConsumer;
 import org.xblackcat.sjpu.storage.StorageSetupException;
 import org.xblackcat.sjpu.storage.ann.DefaultRowMap;
 import org.xblackcat.sjpu.storage.ann.MapRowTo;
 import org.xblackcat.sjpu.storage.ann.RowMap;
 import org.xblackcat.sjpu.storage.ann.ToObjectConverter;
+import org.xblackcat.sjpu.storage.consumer.IRowConsumer;
 import org.xblackcat.sjpu.storage.converter.IToObjectConverter;
 
 import java.lang.reflect.Constructor;

@@ -2,7 +2,7 @@ package org.xblackcat.sjpu.storage.impl;
 
 import org.junit.Assert;
 import org.xblackcat.sjpu.storage.ConsumeException;
-import org.xblackcat.sjpu.storage.IRowConsumer;
+import org.xblackcat.sjpu.storage.consumer.IRowConsumer;
 
 /**
  * 15.02.14 15:17

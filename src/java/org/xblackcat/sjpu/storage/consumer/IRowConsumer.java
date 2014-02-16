@@ -1,4 +1,6 @@
-package org.xblackcat.sjpu.storage;
+package org.xblackcat.sjpu.storage.consumer;
+
+import org.xblackcat.sjpu.storage.ConsumeException;
 
 /**
  * 15.02.14 8:53

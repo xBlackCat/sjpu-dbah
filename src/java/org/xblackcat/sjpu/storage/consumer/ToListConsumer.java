@@ -1,6 +1,4 @@
-package org.xblackcat.sjpu.storage.impl;
-
-import org.xblackcat.sjpu.storage.IRowConsumer;
+package org.xblackcat.sjpu.storage.consumer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,7 +8,7 @@ import java.util.List;
  *
  * @author xBlackCat
  */
-public class ToListConsumer<T> implements IRowConsumer<T> {
+public class ToListConsumer<T> implements IRowSetConsumer<List<T>, T> {
     private final List<T> list = new ArrayList<>();
 
     @Override
@@ -19,7 +17,7 @@ public class ToListConsumer<T> implements IRowConsumer<T> {
         return false;
     }
 
-    public List<T> getList() {
-        return new ArrayList<>(list);
+    public List<T> getRowsHolder() {
+        return list;
     }
 }

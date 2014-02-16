@@ -1,14 +1,13 @@
-package org.xblackcat.sjpu.storage.impl;
+package org.xblackcat.sjpu.storage.consumer;
 
 import org.xblackcat.sjpu.storage.ConsumeException;
-import org.xblackcat.sjpu.storage.IRowConsumer;
 
 /**
  * 15.02.14 10:21
  *
  * @author xBlackCat
  */
-public class SingletonConsumer<T> implements IRowConsumer<T> {
+public class SingletonConsumer<T> implements IRowSetConsumer<T, T> {
     private T obj;
     private boolean set = false;
 
@@ -24,7 +23,7 @@ public class SingletonConsumer<T> implements IRowConsumer<T> {
         return false;
     }
 
-    public T getObject() {
+    public T getRowsHolder() {
         return obj;
     }
 }
