@@ -29,7 +29,7 @@ class GetObjectAnnotatedBuilder extends AMethodBuilder<GetObject> {
             CtClass accessHelper, Method m, GetObject annotation
     ) throws NotFoundException, ReflectiveOperationException, CannotCompileException {
 
-        ConverterInfo converterInfo = ConverterInfo.analyse(pool, typeMapper, m);
+        ConverterInfo converterInfo = ConverterInfo.analyse(pool, typeMapper, rowSetConsumers.keySet(), m);
         final Class<?> realReturnType = converterInfo.getRealReturnType();
         Class<? extends IToObjectConverter<?>> converter = converterInfo.getConverter();
         boolean useFieldList = converterInfo.isUseFieldList();

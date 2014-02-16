@@ -14,6 +14,7 @@ import org.xblackcat.sjpu.storage.typemap.EnumToStringMapper;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Set;
 
 /**
  * 19.12.13 12:33
@@ -350,6 +351,12 @@ public class WorkflowTest {
                      "FROM \"list\"")
         @MapRowTo(ElementNumber.class)
         List<ElementNumber> getListElement() throws StorageException;
+
+        @Sql("SELECT\n" +
+                     "  \"id\", \"name\"\n" +
+                     "FROM \"list\"")
+        @MapRowTo(ElementNumber.class)
+        Set<ElementNumber> getSetElement() throws StorageException;
 
         @Sql("SELECT\n" +
                      "  \"id\", \"name\"\n" +

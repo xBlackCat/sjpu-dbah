@@ -19,6 +19,7 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 /**
  * 17.12.13 16:45
@@ -49,6 +50,7 @@ class ConverterInfo {
     static ConverterInfo analyse(
             ClassPool pool,
             TypeMapper typeMapper,
+            Set<Class<?>> rowSetConsumers,
             Method m
     ) throws ReflectiveOperationException, NotFoundException, CannotCompileException {
         final Class<?> returnType = m.getReturnType();
@@ -89,20 +91,28 @@ class ConverterInfo {
             realReturnType = converterMethod.getReturnType();
             useFieldList = true;
         } else {
+            boolean hasRowSetConsumer = false;
+            for (Class<?> cl : rowSetConsumers) {
+                if (cl.isAssignableFrom(returnType)) {
+                    hasRowSetConsumer = true;
+                    break;
+                }
+            }
+
             if (mapRowTo == null) {
                 if (consumerParamIdx != null) {
                     throw new StorageSetupException("Set target class with annotation " + MapRowTo.class + " for method " + m);
                 }
 
-                if (List.class.isAssignableFrom(returnType)) {
+                if (hasRowSetConsumer) {
                     throw new StorageSetupException("Set target class with annotation " + MapRowTo.class + " for method " + m);
-                } else {
-                    realReturnType = returnType;
                 }
+
+                realReturnType = returnType;
             } else {
                 realReturnType = mapRowTo.value();
                 if (consumerParamIdx == null &&
-                        !List.class.isAssignableFrom(returnType) &&
+                        !hasRowSetConsumer &&
                         !returnType.isAssignableFrom(realReturnType)) {
                     throw new StorageSetupException(
                             "Mapped object " + realReturnType.getName() + " can not be returned as " + returnType.getName() +
