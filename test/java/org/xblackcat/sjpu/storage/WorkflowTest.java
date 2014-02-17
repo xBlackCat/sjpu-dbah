@@ -6,14 +6,18 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.xblackcat.sjpu.storage.ann.MapRowTo;
+import org.xblackcat.sjpu.storage.ann.RowSetConsumer;
 import org.xblackcat.sjpu.storage.ann.Sql;
 import org.xblackcat.sjpu.storage.connection.IDatabaseSettings;
 import org.xblackcat.sjpu.storage.consumer.IRowConsumer;
+import org.xblackcat.sjpu.storage.consumer.IRowSetConsumer;
 import org.xblackcat.sjpu.storage.impl.Storage;
 import org.xblackcat.sjpu.storage.typemap.EnumToStringMapper;
 
 import java.net.URI;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -202,7 +206,13 @@ public class WorkflowTest {
             dataAH.getListIElement(0, consumer);
         }
 
-
+        {
+            final Map<Numbers, Integer> ma = dataAH.getMapElement();
+            Assert.assertEquals(Numbers.values().length, ma.size());
+            for (Map.Entry<Numbers, Integer> e : ma.entrySet()) {
+                Assert.assertEquals(e.getKey() + " element", e.getKey().ordinal(), e.getValue().intValue());
+            }
+        }
     }
 
     @Test
@@ -236,80 +246,80 @@ public class WorkflowTest {
 
     public static interface IDataAH extends IAH {
         @Sql("SELECT\n" +
-                     "  \"name\"\n" +
-                     "FROM \"list\"\n" +
-                     "WHERE \"id\" = ?")
+             "  \"name\"\n" +
+             "FROM \"list\"\n" +
+             "WHERE \"id\" = ?")
         String get(int id) throws StorageException;
 
         @Sql("INSERT INTO \"list\" (\"id\", \"name\") VALUES (?, ?)")
         void put(int id, String name) throws StorageException;
 
         @Sql("SELECT\n" +
-                     "  \"id\", \"name\"\n" +
-                     "FROM \"list\"\n" +
-                     "WHERE \"id\" = ?")
+             "  \"id\", \"name\"\n" +
+             "FROM \"list\"\n" +
+             "WHERE \"id\" = ?")
         Element getElement(int id) throws StorageException;
 
         @Sql("SELECT\n" +
-                     "  \"id\", \"name\"\n" +
-                     "FROM \"list\"\n" +
-                     "WHERE \"id\" = ?")
+             "  \"id\", \"name\"\n" +
+             "FROM \"list\"\n" +
+             "WHERE \"id\" = ?")
         @MapRowTo(Element.class)
         IElement<String> getIElement(int id) throws StorageException;
 
         @Sql("SELECT\n" +
-                     "  \"id\", \"name\"\n" +
-                     "FROM \"list\"")
+             "  \"id\", \"name\"\n" +
+             "FROM \"list\"")
         @MapRowTo(Element.class)
         List<Element> getListElement() throws StorageException;
 
         @Sql("SELECT\n" +
-                     "  \"id\", \"name\"\n" +
-                     "FROM \"list\"")
+             "  \"id\", \"name\"\n" +
+             "FROM \"list\"")
         @MapRowTo(Element.class)
         List<IElement<String>> getListIElement() throws StorageException;
 
         @Sql("SELECT\n" +
-                     "  \"id\", \"name\"\n" +
-                     "FROM \"list\"")
+             "  \"id\", \"name\"\n" +
+             "FROM \"list\"")
         @MapRowTo(Element.class)
         void getListElement(IRowConsumer<Element> consumer) throws StorageException;
 
         @Sql("SELECT\n" +
-                     "  \"id\", \"name\"\n" +
-                     "FROM \"list\"")
+             "  \"id\", \"name\"\n" +
+             "FROM \"list\"")
         @MapRowTo(Element.class)
         void getListIElement(IRowConsumer<IElement<String>> consumer) throws StorageException;
 
         @Sql("SELECT\n" +
-                     "  \"id\", \"name\"\n" +
-                     "FROM \"list\"\n" +
-                     "WHERE\n" +
-                     "  \"id\" >= ?")
+             "  \"id\", \"name\"\n" +
+             "FROM \"list\"\n" +
+             "WHERE\n" +
+             "  \"id\" >= ?")
         @MapRowTo(Element.class)
         void getListElement(IRowConsumer<Element> consumer, int ind) throws StorageException;
 
         @Sql("SELECT\n" +
-                     "  \"id\", \"name\"\n" +
-                     "FROM \"list\"\n" +
-                     "WHERE\n" +
-                     "  \"id\" >= ?")
+             "  \"id\", \"name\"\n" +
+             "FROM \"list\"\n" +
+             "WHERE\n" +
+             "  \"id\" >= ?")
         @MapRowTo(Element.class)
         void getListIElement(IRowConsumer<IElement<String>> consumer, int idx) throws StorageException;
 
         @Sql("SELECT\n" +
-                     "  \"id\", \"name\"\n" +
-                     "FROM \"list\"\n" +
-                     "WHERE\n" +
-                     "  \"id\" >= ?")
+             "  \"id\", \"name\"\n" +
+             "FROM \"list\"\n" +
+             "WHERE\n" +
+             "  \"id\" >= ?")
         @MapRowTo(Element.class)
         void getListElement(int ind, IRowConsumer<Element> consumer) throws StorageException;
 
         @Sql("SELECT\n" +
-                     "  \"id\", \"name\"\n" +
-                     "FROM \"list\"\n" +
-                     "WHERE\n" +
-                     "  \"id\" >= ?")
+             "  \"id\", \"name\"\n" +
+             "FROM \"list\"\n" +
+             "WHERE\n" +
+             "  \"id\" >= ?")
         @MapRowTo(Element.class)
         void getListIElement(int ind, IRowConsumer<IElement<String>> consumer) throws StorageException;
 
@@ -319,92 +329,99 @@ public class WorkflowTest {
 
     public static interface IDataEnumAH extends IAH {
         @Sql("SELECT\n" +
-                     "  \"name\"\n" +
-                     "FROM \"list\"\n" +
-                     "WHERE \"id\" = ?")
+             "  \"name\"\n" +
+             "FROM \"list\"\n" +
+             "WHERE \"id\" = ?")
         Numbers get(int id) throws StorageException;
 
         @Sql("INSERT INTO \"list\" (\"id\", \"name\") VALUES (?, ?)")
         void put(int id, Numbers element) throws StorageException;
 
         @Sql("SELECT\n" +
-                     "  \"id\", \"name\"\n" +
-                     "FROM \"list\"\n" +
-                     "WHERE \"id\" = ?")
+             "  \"id\", \"name\"\n" +
+             "FROM \"list\"\n" +
+             "WHERE \"id\" = ?")
         ElementNumber getElement(int id) throws StorageException;
 
         @Sql("SELECT\n" +
-                     "  \"id\", \"name\"\n" +
-                     "FROM \"list\"\n" +
-                     "WHERE \"id\" = ?")
+             "  \"id\", \"name\"\n" +
+             "FROM \"list\"\n" +
+             "WHERE \"id\" = ?")
         @MapRowTo(ElementNumber.class)
         IElement<Numbers> getIElement(int id) throws StorageException;
 
         @Sql("SELECT\n" +
-                     "  \"name\"\n" +
-                     "FROM \"list\"")
+             "  \"name\"\n" +
+             "FROM \"list\"")
         @MapRowTo(Numbers.class)
         List<Numbers> getList() throws StorageException;
 
         @Sql("SELECT\n" +
-                     "  \"id\", \"name\"\n" +
-                     "FROM \"list\"")
+             "  \"id\", \"name\"\n" +
+             "FROM \"list\"")
         @MapRowTo(ElementNumber.class)
         List<ElementNumber> getListElement() throws StorageException;
 
         @Sql("SELECT\n" +
-                     "  \"id\", \"name\"\n" +
-                     "FROM \"list\"")
+             "  \"id\", \"name\"\n" +
+             "FROM \"list\"")
         @MapRowTo(ElementNumber.class)
         Set<ElementNumber> getSetElement() throws StorageException;
 
         @Sql("SELECT\n" +
-                     "  \"id\", \"name\"\n" +
-                     "FROM \"list\"")
+             "  \"id\", \"name\"\n" +
+             "FROM \"list\"")
         @MapRowTo(ElementNumber.class)
         List<IElement<Numbers>> getListIElement() throws StorageException;
 
         @Sql("SELECT\n" +
-                     "  \"id\", \"name\"\n" +
-                     "FROM \"list\"\n")
+             "  \"id\", \"name\"\n" +
+             "FROM \"list\"\n")
         @MapRowTo(ElementNumber.class)
         void getListElement(IRowConsumer<ElementNumber> consumer) throws StorageException;
 
         @Sql("SELECT\n" +
-                     "  \"id\", \"name\"\n" +
-                     "FROM \"list\"\n")
+             "  \"id\", \"name\"\n" +
+             "FROM \"list\"\n")
         @MapRowTo(ElementNumber.class)
         void getListIElement(IRowConsumer<IElement<Numbers>> consumer) throws StorageException;
 
         @Sql("SELECT\n" +
-                     "  \"id\", \"name\"\n" +
-                     "FROM \"list\"\n" +
-                     "WHERE\n" +
-                     "  \"id\" >= ?")
+             "  \"id\", \"name\"\n" +
+             "FROM \"list\"\n")
+        @MapRowTo(ElementNumber.class)
+        @RowSetConsumer(EnumMapConsumer.class)
+        Map<Numbers, Integer> getMapElement() throws StorageException;
+
+        @Sql("SELECT\n" +
+             "  \"id\", \"name\"\n" +
+             "FROM \"list\"\n" +
+             "WHERE\n" +
+             "  \"id\" >= ?")
         @MapRowTo(ElementNumber.class)
         void getListElement(IRowConsumer<ElementNumber> consumer, int idx) throws StorageException;
 
         @Sql("SELECT\n" +
-                     "  \"id\", \"name\"\n" +
-                     "FROM \"list\"\n" +
-                     "WHERE\n" +
-                     "  \"id\" >= ?")
+             "  \"id\", \"name\"\n" +
+             "FROM \"list\"\n" +
+             "WHERE\n" +
+             "  \"id\" >= ?")
         @MapRowTo(ElementNumber.class)
         void getListIElement(IRowConsumer<IElement<Numbers>> consumer, int idx) throws StorageException;
 
         @Sql("SELECT\n" +
-                     "  \"id\", \"name\"\n" +
-                     "FROM \"list\"\n" +
-                     "WHERE\n" +
-                     "  \"id\" >= ?")
+             "  \"id\", \"name\"\n" +
+             "FROM \"list\"\n" +
+             "WHERE\n" +
+             "  \"id\" >= ?")
         @MapRowTo(ElementNumber.class)
         void getListElement(int idx, IRowConsumer<ElementNumber> consumer) throws StorageException;
 
         @Sql("SELECT\n" +
-                     "  \"id\", \"name\"\n" +
-                     "FROM \"list\"\n" +
-                     "WHERE\n" +
-                     "  \"id\" >= ?")
+             "  \"id\", \"name\"\n" +
+             "FROM \"list\"\n" +
+             "WHERE\n" +
+             "  \"id\" >= ?")
         @MapRowTo(ElementNumber.class)
         void getListIElement(int idx, IRowConsumer<IElement<Numbers>> consumer) throws StorageException;
 
@@ -417,23 +434,23 @@ public class WorkflowTest {
         int putUri(URI uri) throws StorageException;
 
         @Sql("SELECT\n" +
-                     "  \"uri\"\n" +
-                     "FROM \"uri\"\n" +
-                     "WHERE \"id\" = ?")
+             "  \"uri\"\n" +
+             "FROM \"uri\"\n" +
+             "WHERE \"id\" = ?")
         URI get(int id) throws StorageException;
 
         @Sql("SELECT\n" +
-                     "  \"id\",\n" +
-                     "  \"uri\"\n" +
-                     "FROM \"uri\"\n" +
-                     "WHERE \"id\" = ?")
+             "  \"id\",\n" +
+             "  \"uri\"\n" +
+             "FROM \"uri\"\n" +
+             "WHERE \"id\" = ?")
         @MapRowTo(Uri.class)
         IElement<URI> getElement(int id) throws StorageException;
 
         @Sql("SELECT\n" +
-                     "  \"id\",\n" +
-                     "  \"uri\"\n" +
-                     "FROM \"uri\"\n")
+             "  \"id\",\n" +
+             "  \"uri\"\n" +
+             "FROM \"uri\"\n")
 
         @MapRowTo(Uri.class)
         List<IElement<URI>> getList() throws StorageException;
@@ -577,5 +594,20 @@ public class WorkflowTest {
         Eight,
         Nine,
         Ten
+    }
+
+    public static class EnumMapConsumer implements IRowSetConsumer<Map<Numbers, Integer>, IElement<Numbers>> {
+        private final Map<Numbers, Integer> map = new EnumMap<>(Numbers.class);
+
+        @Override
+        public Map<Numbers, Integer> getRowsHolder() {
+            return map;
+        }
+
+        @Override
+        public boolean consume(IElement<Numbers> o) throws ConsumeException {
+            map.put(o.getName(), o.getId());
+            return false;
+        }
     }
 }

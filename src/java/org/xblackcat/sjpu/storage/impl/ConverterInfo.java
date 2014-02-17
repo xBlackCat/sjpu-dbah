@@ -6,10 +6,7 @@ import javassist.Modifier;
 import javassist.NotFoundException;
 import org.apache.commons.lang3.ArrayUtils;
 import org.xblackcat.sjpu.storage.StorageSetupException;
-import org.xblackcat.sjpu.storage.ann.DefaultRowMap;
-import org.xblackcat.sjpu.storage.ann.MapRowTo;
-import org.xblackcat.sjpu.storage.ann.RowMap;
-import org.xblackcat.sjpu.storage.ann.ToObjectConverter;
+import org.xblackcat.sjpu.storage.ann.*;
 import org.xblackcat.sjpu.storage.consumer.IRowConsumer;
 import org.xblackcat.sjpu.storage.converter.IToObjectConverter;
 
@@ -91,11 +88,13 @@ class ConverterInfo {
             realReturnType = converterMethod.getReturnType();
             useFieldList = true;
         } else {
-            boolean hasRowSetConsumer = false;
-            for (Class<?> cl : rowSetConsumers) {
-                if (cl.isAssignableFrom(returnType)) {
-                    hasRowSetConsumer = true;
-                    break;
+            boolean hasRowSetConsumer = m.getAnnotation(RowSetConsumer.class) != null;
+            if (!hasRowSetConsumer) {
+                for (Class<?> cl : rowSetConsumers) {
+                    if (cl.isAssignableFrom(returnType)) {
+                        hasRowSetConsumer = true;
+                        break;
+                    }
                 }
             }
 
@@ -112,11 +111,11 @@ class ConverterInfo {
             } else {
                 realReturnType = mapRowTo.value();
                 if (consumerParamIdx == null &&
-                        !hasRowSetConsumer &&
-                        !returnType.isAssignableFrom(realReturnType)) {
+                    !hasRowSetConsumer &&
+                    !returnType.isAssignableFrom(realReturnType)) {
                     throw new StorageSetupException(
                             "Mapped object " + realReturnType.getName() + " can not be returned as " + returnType.getName() +
-                                    " from method " + m
+                            " from method " + m
                     );
                 }
             }
@@ -199,7 +198,7 @@ class ConverterInfo {
                     if (targetConstructor == null) {
                         throw new StorageSetupException(
                                 "Can't find a way to convert result row to object. Probably one of the following annotations should be used: " +
-                                        Arrays.asList(ToObjectConverter.class, RowMap.class, MapRowTo.class)
+                                Arrays.asList(ToObjectConverter.class, RowMap.class, MapRowTo.class)
                         );
                     }
 
