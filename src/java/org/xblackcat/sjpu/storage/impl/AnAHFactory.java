@@ -47,10 +47,9 @@ abstract class AnAHFactory implements IAHFactory {
             lock.readLock().unlock();
         }
 
-        final T accessHelper = ahBuilder.build(clazz, queryHelper);
-
         lock.writeLock().lock();
         try {
+            final T accessHelper = ahBuilder.build(clazz, queryHelper);
             @SuppressWarnings({"unchecked"})
             T oldAccessHelper = (T) helpers.get(clazz);
 
@@ -59,11 +58,11 @@ abstract class AnAHFactory implements IAHFactory {
             }
 
             helpers.put(clazz, accessHelper);
+
+            return accessHelper;
         } finally {
             lock.writeLock().unlock();
         }
-
-        return accessHelper;
     }
 
 }
