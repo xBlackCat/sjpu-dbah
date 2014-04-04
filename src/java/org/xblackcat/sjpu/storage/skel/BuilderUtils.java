@@ -1,22 +1,16 @@
-package org.xblackcat.sjpu.storage.impl;
+package org.xblackcat.sjpu.storage.skel;
 
 import javassist.*;
-import org.apache.commons.lang3.BooleanUtils;
-import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.xblackcat.sjpu.storage.StorageSetupException;
-import org.xblackcat.sjpu.storage.ann.SetField;
 import org.xblackcat.sjpu.storage.converter.*;
 import org.xblackcat.sjpu.storage.typemap.ITypeMap;
+import org.xblackcat.sjpu.storage.typemap.TypeMapper;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.math.BigDecimal;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -25,13 +19,12 @@ import java.util.regex.Pattern;
  *
  * @author xBlackCat
  */
-class BuilderUtils {
+public class BuilderUtils {
     private static final Log log = LogFactory.getLog(BuilderUtils.class);
 
-    public final static DateFormat SQL_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     public static final CtClass[] EMPTY_LIST = new CtClass[]{};
 
-    static final Pattern FIRST_WORD_SQL = Pattern.compile("(\\w+)(\\s|$)");
+    public static final Pattern FIRST_WORD_SQL = Pattern.compile("(\\w+)(\\s|$)");
 
     private static final Map<Class<?>, String> readDeclarations;
 
@@ -92,77 +85,7 @@ class BuilderUtils {
         }
     }
 
-    public static void addStringifiedParameter(StringBuilder parameters, SetField filter) throws NoSuchMethodException {
-        Class<?> type = filter.type();
-        final String value = filter.v();
-        if (type.equals(String.class)) {
-            parameters.append('"');
-            parameters.append(StringEscapeUtils.escapeJava(value));
-            parameters.append('"');
-        } else if (Number.class.isAssignableFrom(type)) {
-            try {
-                @SuppressWarnings("UnusedDeclaration")
-                double v = Double.parseDouble(value);
-            } catch (NumberFormatException e) {
-                throw new StorageSetupException("Invalid number format", e);
-            }
-            parameters.append(value);
-        } else if (Boolean.class.isAssignableFrom(type)) {
-            Boolean b = BooleanUtils.toBooleanObject(value);
-            if (b == null) {
-                throw new StorageSetupException("Invalid value for boolean operand: " + value);
-            }
-            parameters.append(getName(Boolean.class));
-            parameters.append(".");
-            if (b) {
-                parameters.append("TRUE");
-            } else {
-                parameters.append("FALSE");
-            }
-        } else if (Date.class.equals(type)) {
-            parameters.append("new ");
-            parameters.append(getName(Date.class));
-            parameters.append("(");
-            if (!value.equalsIgnoreCase("now()")) {
-                // parse date
-                final Date date;
-                try {
-                    date = SQL_FORMAT.parse(value);
-                } catch (ParseException e) {
-                    throw new StorageSetupException("Invalid date value for field " + filter.value(), e);
-                }
-
-                parameters.append(date.getTime());
-                parameters.append("l");
-            }
-            parameters.append(")");
-        } else {
-            throw new StorageSetupException("Can't process " + filter);
-        }
-    }
-
-    static void initSelectReturn(
-            ClassPool pool,
-            CtClass realReturnType,
-            Class<? extends IToObjectConverter<?>> converter,
-            boolean returnList,
-            StringBuilder body
-    ) throws NotFoundException, CannotCompileException {
-        if (returnList) {
-            body.append("return helper.execute(\n");
-        } else {
-            body.append("return (");
-            body.append(getName(realReturnType));
-            body.append(")helper.executeSingle(\n");
-        }
-
-        checkConverterInstance(pool, converter);
-
-        body.append(getName(converter));
-        body.append(".Instance.I,\n");
-    }
-
-    static void initInsertReturn(
+    public static void initInsertReturn(
             ClassPool pool,
             CtClass realReturnType,
             Class<? extends IToObjectConverter<?>> converter,
@@ -183,7 +106,7 @@ class BuilderUtils {
         }
     }
 
-    static void checkConverterInstance(
+    public static void checkConverterInstance(
             ClassPool pool,
             Class<? extends IToObjectConverter<?>> converter
     ) throws NotFoundException, CannotCompileException {
@@ -202,36 +125,6 @@ class BuilderUtils {
 
             instanceClass.toClass();
         }
-    }
-
-    static void addArgumentParameter(StringBuilder parameters, int i, Class<?> t) {
-        parameters.append("$args[");
-        parameters.append(i);
-        parameters.append("]");
-    }
-
-    public static Constructor<?> findConstructorByAnnotatedParameter(Class<?> clazz, Class<? extends Annotation> ann) {
-        for (Constructor<?> c : clazz.getConstructors()) {
-            final Annotation[][] annotations = c.getParameterAnnotations();
-            boolean constructorAnnotated = annotations.length > 0;
-            for (Annotation[] aa : annotations) {
-                boolean parameterAnnotated = false;
-                for (Annotation a : aa) {
-                    if (ann.isAssignableFrom(a.getClass())) {
-                        parameterAnnotated = true;
-                        break;
-                    }
-                }
-
-                constructorAnnotated = constructorAnnotated & parameterAnnotated;
-            }
-
-            if (constructorAnnotated) {
-                return c;
-            }
-        }
-
-        throw new StorageSetupException("No annotated constructors found");
     }
 
     /**
@@ -306,7 +199,7 @@ class BuilderUtils {
         return ctClasses;
     }
 
-    protected static Class<? extends IToObjectConverter<?>> checkStandardClassConverter(Class<?> realReturnType) {
+    public static Class<? extends IToObjectConverter<?>> checkStandardClassConverter(Class<?> realReturnType) {
         if (BigDecimal.class.equals(realReturnType)) {
             return ToBigDecimalConverter.class;
         }
@@ -348,7 +241,7 @@ class BuilderUtils {
     }
 
     @SuppressWarnings("unchecked")
-    protected static Class<IToObjectConverter<?>> initializeConverter(
+    public static Class<IToObjectConverter<?>> initializeConverter(
             Constructor<?> objectConstructor,
             TypeMapper typeMapper,
             String suffix

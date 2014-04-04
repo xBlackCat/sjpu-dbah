@@ -1,8 +1,6 @@
-package org.xblackcat.sjpu.storage.impl;
+package org.xblackcat.sjpu.storage.skel;
 
 import javassist.*;
-import org.xblackcat.sjpu.storage.IAH;
-import org.xblackcat.sjpu.storage.IQueryHelper;
 import org.xblackcat.sjpu.storage.StorageSetupException;
 
 import java.lang.reflect.InvocationTargetException;
@@ -12,18 +10,15 @@ import java.lang.reflect.InvocationTargetException;
  *
  * @author xBlackCat
  */
-class Definer<B, P> {
-    static final Definer<AnAH, IQueryHelper> DEFAULT_DEFINER = new Definer<>(AnAH.class, IQueryHelper.class);
-
-    private final Class<B> baseClass;
-    private final Class<P> paramClass;
+public class Definer<Base, Helper> {
+    private final Class<? extends Base> baseClass;
+    private final Class<Helper> paramClass;
     private final ClassPool pool;
 
-    protected Definer(Class<B> baseClass, Class<P> paramClass) {
+    public Definer(Class<? extends Base> baseClass, Class<Helper> paramClass) {
         this.baseClass = baseClass;
         this.paramClass = paramClass;
         pool = new ClassPool(true);
-        pool.appendClassPath(new ClassClassPath(IAH.class));
         pool.appendClassPath(new ClassClassPath(baseClass));
         pool.appendClassPath(new ClassClassPath(paramClass));
     }
@@ -32,7 +27,7 @@ class Definer<B, P> {
         return paramClass.getName();
     }
 
-    protected String getBaseClassName() {
+    public String getBaseClassName() {
         return baseClass.getName();
     }
 
@@ -40,11 +35,11 @@ class Definer<B, P> {
         return baseClass.isAssignableFrom(clazz);
     }
 
-    protected String getNestedClassName() {
+    public String getNestedClassName() {
         return baseClass.getSimpleName() + "Impl";
     }
 
-    protected <T extends IAH> T build(Class<T> target, P param) throws StorageSetupException {
+    protected <T extends Base> T build(Class<T> target, Helper param) throws StorageSetupException {
         try {
             return target.getConstructor(paramClass).newInstance(param);
         } catch (InstantiationException e) {

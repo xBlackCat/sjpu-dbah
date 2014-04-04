@@ -10,7 +10,10 @@ import org.xblackcat.sjpu.storage.consumer.IRowSetConsumer;
 import org.xblackcat.sjpu.storage.consumer.SingletonConsumer;
 import org.xblackcat.sjpu.storage.converter.IToObjectConverter;
 import org.xblackcat.sjpu.storage.converter.StandardMappers;
+import org.xblackcat.sjpu.storage.skel.AMethodBuilder;
+import org.xblackcat.sjpu.storage.skel.BuilderUtils;
 import org.xblackcat.sjpu.storage.typemap.ITypeMap;
+import org.xblackcat.sjpu.storage.typemap.TypeMapper;
 
 import java.lang.reflect.Method;
 import java.util.Date;
@@ -25,7 +28,7 @@ import java.util.regex.Matcher;
  */
 class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
     public SqlAnnotatedBuilder(TypeMapper typeMapper, Map<Class<?>, Class<? extends IRowSetConsumer>> rowSetConsumers) {
-        super(typeMapper, rowSetConsumers);
+        super(Sql.class, typeMapper, rowSetConsumers);
     }
 
     @Override
@@ -72,7 +75,7 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
         final CtClass targetReturnType;
 
         final boolean generateWrapper = (type == QueryType.Select || type == QueryType.Insert) &&
-                                        (returnType.isPrimitive() && returnType != void.class);
+                (returnType.isPrimitive() && returnType != void.class);
 
         if (generateWrapper) {
             assert ctRealReturnType instanceof CtPrimitiveType;
@@ -89,7 +92,9 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
 
             if (info.getConsumeIndex() == null) {
                 if (returnType == void.class) {
-                    throw new StorageSetupException("Consumer should be specified in the method parameters for select method with void return type: " + m);
+                    throw new StorageSetupException(
+                            "Consumer should be specified in the method parameters for select method with void return type: " + m
+                    );
                 }
 
                 Class<? extends IRowSetConsumer> rowSetConsumer;
@@ -133,7 +138,7 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
             }
 
             if (returnType.isAssignableFrom(List.class) &&
-                !realReturnType.isAssignableFrom(List.class)) {
+                    !realReturnType.isAssignableFrom(List.class)) {
                 throw new StorageSetupException(
                         "Invalid return type for insert in method " + methodName + "(...): " + returnType.getName()
                 );
@@ -158,9 +163,9 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
             } else {
                 throw new StorageSetupException(
                         "Invalid return type for updater in method " +
-                        methodName +
-                        "(...): " +
-                        returnType.getName()
+                                methodName +
+                                "(...): " +
+                                returnType.getName()
                 );
             }
 
@@ -265,14 +270,14 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
 
         if (generateWrapper) {
             final String unwrapBody = "{\n" +
-                                      targetReturnType.getName() +
-                                      " value = " +
-                                      targetMethodName +
-                                      "($$);\n" +
-                                      "if (value == null) {\nthrow new java.lang.NullPointerException(\"Can't unwrap null value.\");\n}\n" +
-                                      "return value." +
-                                      BuilderUtils.getUnwrapMethodName(realReturnType) +
-                                      "();\n}";
+                    targetReturnType.getName() +
+                    " value = " +
+                    targetMethodName +
+                    "($$);\n" +
+                    "if (value == null) {\nthrow new java.lang.NullPointerException(\"Can't unwrap null value.\");\n}\n" +
+                    "return value." +
+                    BuilderUtils.getUnwrapMethodName(realReturnType) +
+                    "();\n}";
 
             final CtMethod coverMethod = CtNewMethod.make(
                     m.getModifiers() | Modifier.FINAL,

@@ -2,7 +2,9 @@ package org.xblackcat.sjpu.storage.impl;
 
 import org.xblackcat.sjpu.storage.*;
 import org.xblackcat.sjpu.storage.consumer.IRowSetConsumer;
+import org.xblackcat.sjpu.storage.skel.Definer;
 import org.xblackcat.sjpu.storage.typemap.IMapFactory;
+import org.xblackcat.sjpu.storage.typemap.TypeMapper;
 
 import java.sql.SQLException;
 import java.util.Map;
@@ -13,6 +15,8 @@ import java.util.Map;
  * @author xBlackCat
  */
 public class Storage extends AnAHFactory implements IStorage {
+    private static final Definer<IAH, IQueryHelper> DEFAULT_DEFINER = new Definer<IAH, IQueryHelper>(AnAH.class, IQueryHelper.class);
+
     public Storage(IQueryHelper queryHelper, IMapFactory<?, ?>... mappers) {
         this(queryHelper, StorageUtils.DEFAULT_ROWSET_CONSUMERS, mappers);
     }
@@ -22,13 +26,13 @@ public class Storage extends AnAHFactory implements IStorage {
             Map<Class<?>, Class<? extends IRowSetConsumer>> rowSetConsumers,
             IMapFactory<?, ?>... mappers
     ) {
-        this(queryHelper, rowSetConsumers, Definer.DEFAULT_DEFINER, mappers);
+        this(queryHelper, rowSetConsumers, DEFAULT_DEFINER, mappers);
     }
 
     private Storage(
             IQueryHelper queryHelper,
             Map<Class<?>, Class<? extends IRowSetConsumer>> rowSetConsumers,
-            Definer<AnAH, IQueryHelper> definer,
+            Definer<IAH, IQueryHelper> definer,
             IMapFactory<?, ?>... mappers
     ) {
         super(definer, queryHelper, new TypeMapper(definer.getPool(), mappers), rowSetConsumers);

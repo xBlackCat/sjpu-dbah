@@ -1,12 +1,11 @@
-package org.xblackcat.sjpu.storage.impl;
+package org.xblackcat.sjpu.storage.typemap;
 
 import javassist.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.xblackcat.sjpu.storage.StorageSetupException;
 import org.xblackcat.sjpu.storage.converter.IToObjectConverter;
-import org.xblackcat.sjpu.storage.typemap.IMapFactory;
-import org.xblackcat.sjpu.storage.typemap.ITypeMap;
+import org.xblackcat.sjpu.storage.skel.BuilderUtils;
 
 import java.lang.reflect.Field;
 import java.sql.ResultSet;
@@ -21,7 +20,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  * @author xBlackCat
  */
-class TypeMapper {
+public class TypeMapper {
     private final static AtomicInteger INSTANCES_AMOUNT = new AtomicInteger(0);
     private static final Log log = LogFactory.getLog(TypeMapper.class);
 
@@ -31,13 +30,13 @@ class TypeMapper {
     private final Map<Class<?>, ITypeMap<?, ?>> initializedMappers = new HashMap<>();
     private final ClassPool parentPool;
 
-    TypeMapper(ClassPool pool, IMapFactory<?, ?>... mappers) {
+    public TypeMapper(ClassPool pool, IMapFactory<?, ?>... mappers) {
         parentPool = pool;
         mapperId = INSTANCES_AMOUNT.getAndIncrement();
         this.mappers = mappers;
     }
 
-    Class<? extends IToObjectConverter<?>> getTypeMapperConverter(
+    public Class<? extends IToObjectConverter<?>> getTypeMapperConverter(
             Class<?> type
     ) throws NotFoundException, CannotCompileException, ReflectiveOperationException {
         ITypeMap<?, ?> typeMap = hasTypeMap(type);

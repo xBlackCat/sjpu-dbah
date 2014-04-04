@@ -2,10 +2,13 @@ package org.xblackcat.sjpu.storage.impl;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.xblackcat.sjpu.storage.IAH;
 import org.xblackcat.sjpu.storage.IBatch;
 import org.xblackcat.sjpu.storage.IQueryHelper;
 import org.xblackcat.sjpu.storage.StorageException;
 import org.xblackcat.sjpu.storage.consumer.IRowSetConsumer;
+import org.xblackcat.sjpu.storage.skel.Definer;
+import org.xblackcat.sjpu.storage.typemap.TypeMapper;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -25,7 +28,7 @@ class BatchHelper extends AnAHFactory implements IBatch {
     BatchHelper(
             IQueryHelper helper,
             int transactionIsolationLevel,
-            Definer<AnAH, IQueryHelper> definer,
+            Definer<IAH, IQueryHelper> definer,
             TypeMapper typeMapper,
             Map<Class<?>, Class<? extends IRowSetConsumer>> rowSetConsumers
     ) throws SQLException {

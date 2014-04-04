@@ -1,36 +1,34 @@
-package org.xblackcat.sjpu.storage.impl;
+package org.xblackcat.sjpu.storage.skel;
 
 import javassist.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.xblackcat.sjpu.storage.IAH;
 import org.xblackcat.sjpu.storage.StorageSetupException;
-import org.xblackcat.sjpu.storage.ann.Sql;
-import org.xblackcat.sjpu.storage.consumer.IRowSetConsumer;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.*;
 
 /**
- * 21.02.13 11:54
+ * 04.04.2014 16:10
  *
  * @author xBlackCat
  */
-class AHBuilder<B, P> implements IAHBuilder<P> {
+public class MethodBuilder<Base, Helper> implements IBuilder<Base, Helper> {
     private final Map<Class<? extends Annotation>, IMethodBuilder> methodBuilders = new LinkedHashMap<>();
+    private final Definer<Base, Helper> definer;
 
-    protected final Definer<B, P> definer;
     protected final Log log = LogFactory.getLog(getClass());
 
-    protected AHBuilder(TypeMapper typeMapper, Definer<B, P> definer, Map<Class<?>, Class<? extends IRowSetConsumer>> rowSetConsumers) {
+    public MethodBuilder(Definer<Base, Helper> definer, IMethodBuilder<?>... builders) {
         this.definer = definer;
 
-        methodBuilders.put(Sql.class, new SqlAnnotatedBuilder(typeMapper, rowSetConsumers));
+        for (IMethodBuilder<?> builder : builders) {
+            methodBuilders.put(builder.getAnnotationClass(), builder);
+        }
     }
 
-    @Override
-    public <T extends IAH> T build(Class<T> target, P helper) throws StorageSetupException {
+    public <T extends Base> T build(Class<T> target, Helper helper) throws StorageSetupException {
         try {
             // For the first: check if the implementation is exists
 
@@ -125,7 +123,7 @@ class AHBuilder<B, P> implements IAHBuilder<P> {
         implementNotPublicMethods(root, target.getSuperclass(), accessHelper, implementedMethods);
     }
 
-    private <T extends IAH> CtClass defineCtClassByInterface(Class<T> target) throws NotFoundException, CannotCompileException {
+    private <T extends Base> CtClass defineCtClassByInterface(Class<T> target) throws NotFoundException, CannotCompileException {
         ClassPool pool = BuilderUtils.getClassPool(definer.getPool(), target);
         pool.appendClassPath(new ClassClassPath(target));
 
@@ -138,7 +136,7 @@ class AHBuilder<B, P> implements IAHBuilder<P> {
         return accessHelper;
     }
 
-    private <T extends IAH> CtClass defineCtClassByAbstract(Class<T> target) throws NotFoundException, CannotCompileException {
+    private <T extends Base> CtClass defineCtClassByAbstract(Class<T> target) throws NotFoundException, CannotCompileException {
         ClassPool pool = BuilderUtils.getClassPool(definer.getPool(), target);
 
         CtClass thisClass = pool.get(target.getName());
@@ -190,11 +188,11 @@ class AHBuilder<B, P> implements IAHBuilder<P> {
         );
     }
 
-    private final static class ImplementedMethod {
+    protected final static class ImplementedMethod {
         private final String name;
         private final Class<?>[] parameters;
 
-        private ImplementedMethod(String name, Class<?>[] parameters) {
+        public ImplementedMethod(String name, Class<?>[] parameters) {
             this.name = name;
             this.parameters = parameters;
         }
