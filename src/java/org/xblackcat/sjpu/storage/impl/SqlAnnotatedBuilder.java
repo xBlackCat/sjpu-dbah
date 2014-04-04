@@ -24,8 +24,8 @@ import java.util.regex.Matcher;
  * @author xBlackCat
  */
 class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
-    public SqlAnnotatedBuilder(ClassPool pool, TypeMapper typeMapper, Map<Class<?>, Class<? extends IRowSetConsumer>> rowSetConsumers) {
-        super(typeMapper, pool, rowSetConsumers);
+    public SqlAnnotatedBuilder(TypeMapper typeMapper, Map<Class<?>, Class<? extends IRowSetConsumer>> rowSetConsumers) {
+        super(typeMapper, rowSetConsumers);
     }
 
     @Override
@@ -36,7 +36,7 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
 
         final Class<?> returnType = m.getReturnType();
 
-        ConverterInfo info = ConverterInfo.analyse(pool, typeMapper, rowSetConsumers.keySet(), m);
+        ConverterInfo info = ConverterInfo.analyse(typeMapper, rowSetConsumers.keySet(), m);
         final Class<?> realReturnType = info.getRealReturnType();
         Class<? extends IToObjectConverter<?>> converter = info.getConverter();
 
@@ -63,6 +63,8 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
         if (type == QueryType.Select && converter == null) {
             throw new StorageSetupException("Converter should be specified for SELECT statement in method " + m.toString());
         }
+
+        ClassPool pool = BuilderUtils.getClassPool(typeMapper.getParentPool(), realReturnType, m.getParameterTypes());
 
         CtClass ctRealReturnType = pool.get(returnType.getName());
         final StringBuilder body = new StringBuilder("{\n");
@@ -175,7 +177,7 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
         body.append(returnString);
         body.append("}");
 
-        addMethod(accessHelper, m, ctRealReturnType, targetReturnType, body.toString());
+        addMethod(accessHelper, m, ctRealReturnType, targetReturnType, body.toString(), pool);
     }
 
     protected void appendArgumentList(List<ConverterInfo.Arg> types, StringBuilder body) {
@@ -221,7 +223,8 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
             Method m,
             CtClass realReturnType,
             CtClass targetReturnType,
-            String methodBody
+            String methodBody,
+            ClassPool pool
     ) throws CannotCompileException, NotFoundException {
         final boolean generateWrapper = !targetReturnType.equals(realReturnType);
 

@@ -25,10 +25,11 @@ class BatchHelper extends AnAHFactory implements IBatch {
     BatchHelper(
             IQueryHelper helper,
             int transactionIsolationLevel,
+            Definer<AnAH, IQueryHelper> definer,
             TypeMapper typeMapper,
             Map<Class<?>, Class<? extends IRowSetConsumer>> rowSetConsumers
     ) throws SQLException {
-        super(new SingleConnectionQueryHelper(helper), typeMapper, rowSetConsumers);
+        super(definer, new SingleConnectionQueryHelper(helper), typeMapper, rowSetConsumers);
         final Connection con = queryHelper.getConnection();
         con.setAutoCommit(false);
         if (transactionIsolationLevel != -1) {

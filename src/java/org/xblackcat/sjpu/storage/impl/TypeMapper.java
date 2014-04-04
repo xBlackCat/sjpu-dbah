@@ -29,14 +29,15 @@ class TypeMapper {
     private final int mapperId;
 
     private final Map<Class<?>, ITypeMap<?, ?>> initializedMappers = new HashMap<>();
+    private final ClassPool parentPool;
 
-    public TypeMapper(IMapFactory<?, ?>... mappers) {
+    TypeMapper(ClassPool pool, IMapFactory<?, ?>... mappers) {
+        parentPool = pool;
         mapperId = INSTANCES_AMOUNT.getAndIncrement();
         this.mappers = mappers;
     }
 
     Class<? extends IToObjectConverter<?>> getTypeMapperConverter(
-            ClassPool pool,
             Class<?> type
     ) throws NotFoundException, CannotCompileException, ReflectiveOperationException {
         ITypeMap<?, ?> typeMap = hasTypeMap(type);
@@ -106,10 +107,19 @@ class TypeMapper {
 
         body.append("\n);\n}");
 
-        final CtClass baseCtClass = pool.get(getClass().getName());
+        return initializeToObjectConverter(getClass(), converterCN, body, returnType);
+    }
+
+    public Class<IToObjectConverter<?>> initializeToObjectConverter(
+            Class<?> containerClass,
+            String converterCN,
+            StringBuilder body,
+            Class<?> returnType
+    ) throws NotFoundException, CannotCompileException {
+        final CtClass baseCtClass = parentPool.get(containerClass.getName());
         final CtClass toObjectConverter = baseCtClass.makeNestedClass(converterCN, true);
 
-        toObjectConverter.addInterface(pool.get(IToObjectConverter.class.getName()));
+        toObjectConverter.addInterface(parentPool.get(IToObjectConverter.class.getName()));
 
         if (log.isTraceEnabled()) {
             log.trace(
@@ -123,10 +133,10 @@ class TypeMapper {
 
         final CtMethod method = CtNewMethod.make(
                 Modifier.PUBLIC | Modifier.FINAL,
-                pool.get(Object.class.getName()),
+                parentPool.get(Object.class.getName()),
                 "convert",
-                BuilderUtils.toCtClasses(pool, ResultSet.class),
-                BuilderUtils.toCtClasses(pool, SQLException.class),
+                BuilderUtils.toCtClasses(parentPool, ResultSet.class),
+                BuilderUtils.toCtClasses(parentPool, SQLException.class),
                 body.toString(),
                 toObjectConverter
         );
@@ -158,7 +168,7 @@ class TypeMapper {
                 @SuppressWarnings("unchecked")
                 final ITypeMap<?, ?> typeMap = typeMapper.mapper((Class) objClass);
 
-                ClassPool pool = ClassPool.getDefault();
+                ClassPool pool = BuilderUtils.getClassPool(parentPool, objClass);
                 final String className = nestedClassName(objClass);
 
                 try {
@@ -202,5 +212,9 @@ class TypeMapper {
 
     private String nestedClassName(Class<?> objClass) {
         return "TypeMap_" + BuilderUtils.asIdentifier(objClass) + "_" + mapperId + "_Instance";
+    }
+
+    public ClassPool getParentPool() {
+        return parentPool;
     }
 }

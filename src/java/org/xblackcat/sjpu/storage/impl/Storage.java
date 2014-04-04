@@ -22,7 +22,16 @@ public class Storage extends AnAHFactory implements IStorage {
             Map<Class<?>, Class<? extends IRowSetConsumer>> rowSetConsumers,
             IMapFactory<?, ?>... mappers
     ) {
-        super(queryHelper, new TypeMapper(mappers), rowSetConsumers);
+        this(queryHelper, rowSetConsumers, Definer.DEFAULT_DEFINER, mappers);
+    }
+
+    private Storage(
+            IQueryHelper queryHelper,
+            Map<Class<?>, Class<? extends IRowSetConsumer>> rowSetConsumers,
+            Definer<AnAH, IQueryHelper> definer,
+            IMapFactory<?, ?>... mappers
+    ) {
+        super(definer, queryHelper, new TypeMapper(definer.getPool(), mappers), rowSetConsumers);
     }
 
     @Override
@@ -33,7 +42,7 @@ public class Storage extends AnAHFactory implements IStorage {
     @Override
     public IBatch openTransaction(int transactionIsolationLevel) throws StorageException {
         try {
-            return new BatchHelper(queryHelper, transactionIsolationLevel, typeMapper, rowSetConsumers);
+            return new BatchHelper(queryHelper, transactionIsolationLevel, definer, typeMapper, rowSetConsumers);
         } catch (SQLException e) {
             throw new StorageException("An exception occurs while starting a transaction", e);
         }

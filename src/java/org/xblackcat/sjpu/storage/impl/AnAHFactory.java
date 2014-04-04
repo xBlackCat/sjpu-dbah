@@ -23,15 +23,22 @@ abstract class AnAHFactory implements IAHFactory {
     protected final IQueryHelper queryHelper;
     protected final TypeMapper typeMapper;
     protected final Map<Class<?>, Class<? extends IRowSetConsumer>> rowSetConsumers;
+    protected final Definer<AnAH, IQueryHelper> definer;
 
-    AnAHFactory(IQueryHelper queryHelper, TypeMapper typeMapper, Map<Class<?>, Class<? extends IRowSetConsumer>> rowSetConsumers) {
+    AnAHFactory(
+            Definer<AnAH, IQueryHelper> definer,
+            IQueryHelper queryHelper,
+            TypeMapper typeMapper,
+            Map<Class<?>, Class<? extends IRowSetConsumer>> rowSetConsumers
+    ) {
         if (rowSetConsumers == null) {
             throw new NullPointerException("RowSet consumer map can't be null");
         }
         this.queryHelper = queryHelper;
         this.typeMapper = typeMapper;
         this.rowSetConsumers = rowSetConsumers;
-        ahBuilder = new AHBuilder<>(typeMapper, new Definer<>(AnAH.class, IQueryHelper.class), rowSetConsumers);
+        this.definer = definer;
+        ahBuilder = new AHBuilder<>(typeMapper, this.definer, rowSetConsumers);
     }
 
     public <T extends IAH> T get(Class<T> clazz) throws StorageSetupException {

@@ -5,6 +5,5 @@ package org.xblackcat.sjpu.storage;
  *
  * @author xBlackCat
  */
-public interface IAHFactory {
-    <T extends IAH> T get(Class<T> clazz);
+public interface IAHFactory extends IFactory<IAH> {
 }

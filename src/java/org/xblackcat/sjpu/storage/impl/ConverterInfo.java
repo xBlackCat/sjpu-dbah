@@ -1,7 +1,6 @@
 package org.xblackcat.sjpu.storage.impl;
 
 import javassist.CannotCompileException;
-import javassist.ClassPool;
 import javassist.Modifier;
 import javassist.NotFoundException;
 import org.apache.commons.lang3.ArrayUtils;
@@ -45,7 +44,6 @@ class ConverterInfo {
     }
 
     static ConverterInfo analyse(
-            ClassPool pool,
             TypeMapper typeMapper,
             Set<Class<?>> rowSetConsumers,
             Method m
@@ -144,7 +142,7 @@ class ConverterInfo {
 
                 useFieldList = true;
             } else {
-                Class<? extends IToObjectConverter<?>> mapperConverter = typeMapper.getTypeMapperConverter(pool, realReturnType);
+                Class<? extends IToObjectConverter<?>> mapperConverter = typeMapper.getTypeMapperConverter(realReturnType);
                 if (mapperConverter != null) {
                     converter = mapperConverter;
                     useFieldList = false;
@@ -210,7 +208,7 @@ class ConverterInfo {
                         }
                     }
 
-                    converter = BuilderUtils.initializeConverter(pool, targetConstructor, typeMapper, suffix);
+                    converter = BuilderUtils.initializeConverter(targetConstructor, typeMapper, suffix);
                 }
             }
         }

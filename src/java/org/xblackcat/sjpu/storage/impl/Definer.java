@@ -1,6 +1,8 @@
 package org.xblackcat.sjpu.storage.impl;
 
+import javassist.*;
 import org.xblackcat.sjpu.storage.IAH;
+import org.xblackcat.sjpu.storage.IQueryHelper;
 import org.xblackcat.sjpu.storage.StorageSetupException;
 
 import java.lang.reflect.InvocationTargetException;
@@ -11,12 +13,19 @@ import java.lang.reflect.InvocationTargetException;
  * @author xBlackCat
  */
 class Definer<B, P> {
+    static final Definer<AnAH, IQueryHelper> DEFAULT_DEFINER = new Definer<>(AnAH.class, IQueryHelper.class);
+
     private final Class<B> baseClass;
     private final Class<P> paramClass;
+    private final ClassPool pool;
 
     protected Definer(Class<B> baseClass, Class<P> paramClass) {
         this.baseClass = baseClass;
         this.paramClass = paramClass;
+        pool = new ClassPool(true);
+        pool.appendClassPath(new ClassClassPath(IAH.class));
+        pool.appendClassPath(new ClassClassPath(baseClass));
+        pool.appendClassPath(new ClassClassPath(paramClass));
     }
 
     protected String getParamClassName() {
@@ -52,5 +61,18 @@ class Definer<B, P> {
             );
         }
 
+    }
+
+    public CtConstructor buildCtConstructor(CtClass accessHelper) throws NotFoundException, CannotCompileException {
+        return CtNewConstructor.make(
+                new CtClass[]{pool.get(getParamClassName())},
+                BuilderUtils.EMPTY_LIST,
+                "{ super($1); }",
+                accessHelper
+        );
+    }
+
+    public ClassPool getPool() {
+        return pool;
     }
 }

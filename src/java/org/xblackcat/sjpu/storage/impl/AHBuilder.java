@@ -20,17 +20,13 @@ import java.util.*;
 class AHBuilder<B, P> implements IAHBuilder<P> {
     private final Map<Class<? extends Annotation>, IMethodBuilder> methodBuilders = new LinkedHashMap<>();
 
-    protected final ClassPool pool;
     protected final Definer<B, P> definer;
     protected final Log log = LogFactory.getLog(getClass());
 
     protected AHBuilder(TypeMapper typeMapper, Definer<B, P> definer, Map<Class<?>, Class<? extends IRowSetConsumer>> rowSetConsumers) {
-        pool = ClassPool.getDefault();
         this.definer = definer;
 
-        methodBuilders.put(Sql.class, new SqlAnnotatedBuilder(pool, typeMapper, rowSetConsumers));
-//        methodBuilders.put(GetObject.class, new GetObjectAnnotatedBuilder(pool, typeMapper));
-//        methodBuilders.put(UpdateObject.class, new UpdateObjectAnnotatedBuilder(pool, typeMapper));
+        methodBuilders.put(Sql.class, new SqlAnnotatedBuilder(typeMapper, rowSetConsumers));
     }
 
     @Override
@@ -71,12 +67,7 @@ class AHBuilder<B, P> implements IAHBuilder<P> {
                 }
             }
 
-            final CtConstructor constructor = CtNewConstructor.make(
-                    new CtClass[]{pool.get(definer.getParamClassName())},
-                    BuilderUtils.EMPTY_LIST,
-                    "{ super($1); }",
-                    accessHelper
-            );
+            final CtConstructor constructor = definer.buildCtConstructor(accessHelper);
 
             accessHelper.addConstructor(constructor);
 
@@ -135,6 +126,9 @@ class AHBuilder<B, P> implements IAHBuilder<P> {
     }
 
     private <T extends IAH> CtClass defineCtClassByInterface(Class<T> target) throws NotFoundException, CannotCompileException {
+        ClassPool pool = BuilderUtils.getClassPool(definer.getPool(), target);
+        pool.appendClassPath(new ClassClassPath(target));
+
         CtClass baseClass = pool.get(target.getName());
         final CtClass accessHelper = baseClass.makeNestedClass(definer.getNestedClassName(), true);
         accessHelper.setModifiers(Modifier.PUBLIC | Modifier.FINAL);
@@ -145,6 +139,8 @@ class AHBuilder<B, P> implements IAHBuilder<P> {
     }
 
     private <T extends IAH> CtClass defineCtClassByAbstract(Class<T> target) throws NotFoundException, CannotCompileException {
+        ClassPool pool = BuilderUtils.getClassPool(definer.getPool(), target);
+
         CtClass thisClass = pool.get(target.getName());
         CtClass accessHelper = thisClass.makeNestedClass(definer.getNestedClassName(), true);
         accessHelper.setModifiers(Modifier.PUBLIC | Modifier.FINAL);

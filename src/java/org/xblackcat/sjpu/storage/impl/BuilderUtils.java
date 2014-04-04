@@ -14,14 +14,10 @@ import org.xblackcat.sjpu.storage.typemap.ITypeMap;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.math.BigDecimal;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Pattern;
 
 /**
@@ -37,40 +33,63 @@ class BuilderUtils {
 
     static final Pattern FIRST_WORD_SQL = Pattern.compile("(\\w+)(\\s|$)");
 
-    private static final Map<Class<?>, String> readDeclarations = new HashMap<>();
+    private static final Map<Class<?>, String> readDeclarations;
 
     static {
-        readDeclarations.put(long.class, "long value%1$d = $1.getLong(%1$d);\n");
-        readDeclarations.put(
+        Map<Class<?>, String> map = new HashMap<>();
+
+        // Integer types
+        map.put(long.class, "long value%1$d = $1.getLong(%1$d);\n");
+        map.put(
                 Long.class,
                 "long tmp%1$d = $1.getLong(%1$d);\njava.lang.Long value%1$d = $1.wasNull() ? null : java.lang.Long.valueOf(tmp%1$d);\n"
         );
-        readDeclarations.put(int.class, "int value%1$d = $1.getInt(%1$d);\n");
-        readDeclarations.put(
+        map.put(int.class, "int value%1$d = $1.getInt(%1$d);\n");
+        map.put(
                 Integer.class,
                 "int tmp%1$d = $1.getInt(%1$d);\njava.lang.Integer value%1$d = $1.wasNull() ? null : java.lang.Integer.valueOf(tmp%1$d);\n"
         );
-        readDeclarations.put(short.class, "short value%1$d = $1.getShort(%1$d);\n");
-        readDeclarations.put(
+        map.put(short.class, "short value%1$d = $1.getShort(%1$d);\n");
+        map.put(
                 Short.class,
                 "short tmp%1$d = $1.getShort(%1$d);\njava.lang.Short value%1$d = $1.wasNull() ? null : java.lang.Short.valueOf(tmp%1$d);\n"
         );
-        readDeclarations.put(byte.class, "byte value%1$d = $1.getByte(%1$d);\n");
-        readDeclarations.put(
+        map.put(byte.class, "byte value%1$d = $1.getByte(%1$d);\n");
+        map.put(
                 Byte.class,
                 "byte tmp%1$d = $1.getByte(%1$d);\njava.lang.Byte value%1$d = $1.wasNull() ? null : java.lang.Byte.valueOf(tmp%1$d);\n"
         );
-        readDeclarations.put(boolean.class, "boolean value%1$d = $1.getBoolean(%1$d);\n");
-        readDeclarations.put(
+
+        // Float types
+        map.put(double.class, "double value%1$d = $1.getDouble(%1$d);\n");
+        map.put(
+                Double.class,
+                "double tmp%1$d = $1.getDouble(%1$d);\njava.lang.Double value%1$d = $1.wasNull() ? null : java.lang.Double.valueOf(tmp%1$d);\n"
+        );
+        map.put(float.class, "float value%1$d = $1.getFloat(%1$d);\n");
+        map.put(
+                Float.class,
+                "float tmp%1$d = $1.getFloat(%1$d);\njava.lang.Float value%1$d = $1.wasNull() ? null : java.lang.Float.valueOf(tmp%1$d);\n"
+        );
+
+        // Boolean type
+        map.put(boolean.class, "boolean value%1$d = $1.getBoolean(%1$d);\n");
+        map.put(
                 Boolean.class,
                 "boolean tmp%1$d = $1.getBoolean(%1$d);\njava.lang.Boolean value%1$d = $1.wasNull() ? null : java.lang.Boolean.valueOf(tmp%1$d);\n"
         );
-        readDeclarations.put(byte[].class, "byte[] value%1$d = $1.getBytes(%1$d);\n");
-        readDeclarations.put(String.class, String.class.getName() + " value%1$d = $1.getString(%1$d);\n");
-        readDeclarations.put(
+
+        // Other types
+        map.put(byte[].class, "byte[] value%1$d = $1.getBytes(%1$d);\n");
+        map.put(String.class, String.class.getName() + " value%1$d = $1.getString(%1$d);\n");
+        map.put(
                 Date.class,
                 Date.class.getName() + " value%1$d = " + getName(StandardMappers.class) + ".timestampToDate($1.getTimestamp(%1$d));\n"
         );
+
+        synchronized (BuilderUtils.class) {
+            readDeclarations = Collections.unmodifiableMap(map);
+        }
     }
 
     public static void addStringifiedParameter(StringBuilder parameters, SetField filter) throws NoSuchMethodException {
@@ -330,7 +349,6 @@ class BuilderUtils {
 
     @SuppressWarnings("unchecked")
     protected static Class<IToObjectConverter<?>> initializeConverter(
-            ClassPool pool,
             Constructor<?> objectConstructor,
             TypeMapper typeMapper,
             String suffix
@@ -413,43 +431,30 @@ class BuilderUtils {
         body.append(newObject);
         body.append("\n);\n}");
 
-        final CtClass baseCtClass = pool.get(IToObjectConverter.class.getName());
-        final CtClass toObjectConverter = baseCtClass.makeNestedClass(converterCN, true);
-
-        toObjectConverter.addInterface(pool.get(IToObjectConverter.class.getName()));
-
-        if (log.isTraceEnabled()) {
-            log.trace(
-                    "Generated convert method " +
-                            returnType.getName() +
-                            " convert(ResultSet $1) throws SQLException " +
-                            body.toString()
-            );
-        }
-
-
-        final CtMethod method = CtNewMethod.make(
-                Modifier.PUBLIC | Modifier.FINAL,
-                pool.get(Object.class.getName()),
-                "convert",
-                toCtClasses(pool, ResultSet.class),
-                toCtClasses(pool, SQLException.class),
-                body.toString(),
-                toObjectConverter
-        );
-
-        toObjectConverter.addMethod(method);
-
-        if (log.isTraceEnabled()) {
-            log.trace("Initialize subclass with object converter instance");
-        }
-
-        final Class<IToObjectConverter<?>> converterClass = (Class<IToObjectConverter<?>>) toObjectConverter.toClass();
-        toObjectConverter.defrost();
-        return converterClass;
+        return typeMapper.initializeToObjectConverter(IToObjectConverter.class, converterCN, body, returnType);
     }
 
     public static String asIdentifier(Class<?> typeMap) {
         return StringUtils.replaceChars(getName(typeMap), '.', '_');
+    }
+
+    public static ClassPool getClassPool(ClassPool parent, Class<?> clazz, Class<?>... classes) {
+        ClassPool pool = new ClassPool(parent);
+
+        Set<ClassLoader> usedLoaders = new HashSet<>();
+        usedLoaders.add(ClassLoader.getSystemClassLoader());
+        usedLoaders.add(ClassPool.class.getClassLoader());
+
+        if (usedLoaders.add(clazz.getClassLoader())) {
+            pool.appendClassPath(new ClassClassPath(clazz));
+        }
+
+        for (Class<?> c : classes) {
+            if (usedLoaders.add(c.getClassLoader())) {
+                pool.appendClassPath(new ClassClassPath(c));
+            }
+        }
+
+        return pool;
     }
 }
