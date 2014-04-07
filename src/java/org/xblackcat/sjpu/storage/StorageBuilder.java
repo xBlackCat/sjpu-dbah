@@ -6,6 +6,7 @@ import org.xblackcat.sjpu.storage.connection.SimplePooledConnectionFactory;
 import org.xblackcat.sjpu.storage.consumer.IRowSetConsumer;
 import org.xblackcat.sjpu.storage.impl.QueryHelper;
 import org.xblackcat.sjpu.storage.impl.Storage;
+import org.xblackcat.sjpu.storage.typemap.DateMapper;
 import org.xblackcat.sjpu.storage.typemap.EnumToStringMapper;
 import org.xblackcat.sjpu.storage.typemap.IMapFactory;
 
@@ -25,7 +26,8 @@ public class StorageBuilder {
         IQueryHelper queryHelper = new QueryHelper(factory);
         Map<Class<?>, Class<? extends IRowSetConsumer>> consumers = StorageUtils.DEFAULT_ROWSET_CONSUMERS;
         IMapFactory<?, ?>[] mappers = new IMapFactory[]{
-                new EnumToStringMapper()
+                new EnumToStringMapper(),
+                new DateMapper()
         };
         return new Storage(queryHelper, consumers, mappers);
     }
