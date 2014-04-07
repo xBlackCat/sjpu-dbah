@@ -8,9 +8,7 @@ import org.xblackcat.sjpu.storage.converter.IToObjectConverter;
 import org.xblackcat.sjpu.storage.skel.BuilderUtils;
 
 import java.lang.reflect.Field;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Date;
+import java.sql.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -98,8 +96,12 @@ public class TypeMapper {
             body.append("$1.getBoolean(1)");
         } else if (byte[].class.equals(dbType)) {
             body.append("$1.getBytes(1)");
+        } else if (Time.class.equals(dbType)) {
+            body.append("$1.getTime(1)");
         } else if (Date.class.equals(dbType)) {
-            body.append("$1.getTimeStamp(1)");
+            body.append("$1.getDate(1)");
+        } else if (Timestamp.class.equals(dbType)) {
+            body.append("$1.Timestamp(1)");
         } else {
             throw new StorageSetupException("Can't process DB type " + dbType.getName());
         }

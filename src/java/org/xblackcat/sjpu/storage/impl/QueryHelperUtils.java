@@ -1,10 +1,7 @@
 package org.xblackcat.sjpu.storage.impl;
 
-import org.xblackcat.sjpu.storage.converter.StandardMappers;
-
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.Date;
 import java.util.regex.Matcher;
 
 /**
@@ -19,8 +16,6 @@ public class QueryHelperUtils {
             for (int i = 0; i < parameters.length; i++) {
                 if (parameters[i] instanceof Boolean) {
                     pstmt.setBoolean(i + 1, (Boolean) (parameters[i]));
-                } else if (parameters[i] instanceof Date) {
-                    pstmt.setTimestamp(i + 1, StandardMappers.dateToTimestamp((Date) parameters[i]));
                 } else {
                     pstmt.setObject(i + 1, parameters[i]);
                 }

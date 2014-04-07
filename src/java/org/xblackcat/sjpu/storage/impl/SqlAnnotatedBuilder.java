@@ -9,14 +9,12 @@ import org.xblackcat.sjpu.storage.consumer.IRowConsumer;
 import org.xblackcat.sjpu.storage.consumer.IRowSetConsumer;
 import org.xblackcat.sjpu.storage.consumer.SingletonConsumer;
 import org.xblackcat.sjpu.storage.converter.IToObjectConverter;
-import org.xblackcat.sjpu.storage.converter.StandardMappers;
 import org.xblackcat.sjpu.storage.skel.AMethodBuilder;
 import org.xblackcat.sjpu.storage.skel.BuilderUtils;
 import org.xblackcat.sjpu.storage.typemap.ITypeMap;
 import org.xblackcat.sjpu.storage.typemap.TypeMapper;
 
 import java.lang.reflect.Method;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -201,13 +199,6 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
                 if (mapperInstanceRef != null) {
                     body.append(mapperInstanceRef);
                     body.append(".forStore($args[");
-                    body.append(arg.idx);
-                    body.append("])");
-                } else if (Date.class.equals(type)) {
-                    body.append(BuilderUtils.getName(StandardMappers.class));
-                    body.append(".dateToTimestamp((");
-                    body.append(BuilderUtils.getName(Date.class));
-                    body.append(")$args[");
                     body.append(arg.idx);
                     body.append("])");
                 } else {

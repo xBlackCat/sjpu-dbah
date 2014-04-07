@@ -75,9 +75,19 @@ public class BuilderUtils {
         // Other types
         map.put(byte[].class, "byte[] value%1$d = $1.getBytes(%1$d);\n");
         map.put(String.class, String.class.getName() + " value%1$d = $1.getString(%1$d);\n");
+
+        // Time classes
         map.put(
-                Date.class,
-                Date.class.getName() + " value%1$d = " + getName(StandardMappers.class) + ".timestampToDate($1.getTimestamp(%1$d));\n"
+                java.sql.Time.class,
+                java.sql.Time.class.getName() + " value%1$d = $1.getTime(%1$d);\n"
+        );
+        map.put(
+                java.sql.Date.class,
+                java.sql.Date.class.getName() + " value%1$d = $1.getDate(%1$d);\n"
+        );
+        map.put(
+                java.sql.Timestamp.class,
+                java.sql.Timestamp.class.getName() + " value%1$d = $1.getTimestamp(%1$d);\n"
         );
 
         synchronized (BuilderUtils.class) {
@@ -211,9 +221,6 @@ public class BuilderUtils {
         }
         if (byte[].class.equals(realReturnType)) {
             return ToBytesConverter.class;
-        }
-        if (Date.class.equals(realReturnType)) {
-            return ToDateConverter.class;
         }
         if (double.class.equals(realReturnType) || Double.class.equals(realReturnType)) {
             return ToDoubleObjectConverter.class;
