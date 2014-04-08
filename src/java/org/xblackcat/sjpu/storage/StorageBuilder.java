@@ -23,13 +23,10 @@ import java.util.Map;
 public class StorageBuilder {
     public static IStorage defaultStorage(IDatabaseSettings settings) throws StorageException {
         IConnectionFactory factory = new SimplePooledConnectionFactory(settings);
-        IQueryHelper queryHelper = new QueryHelper(factory);
-        Map<Class<?>, Class<? extends IRowSetConsumer>> consumers = StorageUtils.DEFAULT_ROWSET_CONSUMERS;
-        IMapFactory<?, ?>[] mappers = new IMapFactory[]{
-                new EnumToStringMapper(),
-                new DateMapper()
-        };
-        return new Storage(queryHelper, consumers, mappers);
+
+        StorageBuilder builder = new StorageBuilder();
+        builder.setConnectionFactory(factory);
+        return builder.build();
     }
 
     private IConnectionFactory connectionFactory = null;
@@ -47,6 +44,7 @@ public class StorageBuilder {
         }
         if (defaultMappers) {
             mappers.add(new EnumToStringMapper());
+            mappers.add(new DateMapper());
         }
     }
 
