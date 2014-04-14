@@ -10,14 +10,14 @@ import org.xblackcat.sjpu.storage.StorageException;
 
 public abstract class AConnectionFactory implements IConnectionFactory {
     protected final Log log;
-    protected final IDatabaseSettings settings;
+    protected final IDBConfig settings;
 
-    AConnectionFactory(IDatabaseSettings settings) throws StorageException {
+    AConnectionFactory(IDBConfig settings) throws StorageException {
         log = LogFactory.getLog(getClass());
         this.settings = settings;
 
         try {
-            Class.forName(this.settings.getDbJdbcDriverClass()).newInstance();
+            Class.forName(this.settings.getDriver()).newInstance();
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
             throw new StorageException("Can not initialize JDBC driver.", e);
         }

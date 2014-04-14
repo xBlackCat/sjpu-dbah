@@ -11,15 +11,15 @@ import java.sql.SQLException;
  */
 
 public class SimpleConnectionFactory extends AConnectionFactory {
-    public SimpleConnectionFactory(IDatabaseSettings settings) throws StorageException {
+    public SimpleConnectionFactory(IDBConfig settings) throws StorageException {
         super(settings);
     }
 
     public Connection getConnection() throws SQLException {
         return DriverManager.getConnection(
-                settings.getDbConnectionUrlPattern(),
-                settings.getDbAccessUser(),
-                settings.getDbAccessPassword()
+                settings.getUrl(),
+                settings.getUser(),
+                settings.getPassword()
         );
     }
 

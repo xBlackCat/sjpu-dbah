@@ -1,12 +1,10 @@
 package org.xblackcat.sjpu.storage.impl;
 
-import org.h2.Driver;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.xblackcat.sjpu.storage.*;
 import org.xblackcat.sjpu.storage.ann.Sql;
-import org.xblackcat.sjpu.storage.connection.IDatabaseSettings;
 
 /**
  * 18.11.13 12:48
@@ -14,37 +12,11 @@ import org.xblackcat.sjpu.storage.connection.IDatabaseSettings;
  * @author xBlackCat
  */
 public class BatchTest {
-    private static IDatabaseSettings settings = new IDatabaseSettings() {
-        @Override
-        public String getDbJdbcDriverClass() {
-            return Driver.class.getName();
-        }
-
-        @Override
-        public String getDbConnectionUrlPattern() {
-            return "jdbc:h2:mem:db1";
-        }
-
-        @Override
-        public String getDbAccessUser() {
-            return null;
-        }
-
-        @Override
-        public String getDbAccessPassword() {
-            return null;
-        }
-
-        @Override
-        public int getDbPoolSize() {
-            return 10;
-        }
-    };
     private Storage storage;
 
     @Before
     public void setupDatabase() throws StorageException {
-        IQueryHelper helper = StorageUtils.buildQueryHelper(settings);
+        IQueryHelper helper = StorageUtils.buildQueryHelper(Config.TEST_DB_CONFIG);
         storage = new Storage(helper);
     }
 

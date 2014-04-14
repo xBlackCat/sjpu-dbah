@@ -1,6 +1,6 @@
 package org.xblackcat.sjpu.storage;
 
-import org.xblackcat.sjpu.storage.connection.IDatabaseSettings;
+import org.xblackcat.sjpu.storage.connection.IDBConfig;
 import org.xblackcat.sjpu.storage.connection.SimplePooledConnectionFactory;
 import org.xblackcat.sjpu.storage.consumer.IRowSetConsumer;
 import org.xblackcat.sjpu.storage.consumer.ToListConsumer;
@@ -26,7 +26,7 @@ public class StorageUtils {
     }
 
 
-    public static IQueryHelper buildQueryHelper(IDatabaseSettings settings) {
+    public static IQueryHelper buildQueryHelper(IDBConfig settings) {
         try {
             return new QueryHelper(new SimplePooledConnectionFactory(settings));
         } catch (StorageException e) {

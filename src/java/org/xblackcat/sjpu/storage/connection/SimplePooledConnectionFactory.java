@@ -23,18 +23,18 @@ public class SimplePooledConnectionFactory extends AConnectionFactory {
     private final String poolName;
     private final ObjectPool connectionPool;
 
-    public SimplePooledConnectionFactory(IDatabaseSettings settings) throws StorageException {
+    public SimplePooledConnectionFactory(IDBConfig settings) throws StorageException {
         super(settings);
 
         ConnectionFactory connectionFactory = new DriverManagerConnectionFactory(
-                this.settings.getDbConnectionUrlPattern(),
-                this.settings.getDbAccessUser(),
-                this.settings.getDbAccessPassword()
+                this.settings.getUrl(),
+                this.settings.getUser(),
+                this.settings.getPassword()
         );
 
         connectionPool = new GenericObjectPool<Object>(
                 null,
-                this.settings.getDbPoolSize(),
+                this.settings.getPoolSize(),
                 GenericObjectPool.WHEN_EXHAUSTED_BLOCK,
                 0,
                 13,
