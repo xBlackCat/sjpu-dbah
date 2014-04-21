@@ -8,6 +8,7 @@ import org.xblackcat.sjpu.storage.IQueryHelper;
 import org.xblackcat.sjpu.storage.StorageException;
 import org.xblackcat.sjpu.storage.consumer.IRowSetConsumer;
 import org.xblackcat.sjpu.storage.skel.Definer;
+import org.xblackcat.sjpu.storage.skel.IBuilder;
 import org.xblackcat.sjpu.storage.typemap.TypeMapper;
 
 import java.sql.Connection;
@@ -30,9 +31,11 @@ class BatchHelper extends AnAHFactory implements IBatch {
             int transactionIsolationLevel,
             Definer<IAH, IQueryHelper> definer,
             TypeMapper typeMapper,
-            Map<Class<?>, Class<? extends IRowSetConsumer>> rowSetConsumers
+            Map<Class<?>, Class<? extends IRowSetConsumer>> rowSetConsumers,
+            IBuilder<IAH, IQueryHelper> methodBuilder
     ) throws SQLException {
-        super(definer, new SingleConnectionQueryHelper(helper), typeMapper, rowSetConsumers);
+        super(definer, new SingleConnectionQueryHelper(helper), typeMapper, rowSetConsumers, methodBuilder);
+
         final Connection con = queryHelper.getConnection();
         con.setAutoCommit(false);
         if (transactionIsolationLevel != -1) {

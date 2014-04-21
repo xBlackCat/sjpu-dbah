@@ -3,6 +3,7 @@ package org.xblackcat.sjpu.storage.impl;
 import org.xblackcat.sjpu.storage.*;
 import org.xblackcat.sjpu.storage.consumer.IRowSetConsumer;
 import org.xblackcat.sjpu.storage.skel.Definer;
+import org.xblackcat.sjpu.storage.skel.MethodBuilder;
 import org.xblackcat.sjpu.storage.typemap.IMapFactory;
 import org.xblackcat.sjpu.storage.typemap.TypeMapper;
 
@@ -26,16 +27,30 @@ public class Storage extends AnAHFactory implements IStorage {
             Map<Class<?>, Class<? extends IRowSetConsumer>> rowSetConsumers,
             IMapFactory<?, ?>... mappers
     ) {
-        this(queryHelper, rowSetConsumers, DEFAULT_DEFINER, mappers);
+        this(
+                queryHelper,
+                rowSetConsumers,
+                DEFAULT_DEFINER,
+                new TypeMapper(DEFAULT_DEFINER.getPool(), mappers)
+        );
     }
 
     private Storage(
             IQueryHelper queryHelper,
             Map<Class<?>, Class<? extends IRowSetConsumer>> rowSetConsumers,
             Definer<IAH, IQueryHelper> definer,
-            IMapFactory<?, ?>... mappers
+            TypeMapper typeMapper
     ) {
-        super(definer, queryHelper, new TypeMapper(definer.getPool(), mappers), rowSetConsumers);
+        super(
+                definer,
+                queryHelper,
+                typeMapper,
+                rowSetConsumers,
+                new MethodBuilder<>(
+                        definer,
+                        new SqlAnnotatedBuilder(typeMapper, rowSetConsumers)
+                )
+        );
     }
 
     @Override
@@ -46,7 +61,7 @@ public class Storage extends AnAHFactory implements IStorage {
     @Override
     public IBatch openTransaction(int transactionIsolationLevel) throws StorageException {
         try {
-            return new BatchHelper(queryHelper, transactionIsolationLevel, definer, typeMapper, rowSetConsumers);
+            return new BatchHelper(queryHelper, transactionIsolationLevel, definer, typeMapper, rowSetConsumers, builder);
         } catch (SQLException e) {
             throw new StorageException("An exception occurs while starting a transaction", e);
         }
