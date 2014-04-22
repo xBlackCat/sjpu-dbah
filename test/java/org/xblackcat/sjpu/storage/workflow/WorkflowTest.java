@@ -6,6 +6,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.xblackcat.sjpu.storage.*;
 import org.xblackcat.sjpu.storage.consumer.IRowConsumer;
+import org.xblackcat.sjpu.storage.typemap.EnumToStringMapper;
 
 import java.net.URI;
 import java.util.List;
@@ -22,7 +23,12 @@ public class WorkflowTest {
     @Before
     public void setupDatabase() throws StorageException {
         IQueryHelper helper = StorageUtils.buildQueryHelper(Config.TEST_DB_CONFIG);
-        storage = new StorageBuilder().setQueryHelper(helper).addRowSetConsumer(int[].class, ArrayIntConsumer.class).build();
+        final StorageBuilder builder = new StorageBuilder();
+        builder.setQueryHelper(helper);
+        builder.addRowSetConsumer(int[].class, ArrayIntConsumer.class);
+        builder.addMapper(new EnumToStringMapper());
+        builder.addMapper(new UriTypeMap());
+        storage = builder.build();
 
         final IDBInitAH initAH = storage.get(IDBInitAH.class);
         initAH.init1();
@@ -188,7 +194,7 @@ public class WorkflowTest {
 
     @Test
     public void processDefinedClasses() throws StorageException {
-        final IUriTest uriTest = storage.get(IUriTest.class);
+        final IUriTestAH uriTest = storage.get(IUriTestAH.class);
 
         for (int i = 0; i < 10; i++) {
             URI uri = URI.create("http://example.org/test/" + i);

@@ -163,8 +163,8 @@
             <batchtest todir="${basedir}/report">
                 <formatter type="xml"/>
                 <fileset dir="${testoutput.dir}">
-                    <include name="**/*Test*"/>
-                    <exclude name="**/*Test*$*"/>
+                    <include name="**/*Test.*"/>
+                    <exclude name="**/*Test.*$*"/>
                 </fileset>
             </batchtest>
         </junit>

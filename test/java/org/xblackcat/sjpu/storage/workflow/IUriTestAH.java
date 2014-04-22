@@ -13,28 +13,28 @@ import java.util.List;
 *
 * @author xBlackCat
 */
-public interface IUriTest extends IAH {
-    @Sql("INSERT INTO \"uri\" (\"uri\") VALUES (?)")
+public interface IUriTestAH extends IAH {
+    @Sql("INSERT INTO uri (uri) VALUES (?)")
     int putUri(URI uri) throws StorageException;
 
     @Sql("SELECT\n" +
-                 "  \"uri\"\n" +
-                 "FROM \"uri\"\n" +
-                 "WHERE \"id\" = ?")
+                 "  uri\n" +
+                 "FROM uri\n" +
+                 "WHERE id = ?")
     URI get(int id) throws StorageException;
 
     @Sql("SELECT\n" +
-                 "  \"id\",\n" +
-                 "  \"uri\"\n" +
-                 "FROM \"uri\"\n" +
-                 "WHERE \"id\" = ?")
+                 "  id,\n" +
+                 "  uri\n" +
+                 "FROM uri\n" +
+                 "WHERE id = ?")
     @MapRowTo(Uri.class)
     IElement<URI> getElement(int id) throws StorageException;
 
     @Sql("SELECT\n" +
-                 "  \"id\",\n" +
-                 "  \"uri\"\n" +
-                 "FROM \"uri\"\n")
+                 "  id,\n" +
+                 "  uri\n" +
+                 "FROM uri\n")
 
     @MapRowTo(Uri.class)
     List<IElement<URI>> getList() throws StorageException;

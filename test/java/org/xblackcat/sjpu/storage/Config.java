@@ -9,5 +9,5 @@ import org.xblackcat.sjpu.storage.connection.DBConfig;
  * @author xBlackCat
  */
 public class Config {
-    public static final DBConfig TEST_DB_CONFIG = new DBConfig(Driver.class.getName(), "jdbc:h2:mem:db1", null, null, 10);
+    public static final DBConfig TEST_DB_CONFIG = new DBConfig(Driver.class.getName(), "jdbc:h2:mem:", null, null, 10);
 }
