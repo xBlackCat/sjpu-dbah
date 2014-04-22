@@ -11,7 +11,7 @@ import java.lang.annotation.Target;
  * @author xBlackCat
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD})
+@Target({ElementType.METHOD, ElementType.TYPE})
 public @interface MapRowTo {
     Class<?> value();
 }

@@ -7,6 +7,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.xblackcat.sjpu.storage.StorageSetupException;
 import org.xblackcat.sjpu.storage.ann.*;
 import org.xblackcat.sjpu.storage.consumer.IRowConsumer;
+import org.xblackcat.sjpu.storage.consumer.IRowSetConsumer;
 import org.xblackcat.sjpu.storage.converter.IToObjectConverter;
 import org.xblackcat.sjpu.storage.skel.BuilderUtils;
 import org.xblackcat.sjpu.storage.typemap.TypeMapper;
@@ -17,7 +18,7 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 /**
  * 17.12.13 16:45
@@ -47,7 +48,7 @@ class ConverterInfo {
 
     static ConverterInfo analyse(
             TypeMapper typeMapper,
-            Set<Class<?>> rowSetConsumers,
+            Map<Class<?>, Class<? extends IRowSetConsumer>> rowSetConsumers,
             Method m
     ) throws ReflectiveOperationException, NotFoundException, CannotCompileException {
         final Class<?> returnType = m.getReturnType();
@@ -76,7 +77,6 @@ class ConverterInfo {
         }
 
         final ToObjectConverter converterAnn = m.getAnnotation(ToObjectConverter.class);
-        final MapRowTo mapRowTo = m.getAnnotation(MapRowTo.class);
 
         if (converterAnn != null) {
             converter = converterAnn.value();
@@ -88,11 +88,17 @@ class ConverterInfo {
             realReturnType = converterMethod.getReturnType();
             useFieldList = true;
         } else {
+            MapRowTo mapRowTo = m.getAnnotation(MapRowTo.class);
+
             boolean hasRowSetConsumer = m.getAnnotation(RowSetConsumer.class) != null;
             if (!hasRowSetConsumer) {
-                for (Class<?> cl : rowSetConsumers) {
-                    if (cl.isAssignableFrom(returnType)) {
+                for (Map.Entry<Class<?>, Class<? extends IRowSetConsumer>> cl : rowSetConsumers.entrySet()) {
+                    if (cl.getKey().isAssignableFrom(returnType)) {
                         hasRowSetConsumer = true;
+
+                        if (mapRowTo == null) {
+                            mapRowTo = cl.getValue().getAnnotation(MapRowTo.class);
+                        }
                         break;
                     }
                 }
@@ -111,11 +117,11 @@ class ConverterInfo {
             } else {
                 realReturnType = mapRowTo.value();
                 if (consumerParamIdx == null &&
-                    !hasRowSetConsumer &&
-                    !returnType.isAssignableFrom(realReturnType)) {
+                        !hasRowSetConsumer &&
+                        !returnType.isAssignableFrom(realReturnType)) {
                     throw new StorageSetupException(
                             "Mapped object " + realReturnType.getName() + " can not be returned as " + returnType.getName() +
-                            " from method " + m
+                                    " from method " + m
                     );
                 }
             }
@@ -198,7 +204,7 @@ class ConverterInfo {
                     if (targetConstructor == null) {
                         throw new StorageSetupException(
                                 "Can't find a way to convert result row to object. Probably one of the following annotations should be used: " +
-                                Arrays.asList(ToObjectConverter.class, RowMap.class, MapRowTo.class)
+                                        Arrays.asList(ToObjectConverter.class, RowMap.class, MapRowTo.class)
                         );
                     }
 

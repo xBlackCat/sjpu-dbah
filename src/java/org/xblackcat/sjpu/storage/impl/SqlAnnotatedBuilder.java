@@ -37,7 +37,7 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
 
         final Class<?> returnType = m.getReturnType();
 
-        ConverterInfo info = ConverterInfo.analyse(typeMapper, rowSetConsumers.keySet(), m);
+        ConverterInfo info = ConverterInfo.analyse(typeMapper, rowSetConsumers, m);
         final Class<?> realReturnType = info.getRealReturnType();
         Class<? extends IToObjectConverter<?>> converter = info.getConverter();
 

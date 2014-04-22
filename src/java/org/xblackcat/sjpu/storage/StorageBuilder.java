@@ -48,20 +48,24 @@ public class StorageBuilder {
         }
     }
 
-    public void setConnectionFactory(IConnectionFactory connectionFactory) {
+    public StorageBuilder setConnectionFactory(IConnectionFactory connectionFactory) {
         this.connectionFactory = connectionFactory;
+        return this;
     }
 
-    public void setQueryHelper(IQueryHelper queryHelper) {
+    public StorageBuilder setQueryHelper(IQueryHelper queryHelper) {
         this.queryHelper = queryHelper;
+        return this;
     }
 
-    public void addRowSetConsumer(Class<?> returnClass, Class<? extends IRowSetConsumer> consumerClass) {
+    public StorageBuilder addRowSetConsumer(Class<?> returnClass, Class<? extends IRowSetConsumer> consumerClass) {
         consumers.put(returnClass, consumerClass);
+        return this;
     }
 
-    public void addMapper(IMapFactory<?, ?> typeMapper) {
+    public StorageBuilder addMapper(IMapFactory<?, ?> typeMapper) {
         mappers.add(typeMapper);
+        return this;
     }
 
     public IStorage build() {
