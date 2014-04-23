@@ -30,9 +30,9 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
     }
 
     @Override
-    public void buildMethod(
-            CtClass accessHelper, Method m, Sql annotation
-    ) throws NotFoundException, ReflectiveOperationException, CannotCompileException {
+    public void buildMethod(CtClass accessHelper, Method m) throws NotFoundException, ReflectiveOperationException, CannotCompileException {
+        final String sql = m.getAnnotation(getAnnotationClass()).value();
+
         final String methodName = m.getName();
 
         final Class<?> returnType = m.getReturnType();
@@ -41,7 +41,6 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
         final Class<?> realReturnType = info.getRealReturnType();
         Class<? extends IToObjectConverter<?>> converter = info.getConverter();
 
-        final String sql = annotation.value();
         final QueryType type;
         {
             final Matcher matcher = BuilderUtils.FIRST_WORD_SQL.matcher(sql);

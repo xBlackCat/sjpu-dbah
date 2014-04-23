@@ -48,7 +48,8 @@ public class Storage extends AnAHFactory implements IStorage {
                 rowSetConsumers,
                 new MethodBuilder<>(
                         definer,
-                        new SqlAnnotatedBuilder(typeMapper, rowSetConsumers)
+                        new SqlAnnotatedBuilder(typeMapper, rowSetConsumers),
+                        new DDLAnnotatedBuilder(typeMapper.getParentPool())
                 )
         );
     }

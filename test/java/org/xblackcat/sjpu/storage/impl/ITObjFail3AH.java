@@ -2,7 +2,7 @@ package org.xblackcat.sjpu.storage.impl;
 
 import org.xblackcat.sjpu.storage.IAH;
 import org.xblackcat.sjpu.storage.StorageException;
-import org.xblackcat.sjpu.storage.ann.RowMap;
+import org.xblackcat.sjpu.storage.ann.DDL;
 import org.xblackcat.sjpu.storage.ann.Sql;
 
 /**
@@ -10,9 +10,8 @@ import org.xblackcat.sjpu.storage.ann.Sql;
  *
  * @author xBlackCat
  */
-public interface ITObjFailAH extends IAH {
+public interface ITObjFail3AH extends IAH {
     @Sql("SELECT 1")
-    @RowMap({int.class, int.class})
-    FailData getException() throws StorageException;
-
+    @DDL("SET VAR=1")
+    NoDefaultData getException() throws StorageException;
 }

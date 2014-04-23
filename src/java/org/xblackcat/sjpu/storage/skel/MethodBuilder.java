@@ -160,32 +160,37 @@ public class MethodBuilder<Base, Helper> implements IBuilder<Base, Helper> {
             return;
         }
 
-        for (Map.Entry<Class<? extends Annotation>, IMethodBuilder> builder : methodBuilders.entrySet()) {
-            final Annotation annotation = m.getAnnotation(builder.getKey());
+        List<Class<? extends Annotation>> annotations = new ArrayList<>();
 
-            if (annotation != null) {
-                try {
-                    builder.getValue().buildMethod(accessHelper, m, annotation);
-                } catch (NotFoundException | CannotCompileException | ReflectiveOperationException e) {
-                    throw new StorageSetupException("Exception occurs while building method " + m, e);
-                } catch (StorageSetupException e) {
-                    final StorageSetupException ex = new StorageSetupException(
-                            "Exception occurs while building method " +
-                                    m +
-                                    ": " +
-                                    e.getMessage(), e.getCause()
-                    );
-                    ex.setStackTrace(e.getStackTrace());
-                    throw ex;
-                }
-
-                return;
+        for (Class<? extends Annotation> ann : methodBuilders.keySet()) {
+            if (m.isAnnotationPresent(ann)) {
+                annotations.add(ann);
             }
         }
 
-        throw new StorageSetupException(
-                "Method " + m + " should be annotated with one of the following annotations:  " + methodBuilders.keySet()
-        );
+        if (annotations.isEmpty()) {
+            throw new StorageSetupException(
+                    "Method " + m + " should be annotated with one of the following annotations:  " + methodBuilders.keySet()
+            );
+        }
+
+        if (annotations.size() > 1) {
+            throw new StorageSetupException(
+                    "Method " + m + " should be annotated with ONLY one of the following annotations:  " + methodBuilders.keySet()
+            );
+        }
+
+        try {
+            methodBuilders.get(annotations.get(0)).buildMethod(accessHelper, m);
+        } catch (NotFoundException | CannotCompileException | ReflectiveOperationException e) {
+            throw new StorageSetupException("Exception occurs while building method " + m, e);
+        } catch (StorageSetupException e) {
+            final StorageSetupException ex = new StorageSetupException(
+                    "Exception occurs while building method " + m + ": " + e.getMessage(), e.getCause()
+            );
+            ex.setStackTrace(e.getStackTrace());
+            throw ex;
+        }
     }
 
     protected final static class ImplementedMethod {

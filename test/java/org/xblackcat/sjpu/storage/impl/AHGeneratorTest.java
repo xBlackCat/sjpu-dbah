@@ -141,7 +141,7 @@ public class AHGeneratorTest {
         storage.get(ITObjAH.class);
 
         try {
-            storage.get(ITObjFailAH.class);
+            storage.get(ITObjFail1AH.class);
             Assert.fail("Exception expected");
         } catch (Exception e) {
             e.printStackTrace();
@@ -149,6 +149,13 @@ public class AHGeneratorTest {
 
         try {
             storage.get(ITObjFail2AH.class);
+            Assert.fail("Exception expected");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        try {
+            storage.get(ITObjFail3AH.class);
             Assert.fail("Exception expected");
         } catch (Exception e) {
             e.printStackTrace();

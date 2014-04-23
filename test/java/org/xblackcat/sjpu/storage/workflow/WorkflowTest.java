@@ -31,8 +31,7 @@ public class WorkflowTest {
         storage = builder.build();
 
         final IDBInitAH initAH = storage.get(IDBInitAH.class);
-        initAH.init1();
-        initAH.init2();
+        initAH.createDB();
     }
 
     @After
