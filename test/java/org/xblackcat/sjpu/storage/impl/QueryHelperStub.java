@@ -44,6 +44,11 @@ public class QueryHelperStub implements IQueryHelper {
     }
 
     @Override
+    public int update(String sql) throws StorageException {
+        return 0;
+    }
+
+    @Override
     public <T> T insert(IToObjectConverter<T> c, String sql, Object... parameters) throws StorageException {
         return null;
     }

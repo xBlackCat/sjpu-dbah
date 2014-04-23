@@ -51,12 +51,10 @@ class DDLAnnotatedBuilder implements IMethodBuilder<DDL> {
             );
         }
 
-        body.append("java.lang.Object[] empty = new java.lang.Object[0];\n");
-
         for (String sql : ddls) {
             body.append("helper.update(\"");
             body.append(StringEscapeUtils.escapeJava(sql));
-            body.append("\", empty);\n");
+            body.append("\");\n");
         }
 
         body.append("}");

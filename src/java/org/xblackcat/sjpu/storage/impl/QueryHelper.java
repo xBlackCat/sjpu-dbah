@@ -64,6 +64,19 @@ public final class QueryHelper implements IQueryHelper {
     }
 
     @Override
+    public int update(String ddl) throws StorageException {
+        try {
+            try (Connection con = connectionFactory.getConnection()) {
+                try (Statement st = con.createStatement()) {
+                    return st.executeUpdate(ddl);
+                }
+            }
+        } catch (SQLException e) {
+            throw new StorageException("Can not execute query " + QueryHelperUtils.constructDebugSQL(ddl), e);
+        }
+    }
+
+    @Override
     public <T> T insert(IToObjectConverter<T> c, String sql, Object... parameters) throws StorageException {
         try {
             try (Connection con = connectionFactory.getConnection()) {

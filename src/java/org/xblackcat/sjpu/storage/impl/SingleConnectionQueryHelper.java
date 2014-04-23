@@ -56,7 +56,6 @@ final class SingleConnectionQueryHelper implements IQueryHelper {
         }
     }
 
-
     @Override
     public <T> T insert(IToObjectConverter<T> c, String sql, Object... parameters) throws StorageException {
         try {
@@ -78,6 +77,17 @@ final class SingleConnectionQueryHelper implements IQueryHelper {
             }
         } catch (SQLException e) {
             throw new StorageException("Can not execute query " + QueryHelperUtils.constructDebugSQL(sql, parameters), e);
+        }
+    }
+
+    @Override
+    public int update(String ddl) throws StorageException {
+        try {
+            try (Statement st = con.createStatement()) {
+                return st.executeUpdate(ddl);
+            }
+        } catch (SQLException e) {
+            throw new StorageException("Can not execute query " + QueryHelperUtils.constructDebugSQL(ddl), e);
         }
     }
 

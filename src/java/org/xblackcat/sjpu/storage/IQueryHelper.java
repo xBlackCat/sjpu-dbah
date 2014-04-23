@@ -16,6 +16,8 @@ public interface IQueryHelper {
 
     int update(String sql, Object... parameters) throws StorageException;
 
+    int update(String ddl) throws StorageException;
+
     <T> T insert(IToObjectConverter<T> c, String sql, Object... parameters) throws StorageException;
 
     Connection getConnection() throws SQLException;
