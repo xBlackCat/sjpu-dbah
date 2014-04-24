@@ -1,6 +1,7 @@
 package org.xblackcat.sjpu.storage.impl;
 
 import javassist.*;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -43,12 +44,11 @@ class DDLAnnotatedBuilder implements IMethodBuilder<DDL> {
         }
 
         if (!returnType.equals(void.class)) {
-            throw new StorageSetupException(
-                    "Invalid return type for updater in method " +
-                            methodName +
-                            "(...): " +
-                            returnType.getName()
-            );
+            throw new StorageSetupException("Invalid return type for updater in method " + methodName + "(): " + returnType.getName());
+        }
+
+        if (ArrayUtils.isNotEmpty(m.getParameterTypes())) {
+            throw new StorageSetupException("DDL method " + methodName + " should be declared without parameters");
         }
 
         for (String sql : ddls) {
