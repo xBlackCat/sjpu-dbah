@@ -1,4 +1,4 @@
-package org.xblackcat.sjpu.storage.data;
+package org.xblackcat.sjpu.storage.converter.builder;
 
 /**
  * 25.04.2014 13:27

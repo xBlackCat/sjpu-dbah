@@ -9,6 +9,7 @@ import org.xblackcat.sjpu.storage.consumer.IRowConsumer;
 import org.xblackcat.sjpu.storage.consumer.IRowSetConsumer;
 import org.xblackcat.sjpu.storage.consumer.SingletonConsumer;
 import org.xblackcat.sjpu.storage.converter.IToObjectConverter;
+import org.xblackcat.sjpu.storage.converter.builder.ConverterInfo;
 import org.xblackcat.sjpu.storage.skel.AMethodBuilder;
 import org.xblackcat.sjpu.storage.skel.BuilderUtils;
 import org.xblackcat.sjpu.storage.typemap.ITypeMap;

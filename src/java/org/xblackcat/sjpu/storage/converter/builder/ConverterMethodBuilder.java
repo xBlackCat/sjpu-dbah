@@ -1,22 +1,12 @@
-package org.xblackcat.sjpu.storage.impl;
+package org.xblackcat.sjpu.storage.converter.builder;
 
-import javassist.CannotCompileException;
-import javassist.NotFoundException;
-import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.xblackcat.sjpu.storage.StorageSetupException;
-import org.xblackcat.sjpu.storage.ann.DefaultRowMap;
-import org.xblackcat.sjpu.storage.ann.MapRowTo;
-import org.xblackcat.sjpu.storage.ann.RowMap;
-import org.xblackcat.sjpu.storage.ann.ToObjectConverter;
-import org.xblackcat.sjpu.storage.converter.IToObjectConverter;
 import org.xblackcat.sjpu.storage.skel.BuilderUtils;
 import org.xblackcat.sjpu.storage.typemap.ITypeMap;
 import org.xblackcat.sjpu.storage.typemap.TypeMapper;
 
 import java.lang.reflect.Constructor;
-import java.util.Arrays;
+import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -26,9 +16,8 @@ import java.util.Map;
  *
  * @author xBlackCat
  */
-public class ConverterBuilder {
-    private static final Log log = LogFactory.getLog(ConverterBuilder.class);
-    private static final Map<Class<?>, String> readDeclarations;
+class ConverterMethodBuilder {
+    static final Map<Class<?>, String> READ_DECLARATIONS;
 
     static {
         Map<Class<?>, String> map = new HashMap<>();
@@ -77,6 +66,7 @@ public class ConverterBuilder {
         // Other types
         map.put(byte[].class, "byte[] value%1$d = $1.getBytes(%1$d);\n");
         map.put(String.class, String.class.getName() + " value%1$d = $1.getString(%1$d);\n");
+        map.put(BigDecimal.class, BigDecimal.class.getName() + " value%1$d = $1.getBigDecimal(%1$d);\n");
 
         // Time classes
         map.put(
@@ -93,7 +83,7 @@ public class ConverterBuilder {
         );
 
         synchronized (BuilderUtils.class) {
-            readDeclarations = Collections.unmodifiableMap(map);
+            READ_DECLARATIONS = Collections.unmodifiableMap(map);
         }
     }
 
@@ -102,111 +92,9 @@ public class ConverterBuilder {
     private int idx = 0;
     private int shift = 1;
 
-    public static Class<IToObjectConverter<?>> build(
-            TypeMapper typeMapper,
-            Class<?> realReturnType,
-            Class<?>[] signature
-    ) throws StorageSetupException, NotFoundException, CannotCompileException {
-        final Constructor<?>[] constructors = realReturnType.getConstructors();
-        Constructor<?> targetConstructor = null;
-        String suffix = "";
-
-        if (constructors.length == 1) {
-            targetConstructor = constructors[0];
-        } else {
-            Constructor<?> def = null;
-
-            int i = 0;
-            int constructorsLength = constructors.length;
-
-            while (i < constructorsLength) {
-                Constructor<?> c = constructors[i];
-                if (c.getAnnotation(DefaultRowMap.class) != null) {
-                    def = c;
-                    if (signature == null) {
-                        // No annotations so just use the constructor annotated as default map
-                        break;
-                    }
-                } else if (signature != null) {
-                    if (ArrayUtils.isEquals(signature, c.getParameterTypes())) {
-                        targetConstructor = c;
-                        suffix = String.valueOf(i);
-                        break;
-                    }
-                }
-                i++;
-            }
-
-            if (targetConstructor == null) {
-                if (signature == null) {
-                    targetConstructor = def;
-                    suffix = "Def";
-                } else {
-                    // Go deep check
-
-                    throw new StorageSetupException(
-                            "No constructor found in " + realReturnType.getName() + " with signature " + Arrays.asList(signature)
-                    );
-                }
-            }
-        }
-
-        if (targetConstructor == null) {
-            throw new StorageSetupException(
-                    "Can't find a way to convert result row to object. Probably one of the following annotations should be used: " +
-                            Arrays.asList(ToObjectConverter.class, RowMap.class, MapRowTo.class)
-            );
-        }
-
-        if (signature != null) {
-            if (!ArrayUtils.isEquals(signature, targetConstructor.getParameterTypes())) {
-                throw new StorageSetupException(
-                        "No constructor found in " + realReturnType.getName() + " with signature " + Arrays.asList(signature)
-                );
-            }
-        }
-
-        return new ConverterBuilder(typeMapper, targetConstructor).build(BuilderUtils.asIdentifier(realReturnType) + "Converter" + suffix);
-    }
-
-    protected ConverterBuilder(TypeMapper typeMapper, Constructor<?>... constructors) {
+    protected ConverterMethodBuilder(TypeMapper typeMapper, Constructor<?>... constructors) {
         this.typeMapper = typeMapper;
         this.constructors = constructors;
-    }
-
-    protected Class<IToObjectConverter<?>> build(String converterCN) throws StorageSetupException, NotFoundException, CannotCompileException {
-        Class<?> returnType = constructors[0].getDeclaringClass();
-        try {
-
-            if (log.isTraceEnabled()) {
-                log.trace("Check if the converter already exists for class " + returnType.getName());
-            }
-
-            final String converterFQN = IToObjectConverter.class.getName() + "$" + converterCN;
-            final Class<?> aClass = Class.forName(converterFQN);
-
-            if (IToObjectConverter.class.isAssignableFrom(aClass)) {
-                if (log.isTraceEnabled()) {
-                    log.trace("Converter class already exists: " + converterFQN);
-                }
-
-                @SuppressWarnings("unchecked")
-                final Class<IToObjectConverter<?>> converterClass = (Class<IToObjectConverter<?>>) aClass;
-                return converterClass;
-            } else {
-                throw new StorageSetupException(
-                        converterFQN + " class is already exists and it is not implements " + IToObjectConverter.class
-                );
-            }
-        } catch (ClassNotFoundException ignore) {
-            // Just build a new class
-        }
-
-        if (log.isTraceEnabled()) {
-            log.trace("Build converter class for class " + returnType.getName());
-        }
-
-        return typeMapper.initializeToObjectConverter(IToObjectConverter.class, converterCN, returnType, buildBody());
     }
 
     protected String buildBody() throws StorageSetupException {
@@ -239,7 +127,7 @@ public class ConverterBuilder {
                 dbType = typeMap.getDbType();
             }
 
-            String declarationLine = readDeclarations.get(dbType);
+            String declarationLine = READ_DECLARATIONS.get(dbType);
             if (declarationLine == null) {
                 if (shift >= constructors.length) {
                     throw new StorageSetupException("Can't process type " + dbType.getName());

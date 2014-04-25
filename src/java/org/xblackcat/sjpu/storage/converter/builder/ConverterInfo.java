@@ -1,8 +1,10 @@
-package org.xblackcat.sjpu.storage.impl;
+package org.xblackcat.sjpu.storage.converter.builder;
 
 import javassist.CannotCompileException;
 import javassist.Modifier;
 import javassist.NotFoundException;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.xblackcat.sjpu.storage.StorageSetupException;
 import org.xblackcat.sjpu.storage.ann.MapRowTo;
 import org.xblackcat.sjpu.storage.ann.RowMap;
@@ -25,7 +27,9 @@ import java.util.Map;
  *
  * @author xBlackCat
  */
-class ConverterInfo {
+public class ConverterInfo {
+    private static final Log log = LogFactory.getLog(ConverterInfo.class);
+
     private final Class<?> realReturnType;
     private final Class<? extends IToObjectConverter<?>> converter;
     private final Integer consumeIndex;
@@ -43,7 +47,7 @@ class ConverterInfo {
         this.argumentList = argumentList;
     }
 
-    static ConverterInfo analyse(
+    public static ConverterInfo analyse(
             TypeMapper typeMapper,
             Map<Class<?>, Class<? extends IRowSetConsumer>> rowSetConsumers,
             Method m
@@ -148,13 +152,63 @@ class ConverterInfo {
                 } else {
 
                     RowMap constructorSignature = m.getAnnotation(RowMap.class);
-                    final Class<?>[] signature = constructorSignature == null ? null : constructorSignature.value();
 
-                    converter = ConverterBuilder.build(typeMapper, realReturnType, signature);
+                    converter = buildConverter(typeMapper, realReturnType, constructorSignature);
                 }
             }
         }
         return new ConverterInfo(realReturnType, converter, consumerParamIdx, parameterTypes);
+    }
+
+    protected static Class<IToObjectConverter<?>> buildConverter(
+            TypeMapper typeMapper,
+            Class<?> realReturnType,
+            RowMap constructorSignature
+    ) throws NotFoundException, CannotCompileException {
+        final AnAnalyser analyser;
+        if (constructorSignature == null) {
+            analyser = new DefaultAnalyzer(typeMapper);
+        } else {
+            analyser = new SignatureFinder(typeMapper, constructorSignature.value());
+        }
+
+        final Info info = analyser.analyze(realReturnType);
+
+        final ConverterMethodBuilder builder = new ConverterMethodBuilder(typeMapper, info.reference);
+        final String bodyCode = builder.buildBody();
+
+        final String converterClassName = BuilderUtils.asIdentifier(realReturnType) + "Converter" + info.suffix;
+        try {
+
+            if (log.isTraceEnabled()) {
+                log.trace("Check if the converter already exists for class " + realReturnType.getName());
+            }
+
+            final String converterFQN = IToObjectConverter.class.getName() + "$" + converterClassName;
+            final Class<?> aClass = Class.forName(converterFQN);
+
+            if (IToObjectConverter.class.isAssignableFrom(aClass)) {
+                if (log.isTraceEnabled()) {
+                    log.trace("Converter class already exists: " + converterFQN);
+                }
+
+                @SuppressWarnings("unchecked")
+                final Class<IToObjectConverter<?>> converterClass = (Class<IToObjectConverter<?>>) aClass;
+                return converterClass;
+            } else {
+                throw new StorageSetupException(
+                        converterFQN + " class is already exists and it is not implements " + IToObjectConverter.class
+                );
+            }
+        } catch (ClassNotFoundException ignore) {
+            // Just build a new class
+        }
+
+        if (log.isTraceEnabled()) {
+            log.trace("Build converter class for class " + realReturnType.getName());
+        }
+
+        return typeMapper.initializeToObjectConverter(IToObjectConverter.class, converterClassName, realReturnType, bodyCode);
     }
 
     public Class<?> getRealReturnType() {
