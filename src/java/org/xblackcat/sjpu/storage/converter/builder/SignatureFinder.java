@@ -20,7 +20,7 @@ import java.util.Deque;
 class SignatureFinder extends AnAnalyser {
     private final Class<?>[] signature;
 
-    public SignatureFinder(TypeMapper typeMapper, @NotNull Class<?>... signature) {
+    public SignatureFinder(TypeMapper typeMapper, Class<?>... signature) {
         super(typeMapper);
         this.signature = signature;
     }
