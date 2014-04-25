@@ -10,6 +10,7 @@ import org.xblackcat.sjpu.storage.consumer.IRowConsumer;
 import org.xblackcat.sjpu.storage.consumer.IRowSetConsumer;
 import org.xblackcat.sjpu.storage.converter.IToObjectConverter;
 import org.xblackcat.sjpu.storage.skel.BuilderUtils;
+import org.xblackcat.sjpu.storage.skel.ConverterBuilder;
 import org.xblackcat.sjpu.storage.typemap.TypeMapper;
 
 import java.lang.reflect.Constructor;
@@ -28,20 +29,17 @@ import java.util.Map;
 class ConverterInfo {
     private final Class<?> realReturnType;
     private final Class<? extends IToObjectConverter<?>> converter;
-    private final boolean useFieldList;
     private final Integer consumeIndex;
     private final List<Arg> argumentList;
 
     ConverterInfo(
             Class<?> realReturnType,
             Class<? extends IToObjectConverter<?>> converter,
-            boolean useFieldList,
             Integer consumeIndex,
             List<Arg> argumentList
     ) {
         this.realReturnType = realReturnType;
         this.converter = converter;
-        this.useFieldList = useFieldList;
         this.consumeIndex = consumeIndex;
         this.argumentList = argumentList;
     }
@@ -53,7 +51,6 @@ class ConverterInfo {
     ) throws ReflectiveOperationException, NotFoundException, CannotCompileException {
         final Class<?> returnType = m.getReturnType();
         final Class<? extends IToObjectConverter<?>> converter;
-        final boolean useFieldList;
         final Class<?> realReturnType;
         Integer consumerParamIdx = null;
 
@@ -81,12 +78,11 @@ class ConverterInfo {
         if (converterAnn != null) {
             converter = converterAnn.value();
             if (converter.isInterface() || Modifier.isAbstract(converter.getModifiers())) {
-                throw new StorageSetupException("Converter should be implemented class");
+                throw new StorageSetupException("Converter should be non-abstract class");
             }
             final Method converterMethod = converter.getMethod("convert", ResultSet.class);
 
             realReturnType = converterMethod.getReturnType();
-            useFieldList = true;
         } else {
             MapRowTo mapRowTo = m.getAnnotation(MapRowTo.class);
 
@@ -141,86 +137,92 @@ class ConverterInfo {
 
             if (standardConverter != null) {
                 converter = standardConverter;
-                useFieldList = true;
             } else if (objectConverterAnn != null) {
                 converter = objectConverterAnn.value();
                 if (converter.isInterface() || Modifier.isAbstract(converter.getModifiers())) {
                     throw new StorageSetupException("Converter should be implemented class");
                 }
-
-                useFieldList = true;
             } else {
                 Class<? extends IToObjectConverter<?>> mapperConverter = typeMapper.getTypeMapperConverter(realReturnType);
                 if (mapperConverter != null) {
                     converter = mapperConverter;
-                    useFieldList = false;
                 } else {
-                    final Constructor<?>[] constructors = realReturnType.getConstructors();
-                    useFieldList = false;
-                    Constructor<?> targetConstructor = null;
-                    String suffix = "";
 
                     RowMap constructorSignature = m.getAnnotation(RowMap.class);
-                    final Class<?>[] classes = constructorSignature == null ? null : constructorSignature.value();
+                    final Class<?>[] signature = constructorSignature == null ? null : constructorSignature.value();
 
-                    if (constructors.length == 1) {
-                        targetConstructor = constructors[0];
-                    } else {
-                        Constructor<?> def = null;
-
-                        int i = 0;
-                        int constructorsLength = constructors.length;
-
-                        while (i < constructorsLength) {
-                            Constructor<?> c = constructors[i];
-                            if (c.getAnnotation(DefaultRowMap.class) != null) {
-                                def = c;
-                                if (classes == null) {
-                                    // No annotations so just use the constructor annotated as default map
-                                    break;
-                                }
-                            } else if (classes != null) {
-                                if (ArrayUtils.isEquals(classes, c.getParameterTypes())) {
-                                    targetConstructor = c;
-                                    suffix = String.valueOf(i);
-                                    break;
-                                }
-                            }
-                            i++;
-                        }
-
-                        if (targetConstructor == null) {
-                            if (classes != null) {
-                                throw new StorageSetupException(
-                                        "No constructor found in " + realReturnType.getName() + " with signature " + Arrays.asList(classes)
-                                );
-                            } else {
-                                targetConstructor = def;
-                                suffix = "Def";
-                            }
-                        }
-                    }
-
-                    if (targetConstructor == null) {
-                        throw new StorageSetupException(
-                                "Can't find a way to convert result row to object. Probably one of the following annotations should be used: " +
-                                        Arrays.asList(ToObjectConverter.class, RowMap.class, MapRowTo.class)
-                        );
-                    }
-
-                    if (classes != null) {
-                        if (!ArrayUtils.isEquals(classes, targetConstructor.getParameterTypes())) {
-                            throw new StorageSetupException(
-                                    "No constructor found in " + realReturnType.getName() + " with signature " + Arrays.asList(classes)
-                            );
-                        }
-                    }
-
-                    converter = BuilderUtils.initializeConverter(targetConstructor, typeMapper, suffix);
+                    converter = buildConverter(typeMapper, realReturnType, signature);
                 }
             }
         }
-        return new ConverterInfo(realReturnType, converter, useFieldList, consumerParamIdx, parameterTypes);
+        return new ConverterInfo(realReturnType, converter, consumerParamIdx, parameterTypes);
+    }
+
+    private static Class<? extends IToObjectConverter<?>> buildConverter(
+            TypeMapper typeMapper,
+            Class<?> realReturnType,
+            Class<?>[] signature
+    ) throws NotFoundException, CannotCompileException {
+        final Constructor<?>[] constructors = realReturnType.getConstructors();
+        Constructor<?> targetConstructor = null;
+        String suffix = "";
+
+        if (constructors.length == 1) {
+            targetConstructor = constructors[0];
+        } else {
+            Constructor<?> def = null;
+
+            int i = 0;
+            int constructorsLength = constructors.length;
+
+            while (i < constructorsLength) {
+                Constructor<?> c = constructors[i];
+                if (c.getAnnotation(DefaultRowMap.class) != null) {
+                    def = c;
+                    if (signature == null) {
+                        // No annotations so just use the constructor annotated as default map
+                        break;
+                    }
+                } else if (signature != null) {
+                    if (ArrayUtils.isEquals(signature, c.getParameterTypes())) {
+                        targetConstructor = c;
+                        suffix = String.valueOf(i);
+                        break;
+                    }
+                }
+                i++;
+            }
+
+            if (targetConstructor == null) {
+                if (signature == null) {
+                    targetConstructor = def;
+                    suffix = "Def";
+                } else {
+                    // Go deep check
+
+                    throw new StorageSetupException(
+                            "No constructor found in " + realReturnType.getName() + " with signature " + Arrays.asList(signature)
+                    );
+                }
+            }
+        }
+
+        if (targetConstructor == null) {
+            throw new StorageSetupException(
+                    "Can't find a way to convert result row to object. Probably one of the following annotations should be used: " +
+                            Arrays.asList(ToObjectConverter.class, RowMap.class, MapRowTo.class)
+            );
+        }
+
+        if (signature != null) {
+            if (!ArrayUtils.isEquals(signature, targetConstructor.getParameterTypes())) {
+                throw new StorageSetupException(
+                        "No constructor found in " + realReturnType.getName() + " with signature " + Arrays.asList(signature)
+                );
+            }
+        }
+
+        return new ConverterBuilder(typeMapper, targetConstructor).build(BuilderUtils.asIdentifier(realReturnType) + "Converter" + suffix);
     }
 
     public Class<?> getRealReturnType() {
@@ -229,10 +231,6 @@ class ConverterInfo {
 
     public Class<? extends IToObjectConverter<?>> getConverter() {
         return converter;
-    }
-
-    public boolean isUseFieldList() {
-        return useFieldList;
     }
 
     public Integer getConsumeIndex() {

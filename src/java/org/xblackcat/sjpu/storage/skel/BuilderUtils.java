@@ -6,12 +6,10 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.xblackcat.sjpu.storage.StorageSetupException;
 import org.xblackcat.sjpu.storage.converter.*;
-import org.xblackcat.sjpu.storage.typemap.ITypeMap;
-import org.xblackcat.sjpu.storage.typemap.TypeMapper;
 
-import java.lang.reflect.Constructor;
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
@@ -26,74 +24,6 @@ public class BuilderUtils {
 
     public static final Pattern FIRST_WORD_SQL = Pattern.compile("(\\w+)(\\s|$)");
 
-    private static final Map<Class<?>, String> readDeclarations;
-
-    static {
-        Map<Class<?>, String> map = new HashMap<>();
-
-        // Integer types
-        map.put(long.class, "long value%1$d = $1.getLong(%1$d);\n");
-        map.put(
-                Long.class,
-                "long tmp%1$d = $1.getLong(%1$d);\njava.lang.Long value%1$d = $1.wasNull() ? null : java.lang.Long.valueOf(tmp%1$d);\n"
-        );
-        map.put(int.class, "int value%1$d = $1.getInt(%1$d);\n");
-        map.put(
-                Integer.class,
-                "int tmp%1$d = $1.getInt(%1$d);\njava.lang.Integer value%1$d = $1.wasNull() ? null : java.lang.Integer.valueOf(tmp%1$d);\n"
-        );
-        map.put(short.class, "short value%1$d = $1.getShort(%1$d);\n");
-        map.put(
-                Short.class,
-                "short tmp%1$d = $1.getShort(%1$d);\njava.lang.Short value%1$d = $1.wasNull() ? null : java.lang.Short.valueOf(tmp%1$d);\n"
-        );
-        map.put(byte.class, "byte value%1$d = $1.getByte(%1$d);\n");
-        map.put(
-                Byte.class,
-                "byte tmp%1$d = $1.getByte(%1$d);\njava.lang.Byte value%1$d = $1.wasNull() ? null : java.lang.Byte.valueOf(tmp%1$d);\n"
-        );
-
-        // Float types
-        map.put(double.class, "double value%1$d = $1.getDouble(%1$d);\n");
-        map.put(
-                Double.class,
-                "double tmp%1$d = $1.getDouble(%1$d);\njava.lang.Double value%1$d = $1.wasNull() ? null : java.lang.Double.valueOf(tmp%1$d);\n"
-        );
-        map.put(float.class, "float value%1$d = $1.getFloat(%1$d);\n");
-        map.put(
-                Float.class,
-                "float tmp%1$d = $1.getFloat(%1$d);\njava.lang.Float value%1$d = $1.wasNull() ? null : java.lang.Float.valueOf(tmp%1$d);\n"
-        );
-
-        // Boolean type
-        map.put(boolean.class, "boolean value%1$d = $1.getBoolean(%1$d);\n");
-        map.put(
-                Boolean.class,
-                "boolean tmp%1$d = $1.getBoolean(%1$d);\njava.lang.Boolean value%1$d = $1.wasNull() ? null : java.lang.Boolean.valueOf(tmp%1$d);\n"
-        );
-
-        // Other types
-        map.put(byte[].class, "byte[] value%1$d = $1.getBytes(%1$d);\n");
-        map.put(String.class, String.class.getName() + " value%1$d = $1.getString(%1$d);\n");
-
-        // Time classes
-        map.put(
-                java.sql.Time.class,
-                java.sql.Time.class.getName() + " value%1$d = $1.getTime(%1$d);\n"
-        );
-        map.put(
-                java.sql.Date.class,
-                java.sql.Date.class.getName() + " value%1$d = $1.getDate(%1$d);\n"
-        );
-        map.put(
-                java.sql.Timestamp.class,
-                java.sql.Timestamp.class.getName() + " value%1$d = $1.getTimestamp(%1$d);\n"
-        );
-
-        synchronized (BuilderUtils.class) {
-            readDeclarations = Collections.unmodifiableMap(map);
-        }
-    }
 
     public static void initInsertReturn(
             ClassPool pool,
@@ -245,93 +175,6 @@ public class BuilderUtils {
         }
 
         return null;
-    }
-
-    @SuppressWarnings("unchecked")
-    public static Class<IToObjectConverter<?>> initializeConverter(
-            Constructor<?> objectConstructor,
-            TypeMapper typeMapper,
-            String suffix
-    ) throws NotFoundException, CannotCompileException {
-        Class<?> returnType = objectConstructor.getDeclaringClass();
-        final String converterCN = asIdentifier(returnType) + "Converter" + suffix;
-        try {
-
-            if (log.isTraceEnabled()) {
-                log.trace("Check if the converter already exists for class " + returnType.getName());
-            }
-
-            final String converterFQN = IToObjectConverter.class.getName() + "$" + converterCN;
-            final Class<?> aClass = Class.forName(converterFQN);
-
-            if (IToObjectConverter.class.isAssignableFrom(aClass)) {
-                if (log.isTraceEnabled()) {
-                    log.trace("Converter class already exists: " + converterFQN);
-                }
-                return (Class<IToObjectConverter<?>>) aClass;
-            } else {
-                throw new StorageSetupException(
-                        converterFQN + " class is already exists and it is not implements " + IToObjectConverter.class
-                );
-            }
-        } catch (ClassNotFoundException ignore) {
-            // Just build a new class
-        }
-
-        if (log.isTraceEnabled()) {
-            log.trace("Build converter class for class " + returnType.getName());
-        }
-
-        StringBuilder body = new StringBuilder("{\n");
-
-        StringBuilder newObject = new StringBuilder("\nreturn new ");
-        newObject.append(getName(returnType));
-        newObject.append("(\n");
-
-        final Class<?>[] parameterTypes = objectConstructor.getParameterTypes();
-        int i = 0;
-        int parameterTypesLength = parameterTypes.length;
-        while (i < parameterTypesLength) {
-            Class<?> type = parameterTypes[i];
-            i++;
-
-            final ITypeMap<?, ?> typeMap = typeMapper.hasTypeMap(type);
-            final Class<?> dbType;
-            if (typeMap == null) {
-                dbType = type;
-            } else {
-                dbType = typeMap.getDbType();
-            }
-
-            String declarationLine = readDeclarations.get(dbType);
-            if (declarationLine == null) {
-                throw new StorageSetupException("Can't process type " + dbType.getName());
-            }
-
-            body.append(String.format(declarationLine, i));
-
-            if (typeMap != null) {
-                newObject.append("(");
-                newObject.append(getName(type));
-                newObject.append(") ");
-                newObject.append(typeMapper.getTypeMapInstanceRef(type));
-                newObject.append(".forRead(");
-            }
-            newObject.append("value");
-            newObject.append(i);
-            if (typeMap != null) {
-                newObject.append(")");
-            }
-            newObject.append(",\n");
-        }
-
-        if (parameterTypesLength > 0) {
-            newObject.setLength(newObject.length() - 2);
-        }
-        body.append(newObject);
-        body.append("\n);\n}");
-
-        return typeMapper.initializeToObjectConverter(IToObjectConverter.class, converterCN, body, returnType);
     }
 
     public static String asIdentifier(Class<?> typeMap) {

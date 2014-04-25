@@ -108,14 +108,14 @@ public class TypeMapper {
 
         body.append("\n);\n}");
 
-        return initializeToObjectConverter(getClass(), converterCN, body, returnType);
+        return initializeToObjectConverter(getClass(), converterCN, returnType, body.toString());
     }
 
     public Class<IToObjectConverter<?>> initializeToObjectConverter(
             Class<?> containerClass,
             String converterCN,
-            StringBuilder body,
-            Class<?> returnType
+            Class<?> returnType,
+            String bodyCode
     ) throws NotFoundException, CannotCompileException {
         final CtClass baseCtClass = parentPool.get(containerClass.getName());
         final CtClass toObjectConverter = baseCtClass.makeNestedClass(converterCN, true);
@@ -127,7 +127,7 @@ public class TypeMapper {
                     "Generated convert method " +
                             returnType.getName() +
                             " convert(ResultSet $1) throws SQLException " +
-                            body.toString()
+                            bodyCode
             );
         }
 
@@ -138,7 +138,7 @@ public class TypeMapper {
                 "convert",
                 BuilderUtils.toCtClasses(parentPool, ResultSet.class),
                 BuilderUtils.toCtClasses(parentPool, SQLException.class),
-                body.toString(),
+                bodyCode,
                 toObjectConverter
         );
 
