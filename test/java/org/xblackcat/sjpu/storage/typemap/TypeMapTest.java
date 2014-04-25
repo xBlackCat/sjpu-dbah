@@ -1,6 +1,7 @@
 package org.xblackcat.sjpu.storage.typemap;
 
 import javassist.ClassPool;
+import org.junit.Test;
 import org.xblackcat.sjpu.storage.UriTypeMap;
 
 /**
@@ -16,4 +17,8 @@ public class TypeMapTest {
             new EnumToStringMapper(),
             new UriTypeMap()
     );
+
+    @Test
+    public void blank() {
+    }
 }
