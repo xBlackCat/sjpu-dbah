@@ -1,4 +1,4 @@
-package org.xblackcat.sjpu.storage.skel;
+package org.xblackcat.sjpu.storage.impl;
 
 import javassist.CannotCompileException;
 import javassist.NotFoundException;
@@ -11,6 +11,7 @@ import org.xblackcat.sjpu.storage.ann.MapRowTo;
 import org.xblackcat.sjpu.storage.ann.RowMap;
 import org.xblackcat.sjpu.storage.ann.ToObjectConverter;
 import org.xblackcat.sjpu.storage.converter.IToObjectConverter;
+import org.xblackcat.sjpu.storage.skel.BuilderUtils;
 import org.xblackcat.sjpu.storage.typemap.ITypeMap;
 import org.xblackcat.sjpu.storage.typemap.TypeMapper;
 
@@ -173,7 +174,7 @@ public class ConverterBuilder {
         this.constructors = constructors;
     }
 
-    public Class<IToObjectConverter<?>> build(String converterCN) throws StorageSetupException, NotFoundException, CannotCompileException {
+    protected Class<IToObjectConverter<?>> build(String converterCN) throws StorageSetupException, NotFoundException, CannotCompileException {
         Class<?> returnType = constructors[0].getDeclaringClass();
         try {
 

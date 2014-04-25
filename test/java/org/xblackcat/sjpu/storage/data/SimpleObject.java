@@ -1,4 +1,4 @@
-package org.xblackcat.sjpu.storage.skel;
+package org.xblackcat.sjpu.storage.data;
 
 import java.net.URI;
 import java.util.Date;

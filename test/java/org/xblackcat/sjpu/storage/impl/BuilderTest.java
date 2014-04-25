@@ -1,8 +1,10 @@
-package org.xblackcat.sjpu.storage.skel;
+package org.xblackcat.sjpu.storage.impl;
 
 import org.junit.Assert;
 import org.junit.Test;
 import org.xblackcat.sjpu.storage.StorageSetupException;
+import org.xblackcat.sjpu.storage.data.Complex1;
+import org.xblackcat.sjpu.storage.data.SimpleObject;
 import org.xblackcat.sjpu.storage.typemap.TypeMapTest;
 
 /**
@@ -26,7 +28,7 @@ public class BuilderTest {
                     "byte[] value2 = $1.getBytes(2);\n" +
                     "java.sql.Timestamp value3 = $1.getTimestamp(3);\n" +
                     "\n" +
-                    "return new org.xblackcat.sjpu.storage.skel.SimpleObject(\n" +
+                    "return new SimpleObject(\n" +
                     "value1,\n" +
                     "(java.net.URI) org.xblackcat.sjpu.storage.typemap.TypeMapper.TypeMap_java_net_URI_0_Instance.I.forRead(value2),\n" +
                     "(java.util.Date) org.xblackcat.sjpu.storage.typemap.TypeMapper.TypeMap_java_util_Date_0_Instance.I.forRead(value3)\n" +
@@ -50,9 +52,9 @@ public class BuilderTest {
                     "java.sql.Timestamp value4 = $1.getTimestamp(4);\n" +
                     "java.lang.String value5 = $1.getString(5);\n" +
                     "\n" +
-                    "return new org.xblackcat.sjpu.storage.skel.Complex1(\n" +
+                    "return new Complex1(\n" +
                     "value1,\n" +
-                    "new org.xblackcat.sjpu.storage.skel.SimpleObject(\n" +
+                    "new SimpleObject(\n" +
                     "value2,\n" +
                     "(java.net.URI) org.xblackcat.sjpu.storage.typemap.TypeMapper.TypeMap_java_net_URI_0_Instance.I.forRead(value3),\n" +
                     "(java.util.Date) org.xblackcat.sjpu.storage.typemap.TypeMapper.TypeMap_java_util_Date_0_Instance.I.forRead(value4)\n" +
