@@ -1,6 +1,5 @@
 package org.xblackcat.sjpu.storage.converter.builder;
 
-import org.jetbrains.annotations.NotNull;
 import org.xblackcat.sjpu.storage.StorageSetupException;
 import org.xblackcat.sjpu.storage.ann.MapRowTo;
 import org.xblackcat.sjpu.storage.ann.RowMap;
