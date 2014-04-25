@@ -1,13 +1,9 @@
 package org.xblackcat.sjpu.storage.skel;
 
-import javassist.ClassPool;
 import org.junit.Assert;
 import org.junit.Test;
 import org.xblackcat.sjpu.storage.StorageSetupException;
-import org.xblackcat.sjpu.storage.UriTypeMap;
-import org.xblackcat.sjpu.storage.typemap.DateMapper;
-import org.xblackcat.sjpu.storage.typemap.EnumToStringMapper;
-import org.xblackcat.sjpu.storage.typemap.TypeMapper;
+import org.xblackcat.sjpu.storage.typemap.TypeMapTest;
 
 /**
  * 25.04.2014 13:17
@@ -15,12 +11,15 @@ import org.xblackcat.sjpu.storage.typemap.TypeMapper;
  * @author xBlackCat
  */
 public class BuilderTest {
+
     @Test
     public void bodyBuild() {
         {
-            TypeMapper typeMapper = new TypeMapper(new ClassPool(true), new DateMapper(), new EnumToStringMapper(), new UriTypeMap());
 
-            final ConverterBuilder builder = new ConverterBuilder(typeMapper, SimpleObject.class.getConstructors()[0]);
+            final ConverterBuilder builder = new ConverterBuilder(
+                    TypeMapTest.TEST_TYPE_MAPPER,
+                    SimpleObject.class.getConstructors()[0]
+            );
 
             String expected = "{\n" +
                     "java.lang.String value1 = $1.getString(1);\n" +
@@ -38,10 +37,8 @@ public class BuilderTest {
         }
 
         {
-            TypeMapper typeMapper = new TypeMapper(new ClassPool(true), new DateMapper(), new EnumToStringMapper(), new UriTypeMap());
-
             final ConverterBuilder builder = new ConverterBuilder(
-                    typeMapper,
+                    TypeMapTest.TEST_TYPE_MAPPER,
                     Complex1.class.getConstructors()[0],
                     SimpleObject.class.getConstructors()[0]
             );
@@ -70,9 +67,11 @@ public class BuilderTest {
 
     @Test
     public void failedMapping() {
-        TypeMapper typeMapper = new TypeMapper(new ClassPool(true), new DateMapper(), new EnumToStringMapper(), new UriTypeMap());
+        final ConverterBuilder builder = new ConverterBuilder(
+                TypeMapTest.TEST_TYPE_MAPPER,
+                Complex1.class.getConstructors()[0]
+        );
 
-        final ConverterBuilder builder = new ConverterBuilder(typeMapper, Complex1.class.getConstructors()[0]);
         try {
             builder.buildBody();
             Assert.fail("Exception expected");

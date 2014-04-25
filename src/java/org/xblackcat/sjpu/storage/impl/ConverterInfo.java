@@ -3,9 +3,11 @@ package org.xblackcat.sjpu.storage.impl;
 import javassist.CannotCompileException;
 import javassist.Modifier;
 import javassist.NotFoundException;
-import org.apache.commons.lang3.ArrayUtils;
 import org.xblackcat.sjpu.storage.StorageSetupException;
-import org.xblackcat.sjpu.storage.ann.*;
+import org.xblackcat.sjpu.storage.ann.MapRowTo;
+import org.xblackcat.sjpu.storage.ann.RowMap;
+import org.xblackcat.sjpu.storage.ann.RowSetConsumer;
+import org.xblackcat.sjpu.storage.ann.ToObjectConverter;
 import org.xblackcat.sjpu.storage.consumer.IRowConsumer;
 import org.xblackcat.sjpu.storage.consumer.IRowSetConsumer;
 import org.xblackcat.sjpu.storage.converter.IToObjectConverter;
@@ -13,11 +15,9 @@ import org.xblackcat.sjpu.storage.skel.BuilderUtils;
 import org.xblackcat.sjpu.storage.skel.ConverterBuilder;
 import org.xblackcat.sjpu.storage.typemap.TypeMapper;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.sql.ResultSet;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -151,78 +151,11 @@ class ConverterInfo {
                     RowMap constructorSignature = m.getAnnotation(RowMap.class);
                     final Class<?>[] signature = constructorSignature == null ? null : constructorSignature.value();
 
-                    converter = buildConverter(typeMapper, realReturnType, signature);
+                    converter = ConverterBuilder.build(typeMapper, realReturnType, signature);
                 }
             }
         }
         return new ConverterInfo(realReturnType, converter, consumerParamIdx, parameterTypes);
-    }
-
-    private static Class<? extends IToObjectConverter<?>> buildConverter(
-            TypeMapper typeMapper,
-            Class<?> realReturnType,
-            Class<?>[] signature
-    ) throws NotFoundException, CannotCompileException {
-        final Constructor<?>[] constructors = realReturnType.getConstructors();
-        Constructor<?> targetConstructor = null;
-        String suffix = "";
-
-        if (constructors.length == 1) {
-            targetConstructor = constructors[0];
-        } else {
-            Constructor<?> def = null;
-
-            int i = 0;
-            int constructorsLength = constructors.length;
-
-            while (i < constructorsLength) {
-                Constructor<?> c = constructors[i];
-                if (c.getAnnotation(DefaultRowMap.class) != null) {
-                    def = c;
-                    if (signature == null) {
-                        // No annotations so just use the constructor annotated as default map
-                        break;
-                    }
-                } else if (signature != null) {
-                    if (ArrayUtils.isEquals(signature, c.getParameterTypes())) {
-                        targetConstructor = c;
-                        suffix = String.valueOf(i);
-                        break;
-                    }
-                }
-                i++;
-            }
-
-            if (targetConstructor == null) {
-                if (signature == null) {
-                    targetConstructor = def;
-                    suffix = "Def";
-                } else {
-                    // Go deep check
-
-                    throw new StorageSetupException(
-                            "No constructor found in " + realReturnType.getName() + " with signature " + Arrays.asList(signature)
-                    );
-                }
-            }
-        }
-
-        if (targetConstructor == null) {
-            throw new StorageSetupException(
-                    "Can't find a way to convert result row to object. Probably one of the following annotations should be used: " +
-                            Arrays.asList(ToObjectConverter.class, RowMap.class, MapRowTo.class)
-            );
-        }
-
-        if (signature != null) {
-            if (!ArrayUtils.isEquals(signature, targetConstructor.getParameterTypes())) {
-                throw new StorageSetupException(
-                        "No constructor found in " + realReturnType.getName() + " with signature " + Arrays.asList(signature)
-                );
-            }
-        }
-
-        return new ConverterBuilder(typeMapper, targetConstructor).build(BuilderUtils.asIdentifier(realReturnType) + "Converter" + suffix);
     }
 
     public Class<?> getRealReturnType() {

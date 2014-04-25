@@ -2,14 +2,20 @@ package org.xblackcat.sjpu.storage.skel;
 
 import javassist.CannotCompileException;
 import javassist.NotFoundException;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.xblackcat.sjpu.storage.StorageSetupException;
+import org.xblackcat.sjpu.storage.ann.DefaultRowMap;
+import org.xblackcat.sjpu.storage.ann.MapRowTo;
+import org.xblackcat.sjpu.storage.ann.RowMap;
+import org.xblackcat.sjpu.storage.ann.ToObjectConverter;
 import org.xblackcat.sjpu.storage.converter.IToObjectConverter;
 import org.xblackcat.sjpu.storage.typemap.ITypeMap;
 import org.xblackcat.sjpu.storage.typemap.TypeMapper;
 
 import java.lang.reflect.Constructor;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -95,7 +101,74 @@ public class ConverterBuilder {
     private int idx = 0;
     private int shift = 1;
 
-    public ConverterBuilder(TypeMapper typeMapper, Constructor<?>... constructors) {
+    public static Class<IToObjectConverter<?>> build(
+            TypeMapper typeMapper,
+            Class<?> realReturnType,
+            Class<?>[] signature
+    ) throws StorageSetupException, NotFoundException, CannotCompileException {
+        final Constructor<?>[] constructors = realReturnType.getConstructors();
+        Constructor<?> targetConstructor = null;
+        String suffix = "";
+
+        if (constructors.length == 1) {
+            targetConstructor = constructors[0];
+        } else {
+            Constructor<?> def = null;
+
+            int i = 0;
+            int constructorsLength = constructors.length;
+
+            while (i < constructorsLength) {
+                Constructor<?> c = constructors[i];
+                if (c.getAnnotation(DefaultRowMap.class) != null) {
+                    def = c;
+                    if (signature == null) {
+                        // No annotations so just use the constructor annotated as default map
+                        break;
+                    }
+                } else if (signature != null) {
+                    if (ArrayUtils.isEquals(signature, c.getParameterTypes())) {
+                        targetConstructor = c;
+                        suffix = String.valueOf(i);
+                        break;
+                    }
+                }
+                i++;
+            }
+
+            if (targetConstructor == null) {
+                if (signature == null) {
+                    targetConstructor = def;
+                    suffix = "Def";
+                } else {
+                    // Go deep check
+
+                    throw new StorageSetupException(
+                            "No constructor found in " + realReturnType.getName() + " with signature " + Arrays.asList(signature)
+                    );
+                }
+            }
+        }
+
+        if (targetConstructor == null) {
+            throw new StorageSetupException(
+                    "Can't find a way to convert result row to object. Probably one of the following annotations should be used: " +
+                            Arrays.asList(ToObjectConverter.class, RowMap.class, MapRowTo.class)
+            );
+        }
+
+        if (signature != null) {
+            if (!ArrayUtils.isEquals(signature, targetConstructor.getParameterTypes())) {
+                throw new StorageSetupException(
+                        "No constructor found in " + realReturnType.getName() + " with signature " + Arrays.asList(signature)
+                );
+            }
+        }
+
+        return new ConverterBuilder(typeMapper, targetConstructor).build(BuilderUtils.asIdentifier(realReturnType) + "Converter" + suffix);
+    }
+
+    protected ConverterBuilder(TypeMapper typeMapper, Constructor<?>... constructors) {
         this.typeMapper = typeMapper;
         this.constructors = constructors;
     }
@@ -115,8 +188,10 @@ public class ConverterBuilder {
                 if (log.isTraceEnabled()) {
                     log.trace("Converter class already exists: " + converterFQN);
                 }
-                //noinspection unchecked
-                return (Class<IToObjectConverter<?>>) aClass;
+
+                @SuppressWarnings("unchecked")
+                final Class<IToObjectConverter<?>> converterClass = (Class<IToObjectConverter<?>>) aClass;
+                return converterClass;
             } else {
                 throw new StorageSetupException(
                         converterFQN + " class is already exists and it is not implements " + IToObjectConverter.class

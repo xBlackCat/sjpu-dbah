@@ -29,8 +29,13 @@ public class TypeMapper {
     private final ClassPool parentPool;
 
     public TypeMapper(ClassPool pool, IMapFactory<?, ?>... mappers) {
+        this(pool, INSTANCES_AMOUNT.getAndIncrement(), mappers);
+    }
+
+    // For tests only
+    protected TypeMapper(ClassPool pool, int id, IMapFactory<?, ?>... mappers) {
         parentPool = pool;
-        mapperId = INSTANCES_AMOUNT.getAndIncrement();
+        mapperId = id;
         this.mappers = mappers;
     }
 
