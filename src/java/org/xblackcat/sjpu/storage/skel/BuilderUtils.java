@@ -132,11 +132,15 @@ public class BuilderUtils {
         int classesLength = classes.length;
 
         while (i < classesLength) {
-            ctClasses[i] = pool.get(classes[i].getName());
+            ctClasses[i] = pool.get(getName(classes[i]));
             i++;
         }
 
         return ctClasses;
+    }
+
+    public static CtClass toCtClass(ClassPool pool, Class<?> clazz) throws NotFoundException {
+        return pool.get(getName(clazz));
     }
 
     public static Class<? extends IToObjectConverter<?>> checkStandardClassConverter(Class<?> realReturnType) {
