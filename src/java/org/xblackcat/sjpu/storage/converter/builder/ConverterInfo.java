@@ -92,7 +92,7 @@ public class ConverterInfo {
             boolean hasRowSetConsumer = m.getAnnotation(RowSetConsumer.class) != null;
             if (!hasRowSetConsumer) {
                 for (Map.Entry<Class<?>, Class<? extends IRowSetConsumer>> cl : rowSetConsumers.entrySet()) {
-                    if (cl.getKey().isAssignableFrom(returnType)) {
+                    if (cl.getKey().equals(returnType)) {
                         hasRowSetConsumer = true;
 
                         if (mapRowTo == null) {

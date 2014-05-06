@@ -31,8 +31,7 @@ public abstract class AMethodBuilder<T extends Annotation> implements IMethodBui
 
     protected Class<? extends IRowSetConsumer> hasRowSetConsumer(Class<?> returnType, Class<?> realReturnType) {
         for (Map.Entry<Class<?>, Class<? extends IRowSetConsumer>> e : rowSetConsumers.entrySet()) {
-            if (returnType.isAssignableFrom(e.getKey()) &&
-                    !realReturnType.isAssignableFrom(e.getKey())) {
+            if (returnType.equals(e.getKey()) && !realReturnType.isAssignableFrom(e.getKey())) {
                 return e.getValue();
             }
         }

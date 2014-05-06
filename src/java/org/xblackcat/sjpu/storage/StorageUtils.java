@@ -3,6 +3,7 @@ package org.xblackcat.sjpu.storage;
 import org.xblackcat.sjpu.storage.connection.IDBConfig;
 import org.xblackcat.sjpu.storage.connection.SimplePooledConnectionFactory;
 import org.xblackcat.sjpu.storage.consumer.IRowSetConsumer;
+import org.xblackcat.sjpu.storage.consumer.ToEnumSetConsumer;
 import org.xblackcat.sjpu.storage.consumer.ToListConsumer;
 import org.xblackcat.sjpu.storage.consumer.ToSetConsumer;
 import org.xblackcat.sjpu.storage.impl.QueryHelper;
@@ -21,6 +22,7 @@ public class StorageUtils {
         Map<Class<?>, Class<? extends IRowSetConsumer>> map = new HashMap<>();
         map.put(List.class, ToListConsumer.class);
         map.put(Set.class, ToSetConsumer.class);
+        map.put(EnumSet.class, ToEnumSetConsumer.class);
 
         DEFAULT_ROWSET_CONSUMERS = Collections.unmodifiableMap(map);
     }

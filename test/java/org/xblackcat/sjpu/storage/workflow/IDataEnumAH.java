@@ -7,6 +7,7 @@ import org.xblackcat.sjpu.storage.ann.RowSetConsumer;
 import org.xblackcat.sjpu.storage.ann.Sql;
 import org.xblackcat.sjpu.storage.consumer.IRowConsumer;
 
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -56,6 +57,12 @@ public interface IDataEnumAH extends IAH {
                  "FROM list")
     @MapRowTo(ElementNumber.class)
     Set<ElementNumber> getSetElement() throws StorageException;
+
+    @Sql("SELECT\n" +
+                 "  name\n" +
+                 "FROM list")
+    @MapRowTo(Numbers.class)
+    EnumSet<Numbers> getEnumSetElement() throws StorageException;
 
     @Sql("SELECT\n" +
                  "  id, name\n" +

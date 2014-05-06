@@ -15,6 +15,7 @@ import org.xblackcat.sjpu.storage.skel.BuilderUtils;
 import org.xblackcat.sjpu.storage.typemap.ITypeMap;
 import org.xblackcat.sjpu.storage.typemap.TypeMapper;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
@@ -109,7 +110,13 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
                 body.append(BuilderUtils.getName(IRowSetConsumer.class));
                 body.append(" consumer = new ");
                 body.append(BuilderUtils.getName(rowSetConsumer));
-                body.append("()");
+                if (hasClassParameter(rowSetConsumer)) {
+                    body.append("(");
+                    body.append(BuilderUtils.getName(realReturnType));
+                    body.append(".class)");
+                } else {
+                    body.append("()");
+                }
 
                 returnString = "return (" + BuilderUtils.getName(targetReturnType) + ") consumer.getRowsHolder();\n";
             } else {
@@ -181,6 +188,27 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
         body.append("}");
 
         addMethod(accessHelper, m, ctRealReturnType, targetReturnType, body.toString(), pool);
+    }
+
+    private boolean hasClassParameter(Class<? extends IRowSetConsumer> consumer) throws StorageSetupException {
+        final Constructor<?>[] constructors = consumer.getConstructors();
+        boolean hasDefault = false;
+        for (Constructor<?> c : constructors) {
+            final Class<?>[] types = c.getParameterTypes();
+            if (types.length == 1 && types[0].equals(Class.class)) {
+                return true;
+            } else if (types.length == 0) {
+                hasDefault = true;
+            }
+        }
+
+        if (!hasDefault) {
+            throw new StorageSetupException(
+                    "Row set consumer should have either default constructor or a constructor with one Class<?> parameter"
+            );
+        }
+
+        return false;
     }
 
     protected void appendArgumentList(List<ConverterInfo.Arg> types, StringBuilder body) {

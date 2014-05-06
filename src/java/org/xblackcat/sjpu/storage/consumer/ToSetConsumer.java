@@ -9,15 +9,15 @@ import java.util.Set;
  * @author xBlackCat
  */
 public class ToSetConsumer<T> implements IRowSetConsumer<Set<T>, T> {
-    private final Set<T> list = new HashSet<>();
+    private final Set<T> set = new HashSet<>();
 
     @Override
     public boolean consume(T o) {
-        list.add(o);
+        set.add(o);
         return false;
     }
 
     public Set<T> getRowsHolder() {
-        return list;
+        return set;
     }
 }

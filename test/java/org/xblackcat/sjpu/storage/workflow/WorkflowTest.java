@@ -9,8 +9,10 @@ import org.xblackcat.sjpu.storage.consumer.IRowConsumer;
 import org.xblackcat.sjpu.storage.typemap.EnumToStringMapper;
 
 import java.net.URI;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * 19.12.13 12:33
@@ -142,9 +144,25 @@ public class WorkflowTest {
 
         {
             final List<ElementNumber> list = dataAH.getListElement();
+            Assert.assertNotNull(list);
             for (ElementNumber el : list) {
-                Assert.assertNotNull(list);
                 Assert.assertEquals(Numbers.values()[el.id], el.name);
+            }
+        }
+
+        {
+            final Set<ElementNumber> list = dataAH.getSetElement();
+            Assert.assertNotNull(list);
+            for (ElementNumber el : list) {
+                Assert.assertEquals(Numbers.values()[el.id], el.name);
+            }
+        }
+
+        {
+            final EnumSet<Numbers> list = dataAH.getEnumSetElement();
+            Assert.assertNotNull(list);
+            for (Numbers el : Numbers.values()) {
+                Assert.assertTrue(list.contains(el));
             }
         }
 
