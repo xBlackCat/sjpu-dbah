@@ -139,6 +139,7 @@ public class BuilderTest {
             builder.buildBody();
             Assert.fail("Exception expected");
         } catch (StorageSetupException e) {
+            e.printStackTrace();
             // Ignore
         }
     }

@@ -12,6 +12,6 @@ abstract class AnAnalyser {
     public abstract Info analyze(Class<?> clazz);
 
     protected boolean canProcess(Class<?> param) {
-        return ConverterMethodBuilder.READ_DECLARATIONS.containsKey(param) || typeMapper.hasTypeMap(param) != null;
+        return typeMapper.canProcess(param);
     }
 }

@@ -8,7 +8,10 @@ import org.xblackcat.sjpu.storage.converter.IToObjectConverter;
 import org.xblackcat.sjpu.storage.skel.BuilderUtils;
 
 import java.lang.reflect.Field;
-import java.sql.*;
+import java.math.BigDecimal;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -19,7 +22,77 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author xBlackCat
  */
 public class TypeMapper {
-    private final static AtomicInteger INSTANCES_AMOUNT = new AtomicInteger(0);
+    static final Map<Class<?>, String> READ_DECLARATIONS;
+
+    static {
+        Map<Class<?>, String> map = new HashMap<>();
+
+        // Integer types
+        map.put(long.class, "long value%1$d = $1.getLong(%1$d);\n");
+        map.put(
+                Long.class,
+                "long tmp%1$d = $1.getLong(%1$d);\njava.lang.Long value%1$d = $1.wasNull() ? null : java.lang.Long.valueOf(tmp%1$d);\n"
+        );
+        map.put(int.class, "int value%1$d = $1.getInt(%1$d);\n");
+        map.put(
+                Integer.class,
+                "int tmp%1$d = $1.getInt(%1$d);\njava.lang.Integer value%1$d = $1.wasNull() ? null : java.lang.Integer.valueOf(tmp%1$d);\n"
+        );
+        map.put(short.class, "short value%1$d = $1.getShort(%1$d);\n");
+        map.put(
+                Short.class,
+                "short tmp%1$d = $1.getShort(%1$d);\njava.lang.Short value%1$d = $1.wasNull() ? null : java.lang.Short.valueOf(tmp%1$d);\n"
+        );
+        map.put(byte.class, "byte value%1$d = $1.getByte(%1$d);\n");
+        map.put(
+                Byte.class,
+                "byte tmp%1$d = $1.getByte(%1$d);\njava.lang.Byte value%1$d = $1.wasNull() ? null : java.lang.Byte.valueOf(tmp%1$d);\n"
+        );
+
+        // Float types
+        map.put(double.class, "double value%1$d = $1.getDouble(%1$d);\n");
+        map.put(
+                Double.class,
+                "double tmp%1$d = $1.getDouble(%1$d);\njava.lang.Double value%1$d = $1.wasNull() ? null : java.lang.Double.valueOf(tmp%1$d);\n"
+        );
+        map.put(float.class, "float value%1$d = $1.getFloat(%1$d);\n");
+        map.put(
+                Float.class,
+                "float tmp%1$d = $1.getFloat(%1$d);\njava.lang.Float value%1$d = $1.wasNull() ? null : java.lang.Float.valueOf(tmp%1$d);\n"
+        );
+
+        // Boolean type
+        map.put(boolean.class, "boolean value%1$d = $1.getBoolean(%1$d);\n");
+        map.put(
+                Boolean.class,
+                "boolean tmp%1$d = $1.getBoolean(%1$d);\njava.lang.Boolean value%1$d = $1.wasNull() ? null : java.lang.Boolean.valueOf(tmp%1$d);\n"
+        );
+
+        // Other types
+        map.put(byte[].class, "byte[] value%1$d = $1.getBytes(%1$d);\n");
+        map.put(String.class, String.class.getName() + " value%1$d = $1.getString(%1$d);\n");
+        map.put(BigDecimal.class, BigDecimal.class.getName() + " value%1$d = $1.getBigDecimal(%1$d);\n");
+
+        // Time classes
+        map.put(
+                java.sql.Time.class,
+                java.sql.Time.class.getName() + " value%1$d = $1.getTime(%1$d);\n"
+        );
+        map.put(
+                java.sql.Date.class,
+                java.sql.Date.class.getName() + " value%1$d = $1.getDate(%1$d);\n"
+        );
+        map.put(
+                java.sql.Timestamp.class,
+                java.sql.Timestamp.class.getName() + " value%1$d = $1.getTimestamp(%1$d);\n"
+        );
+
+        synchronized (BuilderUtils.class) {
+            READ_DECLARATIONS = Collections.unmodifiableMap(map);
+        }
+    }
+
+    private static final AtomicInteger INSTANCES_AMOUNT = new AtomicInteger(0);
     private static final Log log = LogFactory.getLog(TypeMapper.class);
 
     private final IMapFactory[] mappers;
@@ -37,6 +110,17 @@ public class TypeMapper {
         parentPool = pool;
         mapperId = id;
         this.mappers = mappers;
+    }
+
+    public Class<?> getDBTypeClass(Class<?> type) {
+        final ITypeMap<?, ?> typeMap = hasTypeMap(type);
+        final Class<?> dbType;
+        if (typeMap == null) {
+            dbType = type;
+        } else {
+            dbType = typeMap.getDbType();
+        }
+        return dbType;
     }
 
     public Class<? extends IToObjectConverter<?>> getTypeMapperConverter(
@@ -79,41 +163,49 @@ public class TypeMapper {
             log.trace("Build type map converter class for type " + realClassName);
         }
 
-        StringBuilder body = new StringBuilder("{\nreturn (");
-        final Class<?> returnType = typeMap.getRealType();
-        body.append(BuilderUtils.getName(returnType));
-        body.append(") ");
-        body.append(typeMapperRef);
-        body.append(".forRead(\n");
+        StringBuilder body = new StringBuilder("{\n");
+        StringBuilder bodyTail = new StringBuilder("return ");
 
-        Class<?> dbType = typeMap.getDbType();
-        if (String.class.equals(dbType)) {
-            body.append("$1.getString(1)");
-        } else if (long.class.equals(dbType) || Long.class.equals(dbType)) {
-            body.append("$1.getLong(1)");
-        } else if (int.class.equals(dbType) || Integer.class.equals(dbType)) {
-            body.append("$1.getInt(1)");
-        } else if (short.class.equals(dbType) || Short.class.equals(dbType)) {
-            body.append("$1.getShort(1)");
-        } else if (byte.class.equals(dbType) || Byte.class.equals(dbType)) {
-            body.append("$1.getByte(1)");
-        } else if (boolean.class.equals(dbType) || Boolean.class.equals(dbType)) {
-            body.append("$1.getBoolean(1)");
-        } else if (byte[].class.equals(dbType)) {
-            body.append("$1.getBytes(1)");
-        } else if (Time.class.equals(dbType)) {
-            body.append("$1.getTime(1)");
-        } else if (Date.class.equals(dbType)) {
-            body.append("$1.getDate(1)");
-        } else if (Timestamp.class.equals(dbType)) {
-            body.append("$1.Timestamp(1)");
-        } else {
-            throw new StorageSetupException("Can't process DB type " + dbType.getName());
+        if (!appendDeclaration(type, 1, body, bodyTail)) {
+            throw new StorageSetupException("Can't process DB type " + typeMap.getDbType().getName());
         }
 
-        body.append("\n);\n}");
+        body.append(bodyTail);
+        body.append(";\n}");
 
-        return initializeToObjectConverter(getClass(), converterCN, returnType, body.toString());
+        return initializeToObjectConverter(getClass(), converterCN, type, body.toString());
+    }
+
+    public boolean appendDeclaration(Class<?> type, int idx, StringBuilder bodyHead, StringBuilder bodyTail) {
+        final ITypeMap<?, ?> typeMap = hasTypeMap(type);
+        final Class<?> dbType;
+        if (typeMap == null) {
+            dbType = type;
+        } else {
+            dbType = typeMap.getDbType();
+        }
+
+        String declarationLine = READ_DECLARATIONS.get(dbType);
+        if (declarationLine == null) {
+            return false;
+        }
+
+        bodyHead.append(String.format(declarationLine, idx));
+
+        if (typeMap != null) {
+            bodyTail.append("(");
+            bodyTail.append(BuilderUtils.getName(type));
+            bodyTail.append(") ");
+            bodyTail.append(getTypeMapInstanceRef(type));
+            bodyTail.append(".forRead(");
+        }
+        bodyTail.append("value");
+        bodyTail.append(idx);
+        if (typeMap != null) {
+            bodyTail.append(")");
+        }
+
+        return true;
     }
 
     public Class<IToObjectConverter<?>> initializeToObjectConverter(
@@ -161,6 +253,26 @@ public class TypeMapper {
 
     private String getTypeMapConverterRef(Class<? extends ITypeMap> typeMap) {
         return "ToObjectTypeMapConverter_" + mapperId + "_" + BuilderUtils.asIdentifier(typeMap);
+    }
+
+    public boolean canProcess(Class<?> objClass) {
+        if (READ_DECLARATIONS.containsKey(objClass)) {
+            return true;
+        }
+
+        final ITypeMap<?, ?> typeMap = initializedMappers.get(objClass);
+        if (typeMap != null) {
+            // Already checked classes are here with 'null' as type mappers
+            return true;
+        }
+
+        for (IMapFactory<?, ?> typeMapper : mappers) {
+            if (typeMapper.isAccepted(objClass)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public ITypeMap<?, ?> hasTypeMap(Class<?> objClass) {
