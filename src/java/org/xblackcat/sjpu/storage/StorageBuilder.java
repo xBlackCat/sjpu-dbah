@@ -21,7 +21,7 @@ import java.util.Map;
  */
 @SuppressWarnings("UnusedDeclaration")
 public class StorageBuilder {
-    public static IStorage defaultStorage(IDBConfig settings) {
+    public static IStorage defaultStorage(IDBConfig settings) throws StorageSetupException {
         IQueryHelper helper = StorageUtils.buildQueryHelper(settings);
 
         StorageBuilder builder = new StorageBuilder();
@@ -68,7 +68,7 @@ public class StorageBuilder {
         return this;
     }
 
-    public IStorage build() {
+    public IStorage build() throws StorageSetupException {
         if (queryHelper == null) {
             if (connectionFactory == null) {
                 throw new StorageSetupException("Connection factory or query helper should be specified.");

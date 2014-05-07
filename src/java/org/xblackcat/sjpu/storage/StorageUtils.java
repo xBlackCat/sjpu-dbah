@@ -28,11 +28,11 @@ public class StorageUtils {
     }
 
 
-    public static IQueryHelper buildQueryHelper(IDBConfig settings) {
+    public static IQueryHelper buildQueryHelper(IDBConfig settings) throws StorageSetupException {
         try {
             return new QueryHelper(new SimplePooledConnectionFactory(settings));
         } catch (StorageException e) {
-            throw new RuntimeException("Can not initialize DB connection factory", e);
+            throw new StorageSetupException("Can not initialize DB connection factory", e);
         }
     }
 }
