@@ -2,7 +2,6 @@ package org.xblackcat.sjpu.storage;
 
 import org.xblackcat.sjpu.storage.connection.IConnectionFactory;
 import org.xblackcat.sjpu.storage.connection.IDBConfig;
-import org.xblackcat.sjpu.storage.connection.SimplePooledConnectionFactory;
 import org.xblackcat.sjpu.storage.consumer.IRowSetConsumer;
 import org.xblackcat.sjpu.storage.impl.QueryHelper;
 import org.xblackcat.sjpu.storage.impl.Storage;
@@ -20,12 +19,13 @@ import java.util.Map;
  *
  * @author xBlackCat
  */
+@SuppressWarnings("UnusedDeclaration")
 public class StorageBuilder {
-    public static IStorage defaultStorage(IDBConfig settings) throws StorageException {
-        IConnectionFactory factory = new SimplePooledConnectionFactory(settings);
+    public static IStorage defaultStorage(IDBConfig settings) {
+        IQueryHelper helper = StorageUtils.buildQueryHelper(settings);
 
         StorageBuilder builder = new StorageBuilder();
-        builder.setConnectionFactory(factory);
+        builder.setQueryHelper(helper);
         return builder.build();
     }
 

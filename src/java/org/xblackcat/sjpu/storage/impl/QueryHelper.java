@@ -37,8 +37,7 @@ public final class QueryHelper implements IQueryHelper {
                         }
                     } catch (ConsumeException | RuntimeException e) {
                         throw new StorageException(
-                                "Can not consume result for query " + QueryHelperUtils.constructDebugSQL(sql, parameters),
-                                e
+                                "Can not consume result for query " + QueryHelperUtils.constructDebugSQL(sql, parameters), e
                         );
                     }
                 }
