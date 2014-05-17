@@ -5,12 +5,16 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.xblackcat.sjpu.storage.StorageException;
 import org.xblackcat.sjpu.storage.StorageSetupException;
 import org.xblackcat.sjpu.storage.ann.DDL;
 import org.xblackcat.sjpu.storage.skel.BuilderUtils;
 import org.xblackcat.sjpu.storage.skel.IMethodBuilder;
 
 import java.lang.reflect.Method;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
 
 /**
  * 11.03.13 13:18
@@ -51,13 +55,43 @@ class DDLAnnotatedBuilder implements IMethodBuilder<DDL> {
             throw new StorageSetupException("DDL method " + methodName + " should be declared without parameters");
         }
 
+        body.append("java.lang.String sql = null;\n");
+        body.append("try {\n");
+        body.append(BuilderUtils.getName(Connection.class));
+        body.append(" con = this.factory.getConnection();\n");
+        body.append("try {\n");
+        body.append(BuilderUtils.getName(Statement.class));
+        body.append(" st = con.createStatement();\n");
+        body.append("try {\n");
         for (String sql : ddls) {
-            body.append("helper.update(\"");
+            body.append("sql = \"");
             body.append(StringEscapeUtils.escapeJava(sql));
-            body.append("\");\n");
+            body.append(
+                    "\";\n" +
+                            "st.executeUpdate(sql);\n"
+            );
         }
 
-        body.append("}");
+        body.append(
+                "} finally {\n" +
+                        "st.close();\n" +
+                        "}\n" +
+                        "} finally {\n" +
+                        "con.close();\n" +
+                        "}\n" +
+                        "} catch ("
+        );
+        body.append(BuilderUtils.getName(SQLException.class));
+        body.append(
+                " e) {\n" +
+                        "throw new "
+        );
+        body.append(BuilderUtils.getName(StorageException.class));
+        body.append(
+                "(\"Can not execute query \"+sql,e);\n" +
+                        "}\n" +
+                        "}"
+        );
 
         String methodBody = body.toString();
         final String methodName1 = m.getName();

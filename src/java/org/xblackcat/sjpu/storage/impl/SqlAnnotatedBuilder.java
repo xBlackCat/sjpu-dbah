@@ -298,20 +298,24 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
                             "} catch ("
             );
             body.append(BuilderUtils.getName(ConsumeException.class));
-            body.append(" e) {\n");
-            body.append("throw new ");
+            body.append(
+                    " e) {\n" +
+                            "throw new "
+            );
             body.append(BuilderUtils.getName(StorageException.class));
             body.append("(\"Can not consume result for query \"+");
             body.append(BuilderUtils.getName(QueryHelperUtils.class));
-            body.append(".constructDebugSQL(sql, $args),e);\n");
-            body.append("} catch (RuntimeException e) {\n");
-            body.append("throw new ");
+            body.append(
+                    ".constructDebugSQL(sql, $args),e);\n" +
+                            "} catch (RuntimeException e) {\n" +
+                            "throw new "
+            );
             body.append(BuilderUtils.getName(StorageException.class));
             body.append("(\"Unexpected exception occurs while consuming result for query \"+");
             body.append(BuilderUtils.getName(QueryHelperUtils.class));
-            body.append(".constructDebugSQL(sql, $args),e);\n");
             body.append(
-                    "} finally {\n" +
+                    ".constructDebugSQL(sql, $args),e);\n" +
+                            "} finally {\n" +
                             "rs.close();\n" +
                             "}\n"
             );
