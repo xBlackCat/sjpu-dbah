@@ -379,11 +379,9 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
 
             final String initString;
             if (typeMap != null) {
-                initString = setParamValue(
-                        idx,
-                        typeMap.getDbType(),
-                        typeMapper.getTypeMapInstanceRef(type) + ".forStore($" + (arg.idx + 1) + ")"
-                );
+                final String value = "(" + BuilderUtils.getName(typeMap.getDbType()) + ") " +
+                        typeMapper.getTypeMapInstanceRef(type) + ".forStore($" + (arg.idx + 1) + ")";
+                initString = setParamValue(idx, typeMap.getDbType(), value);
             } else {
                 initString = setParamValue(idx, type, "$" + (arg.idx + 1));
             }
