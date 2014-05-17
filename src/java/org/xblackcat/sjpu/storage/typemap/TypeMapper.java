@@ -181,7 +181,7 @@ public class TypeMapper {
                     final CtClass toObjectClazz = pool.get(getClass().getName());
                     CtClass instanceClass = toObjectClazz.makeNestedClass(className, true);
                     CtField instanceField = CtField.make(
-                            "public static " + BuilderUtils.getName(ITypeMap.class) + " I;",
+                            "public static " + BuilderUtils.CN_ITypeMap + " I;",
                             instanceClass
                     );
                     instanceClass.addField(instanceField, CtField.Initializer.byExpr("null"));

@@ -5,16 +5,12 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.xblackcat.sjpu.storage.StorageException;
 import org.xblackcat.sjpu.storage.StorageSetupException;
 import org.xblackcat.sjpu.storage.ann.DDL;
 import org.xblackcat.sjpu.storage.skel.BuilderUtils;
 import org.xblackcat.sjpu.storage.skel.IMethodBuilder;
 
 import java.lang.reflect.Method;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Statement;
 
 /**
  * 11.03.13 13:18
@@ -57,10 +53,10 @@ class DDLAnnotatedBuilder implements IMethodBuilder<DDL> {
 
         body.append("java.lang.String sql = null;\n");
         body.append("try {\n");
-        body.append(BuilderUtils.getName(Connection.class));
+        body.append(BuilderUtils.CN_java_sql_Connection);
         body.append(" con = this.factory.getConnection();\n");
         body.append("try {\n");
-        body.append(BuilderUtils.getName(Statement.class));
+        body.append(BuilderUtils.CN_java_sql_Statement);
         body.append(" st = con.createStatement();\n");
         body.append("try {\n");
         for (String sql : ddls) {
@@ -81,12 +77,12 @@ class DDLAnnotatedBuilder implements IMethodBuilder<DDL> {
                         "}\n" +
                         "} catch ("
         );
-        body.append(BuilderUtils.getName(SQLException.class));
+        body.append(BuilderUtils.CN_java_sql_SQLException);
         body.append(
                 " e) {\n" +
                         "throw new "
         );
-        body.append(BuilderUtils.getName(StorageException.class));
+        body.append(BuilderUtils.CN_StorageException);
         body.append(
                 "(\"Can not execute query \"+sql,e);\n" +
                         "}\n" +

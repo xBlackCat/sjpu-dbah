@@ -2,12 +2,17 @@ package org.xblackcat.sjpu.storage.skel;
 
 import javassist.*;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.xblackcat.sjpu.storage.ConsumeException;
+import org.xblackcat.sjpu.storage.StorageException;
 import org.xblackcat.sjpu.storage.StorageSetupException;
+import org.xblackcat.sjpu.storage.consumer.IRowConsumer;
+import org.xblackcat.sjpu.storage.consumer.IRowSetConsumer;
 import org.xblackcat.sjpu.storage.converter.*;
+import org.xblackcat.sjpu.storage.impl.QueryHelperUtils;
+import org.xblackcat.sjpu.storage.typemap.ITypeMap;
 
 import java.math.BigDecimal;
+import java.sql.*;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -18,12 +23,23 @@ import java.util.regex.Pattern;
  * @author xBlackCat
  */
 public class BuilderUtils {
-    private static final Log log = LogFactory.getLog(BuilderUtils.class);
-
     public static final CtClass[] EMPTY_LIST = new CtClass[]{};
 
     public static final Pattern FIRST_WORD_SQL = Pattern.compile("(\\w+)(\\s|$)");
 
+    public static final String CN_java_sql_Connection = BuilderUtils.getName(Connection.class);
+    public static final String CN_java_sql_PreparedStatement = BuilderUtils.getName(PreparedStatement.class);
+    public static final String CN_java_sql_ResultSet = BuilderUtils.getName(ResultSet.class);
+    public static final String CN_java_sql_SQLException = BuilderUtils.getName(SQLException.class);
+    public static final String CN_java_sql_Statement = BuilderUtils.getName(Statement.class);
+
+    public static final String CN_ConsumeException = BuilderUtils.getName(ConsumeException.class);
+    public static final String CN_IRowConsumer = BuilderUtils.getName(IRowConsumer.class);
+    public static final String CN_IRowSetConsumer = BuilderUtils.getName(IRowSetConsumer.class);
+    public static final String CN_IToObjectConverter = BuilderUtils.getName(IToObjectConverter.class);
+    public static final String CN_ITypeMap = BuilderUtils.getName(ITypeMap.class);
+    public static final String CN_QueryHelperUtils = BuilderUtils.getName(QueryHelperUtils.class);
+    public static final String CN_StorageException = BuilderUtils.getName(StorageException.class);
 
     public static void checkConverterInstance(
             ClassPool pool,
@@ -37,7 +53,7 @@ public class BuilderUtils {
             final CtClass toObjectClazz = pool.get(converter.getName());
             CtClass instanceClass = toObjectClazz.makeNestedClass("Instance", true);
             CtField instanceField = CtField.make(
-                    "public static final " + getName(IToObjectConverter.class) + " I;",
+                    "public static final " + CN_IToObjectConverter + " I;",
                     instanceClass
             );
             instanceClass.addField(instanceField, CtField.Initializer.byNew(toObjectClazz));

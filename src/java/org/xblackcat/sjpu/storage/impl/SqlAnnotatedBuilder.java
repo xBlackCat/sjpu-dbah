@@ -2,12 +2,9 @@ package org.xblackcat.sjpu.storage.impl;
 
 import javassist.*;
 import org.apache.commons.lang3.StringEscapeUtils;
-import org.xblackcat.sjpu.storage.ConsumeException;
-import org.xblackcat.sjpu.storage.StorageException;
 import org.xblackcat.sjpu.storage.StorageSetupException;
 import org.xblackcat.sjpu.storage.ann.RowSetConsumer;
 import org.xblackcat.sjpu.storage.ann.Sql;
-import org.xblackcat.sjpu.storage.consumer.IRowConsumer;
 import org.xblackcat.sjpu.storage.consumer.IRowSetConsumer;
 import org.xblackcat.sjpu.storage.consumer.SingletonConsumer;
 import org.xblackcat.sjpu.storage.converter.IToObjectConverter;
@@ -20,7 +17,6 @@ import org.xblackcat.sjpu.storage.typemap.TypeMapper;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
-import java.sql.*;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -184,7 +180,7 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
                         rowSetConsumer = SingletonConsumer.class;
                     }
 
-                    body.append(BuilderUtils.getName(IRowSetConsumer.class));
+                    body.append(BuilderUtils.CN_IRowSetConsumer);
                     body.append(" consumer = new ");
                     body.append(BuilderUtils.getName(rowSetConsumer));
                     if (hasClassParameter(rowSetConsumer)) {
@@ -215,7 +211,7 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
                     returnString = "";
                 }
 
-                body.append(BuilderUtils.getName(IRowConsumer.class));
+                body.append(BuilderUtils.CN_IRowConsumer);
                 body.append(" consumer = $args[");
                 body.append(info.getConsumeIndex());
                 body.append("];");
@@ -225,7 +221,7 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
 
             BuilderUtils.checkConverterInstance(pool, converter);
 
-            body.append(BuilderUtils.getName(IToObjectConverter.class));
+            body.append(BuilderUtils.CN_IToObjectConverter);
             body.append(" converter = ");
             body.append(BuilderUtils.getName(converter));
             body.append(".Instance.I;\n");
@@ -249,12 +245,12 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
         }
 
         body.append("try {\n");
-        body.append(BuilderUtils.getName(Connection.class));
+        body.append(BuilderUtils.CN_java_sql_Connection);
         body.append(" con = this.factory.getConnection();\n");
         body.append("try {\n");
-        body.append(BuilderUtils.getName(PreparedStatement.class));
+        body.append(BuilderUtils.CN_java_sql_PreparedStatement);
         body.append(" st = con.prepareStatement(\nsql,\n");
-        body.append(BuilderUtils.getName(Statement.class));
+        body.append(BuilderUtils.CN_java_sql_Statement);
         if (type == QueryType.Update && void.class.equals(returnType)) {
             body.append(".RETURN_GENERATED_KEYS");
         } else {
@@ -269,13 +265,13 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
         switch (type) {
             case Select:
                 processResultSet = true;
-                body.append(BuilderUtils.getName(ResultSet.class));
+                body.append(BuilderUtils.CN_java_sql_ResultSet);
                 body.append(" rs = st.executeQuery();\n");
                 break;
             case Insert:
                 processResultSet = returnKeys;
                 body.append("int rows = st.executeUpdate();\n");
-                body.append(BuilderUtils.getName(ResultSet.class));
+                body.append(BuilderUtils.CN_java_sql_ResultSet);
                 body.append(" rs = st.getGeneratedKeys();\n");
                 break;
             case Update:
@@ -297,22 +293,22 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
                             "}\n" +
                             "} catch ("
             );
-            body.append(BuilderUtils.getName(ConsumeException.class));
+            body.append(BuilderUtils.CN_ConsumeException);
             body.append(
                     " e) {\n" +
                             "throw new "
             );
-            body.append(BuilderUtils.getName(StorageException.class));
+            body.append(BuilderUtils.CN_StorageException);
             body.append("(\"Can not consume result for query \"+");
-            body.append(BuilderUtils.getName(QueryHelperUtils.class));
+            body.append(BuilderUtils.CN_QueryHelperUtils);
             body.append(
                     ".constructDebugSQL(sql, $args),e);\n" +
-                            "} catch (RuntimeException e) {\n" +
+                            "} catch (java.lang.RuntimeException e) {\n" +
                             "throw new "
             );
-            body.append(BuilderUtils.getName(StorageException.class));
+            body.append(BuilderUtils.CN_StorageException);
             body.append("(\"Unexpected exception occurs while consuming result for query \"+");
-            body.append(BuilderUtils.getName(QueryHelperUtils.class));
+            body.append(BuilderUtils.CN_QueryHelperUtils);
             body.append(
                     ".constructDebugSQL(sql, $args),e);\n" +
                             "} finally {\n" +
@@ -331,14 +327,14 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
                         "}\n" +
                         "} catch ("
         );
-        body.append(BuilderUtils.getName(SQLException.class));
+        body.append(BuilderUtils.CN_java_sql_SQLException);
         body.append(
                 " e) {\n" +
                         "throw new "
         );
-        body.append(BuilderUtils.getName(StorageException.class));
+        body.append(BuilderUtils.CN_StorageException);
         body.append("(\"Can not execute query \"+");
-        body.append(BuilderUtils.getName(QueryHelperUtils.class));
+        body.append(BuilderUtils.CN_QueryHelperUtils);
         body.append(
                 ".constructDebugSQL(sql, $args),e);\n" +
                         "}\n" +
