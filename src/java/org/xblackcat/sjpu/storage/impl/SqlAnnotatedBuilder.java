@@ -2,6 +2,8 @@ package org.xblackcat.sjpu.storage.impl;
 
 import javassist.*;
 import org.apache.commons.lang3.StringEscapeUtils;
+import org.xblackcat.sjpu.storage.ConsumeException;
+import org.xblackcat.sjpu.storage.StorageException;
 import org.xblackcat.sjpu.storage.StorageSetupException;
 import org.xblackcat.sjpu.storage.ann.RowSetConsumer;
 import org.xblackcat.sjpu.storage.ann.Sql;
@@ -17,6 +19,10 @@ import org.xblackcat.sjpu.storage.typemap.TypeMapper;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.math.BigDecimal;
+import java.sql.*;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -27,6 +33,67 @@ import java.util.regex.Matcher;
  * @author xBlackCat
  */
 class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
+    static final Map<Class<?>, String> SET_DECLARATIONS;
+
+    static {
+        Map<Class<?>, String> map = new HashMap<>();
+
+        // Integer types
+        map.put(long.class, "st.setLong(%1$d, %2$s);\n");
+        map.put(
+                Long.class,
+                "java.lang.Long tmp%1$d = %2$s;\nif (tmp%1$d == null) {\nst.setNull(%1$d);\n} else {\nst.setLong(%1$d, tmp%1$d.longValue());\n}\n"
+        );
+        map.put(int.class, "st.setInt(%1$d, %2$s);\n");
+        map.put(
+                Integer.class,
+                "java.lang.Integer tmp%1$d = %2$s;\nif (tmp%1$d == null) {\nst.setNull(%1$d);\n} else {\nst.setInt(%1$d, tmp%1$d.intValue());\n}\n"
+        );
+        map.put(short.class, "st.setShort(%1$d, %2$s);\n");
+        map.put(
+                Short.class,
+                "java.lang.Short tmp%1$d = %2$s;\nif (tmp%1$d == null) {\nst.setNull(%1$d);\n} else {\nst.setShort(%1$d, tmp%1$d.shortValue());\n}\n"
+        );
+        map.put(byte.class, "st.setByte(%1$d, %2$s);\n");
+        map.put(
+                Byte.class,
+                "java.lang.Byte tmp%1$d = %2$s;\nif (tmp%1$d == null) {\nst.setNull(%1$d);\n} else {\nst.setByte(%1$d, tmp%1$d.byteValue());\n}\n"
+        );
+
+        // Float types
+        map.put(double.class, "st.setDouble(%1$d, %2$s);\n");
+        map.put(
+                Double.class,
+                "java.lang.Double tmp%1$d = %2$s;\nif (tmp%1$d == null) {\nst.setNull(%1$d);\n} else {\nst.setDouble(%1$d, tmp%1$d.doubleValue());\n}\n"
+        );
+        map.put(float.class, "st.setFloat(%1$d, %2$s);\n");
+        map.put(
+                Float.class,
+                "java.lang.Float tmp%1$d = %2$s;\nif (tmp%1$d == null) {\nst.setNull(%1$d);\n} else {\nst.setFloat(%1$d, tmp%1$d.floatValue());\n}\n"
+        );
+
+        // Boolean type
+        map.put(boolean.class, "st.setBoolean(%1$d, %2$s);\n");
+        map.put(
+                Boolean.class,
+                "java.lang.Boolean tmp%1$d = %2$s;\nif (tmp%1$d == null) {\nst.setNull(%1$d);\n} else {\nst.setBoolean(%1$d, tmp%1$d.booleanValue());\n}\n"
+        );
+
+        // Other types
+        map.put(byte[].class, "st.setBytes(%1$d, %2$s);\n");
+        map.put(String.class, "st.setString(%1$d, %2$s);\n");
+        map.put(BigDecimal.class, "st.setBigDecimal(%1$d, %2$s);\n");
+
+        // Time classes
+        map.put(java.sql.Time.class, "st.setTime(%1$d, %2$s);\n");
+        map.put(java.sql.Date.class, "st.setDate(%1$d, %2$s);\n");
+        map.put(java.sql.Timestamp.class, "st.setTimestamp(%1$d, %2$s);\n");
+
+        synchronized (BuilderUtils.class) {
+            SET_DECLARATIONS = Collections.unmodifiableMap(map);
+        }
+    }
+
     public SqlAnnotatedBuilder(TypeMapper typeMapper, Map<Class<?>, Class<? extends IRowSetConsumer>> rowSetConsumers) {
         super(Sql.class, typeMapper, rowSetConsumers);
     }
@@ -71,10 +138,15 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
         CtClass ctRealReturnType = pool.get(returnType.getName());
         final StringBuilder body = new StringBuilder("{\n");
 
+        body.append("java.lang.String sql = \"");
+        body.append(StringEscapeUtils.escapeJava(sql));
+        body.append("\";\n");
+
         final CtClass targetReturnType;
 
+        final boolean noResult = returnType.equals(void.class);
         final boolean generateWrapper = (type == QueryType.Select || type == QueryType.Insert) &&
-                (returnType.isPrimitive() && returnType != void.class);
+                (returnType.isPrimitive() && !noResult);
 
         if (generateWrapper) {
             assert ctRealReturnType instanceof CtPrimitiveType;
@@ -83,88 +155,87 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
             targetReturnType = ctRealReturnType;
         }
 
+        if (log.isDebugEnabled()) {
+            log.debug("Generate " + type + " method " + m);
+        }
+
         final String returnString;
-        if (type == QueryType.Select) {
-            if (log.isDebugEnabled()) {
-                log.debug("Generate SELECT method " + m);
-            }
-
+        final boolean returnKeys;
+        if (type == QueryType.Select || type == QueryType.Insert) {
             if (info.getConsumeIndex() == null) {
-                if (returnType == void.class) {
-                    throw new StorageSetupException(
-                            "Consumer should be specified in the method parameters for select method with void return type: " + m
-                    );
-                }
+                if (noResult) {
+                    if (type == QueryType.Select) {
+                        throw new StorageSetupException(
+                                "Consumer should be specified in the method parameters for select method with void return type: " + m
+                        );
+                    }
 
-                Class<? extends IRowSetConsumer> rowSetConsumer;
-                final RowSetConsumer annConsumer = m.getAnnotation(RowSetConsumer.class);
-                if (annConsumer != null) {
-                    rowSetConsumer = annConsumer.value();
+                    returnString = "";
+                    returnKeys = false;
                 } else {
-                    rowSetConsumer = hasRowSetConsumer(returnType, realReturnType);
-                }
-                if (rowSetConsumer == null) {
-                    rowSetConsumer = SingletonConsumer.class;
-                }
+                    Class<? extends IRowSetConsumer> rowSetConsumer;
+                    final RowSetConsumer annConsumer = m.getAnnotation(RowSetConsumer.class);
+                    if (annConsumer != null) {
+                        rowSetConsumer = annConsumer.value();
+                    } else {
+                        rowSetConsumer = hasRowSetConsumer(returnType, realReturnType);
+                    }
+                    if (rowSetConsumer == null) {
+                        rowSetConsumer = SingletonConsumer.class;
+                    }
 
-                body.append(BuilderUtils.getName(IRowSetConsumer.class));
-                body.append(" consumer = new ");
-                body.append(BuilderUtils.getName(rowSetConsumer));
-                if (hasClassParameter(rowSetConsumer)) {
-                    body.append("(");
-                    body.append(BuilderUtils.getName(realReturnType));
-                    body.append(".class)");
-                } else {
-                    body.append("()");
-                }
+                    body.append(BuilderUtils.getName(IRowSetConsumer.class));
+                    body.append(" consumer = new ");
+                    body.append(BuilderUtils.getName(rowSetConsumer));
+                    if (hasClassParameter(rowSetConsumer)) {
+                        body.append("(");
+                        body.append(BuilderUtils.getName(realReturnType));
+                        body.append(".class);");
+                    } else {
+                        body.append("();");
+                    }
 
-                returnString = "return (" + BuilderUtils.getName(targetReturnType) + ") consumer.getRowsHolder();\n";
+                    returnString = "return (" + BuilderUtils.getName(targetReturnType) + ") consumer.getRowsHolder();\n";
+                    returnKeys = true;
+                }
             } else {
-                if (returnType != void.class) {
-                    throw new StorageSetupException("Consumer can't be used with non-void return type: " + m.toString());
+                if (!noResult) {
+                    if (type == QueryType.Select) {
+                        throw new StorageSetupException("Consumer can't be used with non-void return type: " + m.toString());
+                    }
+                    if (int.class.equals(returnType)) {
+                        returnString = "return rows;";
+                    } else {
+                        throw new StorageSetupException(
+                                "Insert method with consumer can have only void or int return type: " +
+                                        m.toString()
+                        );
+                    }
+                } else {
+                    returnString = "";
                 }
 
                 body.append(BuilderUtils.getName(IRowConsumer.class));
                 body.append(" consumer = $args[");
                 body.append(info.getConsumeIndex());
-                body.append("]");
+                body.append("];");
 
-                returnString = "";
+                returnKeys = true;
             }
-            body.append(";\nhelper.execute(\nconsumer,\n");
 
             BuilderUtils.checkConverterInstance(pool, converter);
 
+            body.append(BuilderUtils.getName(IToObjectConverter.class));
+            body.append(" converter = ");
             body.append(BuilderUtils.getName(converter));
-            body.append(".Instance.I,\n");
-        } else if (type == QueryType.Insert) {
-            if (log.isDebugEnabled()) {
-                log.debug("Generate INSERT method " + m);
-            }
-
-            if (returnType.isAssignableFrom(List.class) &&
-                    !realReturnType.isAssignableFrom(List.class)) {
-                throw new StorageSetupException(
-                        "Invalid return type for insert in method " + methodName + "(...): " + returnType.getName()
-                );
-            }
-
-            // Real return type for insert
-            final CtClass rrt = returnType == void.class ? null : targetReturnType;
-            BuilderUtils.initInsertReturn(pool, rrt, converter, body);
-
-            returnString = "";
+            body.append(".Instance.I;\n");
         } else {
-            if (log.isDebugEnabled()) {
-                log.debug("Generate UPDATE method " + m);
-            }
-
             if (returnType.equals(int.class)) {
-                body.append("return helper.update(");
                 ctRealReturnType = CtClass.intType;
-            } else if (returnType.equals(void.class)) {
-                body.append("helper.update(");
+                returnString = "return rows;";
+            } else if (noResult) {
                 ctRealReturnType = CtClass.voidType;
+                returnString = "";
             } else {
                 throw new StorageSetupException(
                         "Invalid return type for updater in method " +
@@ -174,18 +245,101 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
                 );
             }
 
-            returnString = "";
+            returnKeys = false;
         }
 
-        body.append("\"");
-        body.append(StringEscapeUtils.escapeJava(sql));
-        body.append("\",\n");
+        body.append("try {\n");
+        body.append(BuilderUtils.getName(Connection.class));
+        body.append(" con = this.factory.getConnection();\n");
+        body.append("try {\n");
+        body.append(BuilderUtils.getName(PreparedStatement.class));
+        body.append(" st = con.prepareStatement(\nsql,\n");
+        body.append(BuilderUtils.getName(Statement.class));
+        if (type == QueryType.Update && void.class.equals(returnType)) {
+            body.append(".RETURN_GENERATED_KEYS");
+        } else {
+            body.append(".NO_GENERATED_KEYS");
+        }
+        body.append(");\n");
+        body.append("try {\n");
 
-        appendArgumentList(info.getArgumentList(), body);
+        setParameters(info.getArgumentList(), body);
 
-        body.append("\n);\n");
+        final boolean processResultSet;
+        switch (type) {
+            case Select:
+                processResultSet = true;
+                body.append(BuilderUtils.getName(ResultSet.class));
+                body.append(" rs = st.executeQuery();\n");
+                break;
+            case Insert:
+                processResultSet = returnKeys;
+                body.append("int rows = st.executeUpdate();\n");
+                body.append(BuilderUtils.getName(ResultSet.class));
+                body.append(" rs = st.getGeneratedKeys();\n");
+                break;
+            case Update:
+            case Other:
+            default:
+                processResultSet = false;
+                body.append("int rows = st.executeUpdate();\n");
+                break;
+        }
+
+        if (processResultSet) {
+            body.append(
+                    "try {\n" +
+                            "while (rs.next()) {\n" +
+                            "java.lang.Object obj = converter.convert(rs);\n" +
+                            "if (consumer.consume(obj)) {\n" +
+                            "break;\n" +
+                            "}\n" +
+                            "}\n" +
+                            "} catch ("
+            );
+            body.append(BuilderUtils.getName(ConsumeException.class));
+            body.append(" e) {\n");
+            body.append("throw new ");
+            body.append(BuilderUtils.getName(StorageException.class));
+            body.append("(\"Can not consume result for query \"+");
+            body.append(BuilderUtils.getName(QueryHelperUtils.class));
+            body.append(".constructDebugSQL(sql, $args),e);\n");
+            body.append("} catch (RuntimeException e) {\n");
+            body.append("throw new ");
+            body.append(BuilderUtils.getName(StorageException.class));
+            body.append("(\"Unexpected exception occurs while consuming result for query \"+");
+            body.append(BuilderUtils.getName(QueryHelperUtils.class));
+            body.append(".constructDebugSQL(sql, $args),e);\n");
+            body.append(
+                    "} finally {\n" +
+                            "rs.close();\n" +
+                            "}\n"
+            );
+        }
+
         body.append(returnString);
-        body.append("}");
+        body.append(
+                "} finally {\n" +
+                        "st.close();\n" +
+                        "}\n" +
+                        "} finally {\n" +
+                        "con.close();\n" +
+                        "}\n" +
+                        "} catch ("
+        );
+        body.append(BuilderUtils.getName(SQLException.class));
+        body.append(
+                " e) {\n" +
+                        "throw new "
+        );
+        body.append(BuilderUtils.getName(StorageException.class));
+        body.append("(\"Can not execute query \"+");
+        body.append(BuilderUtils.getName(QueryHelperUtils.class));
+        body.append(
+                ".constructDebugSQL(sql, $args),e);\n" +
+                        "}\n" +
+                        "}"
+        );
 
         addMethod(accessHelper, m, ctRealReturnType, targetReturnType, body.toString(), pool);
     }
@@ -211,35 +365,35 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
         return false;
     }
 
-    protected void appendArgumentList(List<ConverterInfo.Arg> types, StringBuilder body) {
-        body.append("new Object[");
+    protected void setParameters(List<ConverterInfo.Arg> types, StringBuilder body) {
+        int idx = 0;
 
-        if (types.isEmpty()) {
-            body.append("0]");
-        } else {
-            body.append("]{\n");
+        for (ConverterInfo.Arg arg : types) {
+            idx++;
+            Class<?> type = arg.clazz;
+            final ITypeMap<?, ?> typeMap = typeMapper.hasTypeMap(type);
 
-            for (ConverterInfo.Arg arg : types) {
-                Class<?> type = arg.clazz;
-                final ITypeMap<?, ?> typeMap = typeMapper.hasTypeMap(type);
-
-                String mapperInstanceRef = typeMap == null ? null : typeMapper.getTypeMapInstanceRef(type);
-                if (mapperInstanceRef != null) {
-                    body.append(mapperInstanceRef);
-                    body.append(".forStore($args[");
-                    body.append(arg.idx);
-                    body.append("])");
-                } else {
-                    body.append("$args[");
-                    body.append(arg.idx);
-                    body.append("]");
-                }
-
-                body.append(",\n");
+            final String initString;
+            if (typeMap != null) {
+                initString = setParamValue(
+                        idx,
+                        typeMap.getDbType(),
+                        typeMapper.getTypeMapInstanceRef(type) + ".forStore($" + (arg.idx + 1) + ")"
+                );
+            } else {
+                initString = setParamValue(idx, type, "$" + (arg.idx + 1));
             }
-            body.setLength(body.length() - 2);
-            body.append("\n}");
+            body.append(initString);
         }
+    }
+
+    protected String setParamValue(int idx, Class<?> type, String value) {
+        final String setLine = SET_DECLARATIONS.get(type);
+        if (setLine == null) {
+            throw new StorageSetupException("Can't process type " + type.getName());
+        }
+
+        return String.format(setLine, idx, value);
     }
 
     protected void addMethod(

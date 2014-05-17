@@ -1,23 +1,13 @@
 package org.xblackcat.sjpu.storage.impl;
 
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.xblackcat.sjpu.storage.IAHFactory;
-import org.xblackcat.sjpu.storage.StorageException;
-
-import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
-
 /**
  * 16.08.13 14:04
  *
  * @author xBlackCat
  */
 public class AHGeneratorTest {
+/*
     @Test
     public void checkPrimitiveAHStructure() throws StorageException {
         IAHFactory storage = new Storage(new QueryHelperStub(1, 2, 3));
@@ -60,10 +50,12 @@ public class AHGeneratorTest {
                 Assert.assertEquals(one, testAH.getLong());
                 Assert.assertEquals(Long.valueOf(one), testAH.getLongObject());
                 testAH.getLongObject(new AssertConsumer<>(Long.valueOf(one)));
+*/
 /*
                 Assert.assertEquals(one, testAH.getLong2());
                 Assert.assertEquals(Long.valueOf(one), testAH.getLongObject2());
-*/
+*//*
+
             }
 
             {
@@ -71,10 +63,12 @@ public class AHGeneratorTest {
                 final ITIntAH testAH = storage.get(ITIntAH.class);
                 Assert.assertEquals(one, testAH.getInt());
                 Assert.assertEquals(Integer.valueOf(one), testAH.getInteger());
+*/
 /*
                 Assert.assertEquals(one, testAH.getInt2());
                 Assert.assertEquals(Integer.valueOf(one), testAH.getInteger2());
-*/
+*//*
+
             }
 
             {
@@ -82,10 +76,12 @@ public class AHGeneratorTest {
                 final ITShortAH testAH = storage.get(ITShortAH.class);
                 Assert.assertEquals(one, testAH.getShort());
                 Assert.assertEquals(Short.valueOf(one), testAH.getShortObject());
+*/
 /*
                 Assert.assertEquals(one, testAH.getShort2());
                 Assert.assertEquals(Short.valueOf(one), testAH.getShortObject2());
-*/
+*//*
+
             }
 
             {
@@ -93,10 +89,12 @@ public class AHGeneratorTest {
                 final ITByteAH testAH = storage.get(ITByteAH.class);
                 Assert.assertEquals(one, testAH.getByte());
                 Assert.assertEquals(Byte.valueOf(one), testAH.getByteObject());
+*/
 /*
                 Assert.assertEquals(one, testAH.getByte2());
                 Assert.assertEquals(Byte.valueOf(one), testAH.getByteObject2());
-*/
+*//*
+
             }
 
             {
@@ -104,10 +102,12 @@ public class AHGeneratorTest {
                 final ITBooleanAH testAH = storage.get(ITBooleanAH.class);
                 Assert.assertEquals(true, testAH.getBoolean());
                 Assert.assertEquals(Boolean.TRUE, testAH.getBooleanObject());
+*/
 /*
                 Assert.assertEquals(true, testAH.getBoolean2());
                 Assert.assertEquals(Boolean.TRUE, testAH.getBooleanObject2());
-*/
+*//*
+
             }
 
             {
@@ -115,10 +115,12 @@ public class AHGeneratorTest {
                 final ITFloatAH testAH = storage.get(ITFloatAH.class);
                 Assert.assertEquals(1.f, testAH.getFloat(), 0);
                 Assert.assertEquals(Float.valueOf(1.f), testAH.getFloatObject());
+*/
 /*
                 Assert.assertEquals(1.f, testAH.getFloat2(), 0);
                 Assert.assertEquals(Float.valueOf(1.f), testAH.getFloatObject2());
-*/
+*//*
+
             }
 
             {
@@ -126,10 +128,12 @@ public class AHGeneratorTest {
                 final ITDoubleAH testAH = storage.get(ITDoubleAH.class);
                 Assert.assertEquals(1., testAH.getDouble(), 0.0000000001);
                 Assert.assertEquals(Double.valueOf(1.), testAH.getDoubleObject());
+*/
 /*
                 Assert.assertEquals(1., testAH.getDouble2(), 0.0000000001);
                 Assert.assertEquals(Double.valueOf(1.), testAH.getDoubleObject2());
-*/
+*//*
+
             }
         }
     }
@@ -204,4 +208,5 @@ public class AHGeneratorTest {
         Assert.assertEquals(1., testAH.getDouble(), 0.0000000001);
         Assert.assertEquals(Double.valueOf(1.), testAH.getDoubleObject());
     }
+*/
 }

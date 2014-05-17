@@ -7,7 +7,6 @@ import org.xblackcat.sjpu.storage.consumer.IRowSetConsumer;
 import org.xblackcat.sjpu.storage.consumer.ToEnumSetConsumer;
 import org.xblackcat.sjpu.storage.consumer.ToListConsumer;
 import org.xblackcat.sjpu.storage.consumer.ToSetConsumer;
-import org.xblackcat.sjpu.storage.impl.QueryHelper;
 
 import java.util.*;
 
@@ -31,7 +30,7 @@ public class StorageUtils {
 
     public static IConnectionFactory buildQueryHelper(IDBConfig settings) {
         try {
-            return new QueryHelper(new SimplePooledConnectionFactory(settings));
+            return new SimplePooledConnectionFactory(settings);
         } catch (StorageException e) {
             throw new RuntimeException("Can not initialize DB connection factory", e);
         }
