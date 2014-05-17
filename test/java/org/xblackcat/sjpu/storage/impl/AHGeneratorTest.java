@@ -1,16 +1,29 @@
 package org.xblackcat.sjpu.storage.impl;
 
 
+import org.junit.Assert;
+import org.junit.Test;
+import org.xblackcat.sjpu.storage.IAHFactory;
+import org.xblackcat.sjpu.storage.StorageException;
+import org.xblackcat.sjpu.storage.connection.IConnectionFactory;
+
+import java.lang.reflect.Method;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
+
 /**
  * 16.08.13 14:04
  *
  * @author xBlackCat
  */
 public class AHGeneratorTest {
-/*
     @Test
     public void checkPrimitiveAHStructure() throws StorageException {
-        IAHFactory storage = new Storage(new QueryHelperStub(1, 2, 3));
+        IAHFactory storage = new Storage(new ConnectionFactoryStub());
 
         final IPrimitiveAH testAH = storage.get(IPrimitiveAH.class);
 
@@ -39,18 +52,18 @@ public class AHGeneratorTest {
         Assert.assertEquals("Found unexpected extra methods" + availableMethods, 0, availableMethods.size());
     }
 
-    @Test
-    public void generatePrimitiveAH() throws StorageException {
-        {
-            final byte one = (byte) 1;
+    /*    @Test
+       public void generatePrimitiveAH() throws StorageException {
+           {
+               final byte one = (byte) 1;
 
-            {
-                IAHFactory storage = new Storage(new QueryHelperStub(1l));
-                final ITLongAH testAH = storage.get(ITLongAH.class);
-                Assert.assertEquals(one, testAH.getLong());
-                Assert.assertEquals(Long.valueOf(one), testAH.getLongObject());
-                testAH.getLongObject(new AssertConsumer<>(Long.valueOf(one)));
-*/
+               {
+                   IAHFactory storage = new Storage(new QueryHelperStub(1l));
+                   final ITLongAH testAH = storage.get(ITLongAH.class);
+                   Assert.assertEquals(one, testAH.getLong());
+                   Assert.assertEquals(Long.valueOf(one), testAH.getLongObject());
+                   testAH.getLongObject(new AssertConsumer<>(Long.valueOf(one)));
+   */
 /*
                 Assert.assertEquals(one, testAH.getLong2());
                 Assert.assertEquals(Long.valueOf(one), testAH.getLongObject2());
@@ -137,10 +150,10 @@ public class AHGeneratorTest {
             }
         }
     }
-
+       */
     @Test
     public void generateToObjConverter() throws StorageException {
-        IAHFactory storage = new Storage(new QueryHelperStub("1"));
+        IAHFactory storage = new Storage(new ConnectionFactoryStub());
 
         storage.get(ITObjAH.class);
 
@@ -166,6 +179,19 @@ public class AHGeneratorTest {
         }
     }
 
+    private static class ConnectionFactoryStub implements IConnectionFactory {
+        @Override
+        public Connection getConnection() throws SQLException {
+            return null;
+        }
+
+        @Override
+        public void shutdown() throws StorageException {
+
+        }
+    }
+
+    /*
     @Test
     public void generateComplexAH() throws StorageException {
         final byte one = (byte) 1;
