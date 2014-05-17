@@ -5,6 +5,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.xblackcat.sjpu.storage.*;
 import org.xblackcat.sjpu.storage.ann.Sql;
+import org.xblackcat.sjpu.storage.connection.IConnectionFactory;
 
 /**
  * 18.11.13 12:48
@@ -16,7 +17,7 @@ public class TxTest {
 
     @Before
     public void setupDatabase() throws StorageException {
-        IQueryHelper helper = StorageUtils.buildQueryHelper(Config.TEST_DB_CONFIG);
+        IConnectionFactory helper = StorageUtils.buildQueryHelper(Config.TEST_DB_CONFIG);
         storage = new Storage(helper);
     }
 

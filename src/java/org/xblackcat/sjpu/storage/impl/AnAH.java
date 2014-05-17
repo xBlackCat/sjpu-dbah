@@ -1,18 +1,18 @@
 package org.xblackcat.sjpu.storage.impl;
 
 import org.xblackcat.sjpu.storage.IAH;
-import org.xblackcat.sjpu.storage.IQueryHelper;
+import org.xblackcat.sjpu.storage.connection.IConnectionFactory;
 
 /**
  * @author xBlackCat Date: 27.07.11
  */
 public class AnAH implements IAH {
-    protected final IQueryHelper helper;
+    protected final IConnectionFactory factory;
 
-    protected AnAH(IQueryHelper helper) {
-        if (helper == null) {
+    protected AnAH(IConnectionFactory factory) {
+        if (factory == null) {
             throw new NullPointerException("Helper can not be null.");
         }
-        this.helper = helper;
+        this.factory = factory;
     }
 }

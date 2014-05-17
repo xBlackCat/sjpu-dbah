@@ -3,9 +3,10 @@ package org.xblackcat.sjpu.storage.impl;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.xblackcat.sjpu.storage.IAH;
-import org.xblackcat.sjpu.storage.IQueryHelper;
 import org.xblackcat.sjpu.storage.ITxAH;
 import org.xblackcat.sjpu.storage.StorageException;
+import org.xblackcat.sjpu.storage.connection.IConnectionFactory;
+import org.xblackcat.sjpu.storage.connection.TxConnectionFactory;
 import org.xblackcat.sjpu.storage.consumer.IRowSetConsumer;
 import org.xblackcat.sjpu.storage.skel.Definer;
 import org.xblackcat.sjpu.storage.skel.IBuilder;
@@ -26,14 +27,14 @@ class TxAHFactory extends AnAHFactory implements ITxAH {
     private boolean transactionDone = false;
 
     TxAHFactory(
-            IQueryHelper helper,
+            IConnectionFactory connectionFactory,
             int transactionIsolationLevel,
-            Definer<IAH, IQueryHelper> definer,
+            Definer<IAH, IConnectionFactory> definer,
             TypeMapper typeMapper,
             Map<Class<?>, Class<? extends IRowSetConsumer>> rowSetConsumers,
-            IBuilder<IAH, IQueryHelper> methodBuilder
+            IBuilder<IAH, IConnectionFactory> methodBuilder
     ) throws SQLException {
-        super(definer, new TxQueryHelper(helper, transactionIsolationLevel), typeMapper, rowSetConsumers, methodBuilder);
+        super(definer, new TxConnectionFactory(connectionFactory, transactionIsolationLevel), typeMapper, rowSetConsumers, methodBuilder);
     }
 
     @Override
@@ -45,7 +46,7 @@ class TxAHFactory extends AnAHFactory implements ITxAH {
         setTransactionDone();
 
         try {
-            queryHelper.getConnection().commit();
+            helper.getConnection().commit();
         } catch (SQLException e) {
             throw new StorageException("Can't commit changes to database", e);
         }
@@ -60,7 +61,7 @@ class TxAHFactory extends AnAHFactory implements ITxAH {
         setTransactionDone();
 
         try {
-            queryHelper.getConnection().rollback();
+            helper.getConnection().rollback();
         } catch (SQLException e) {
             throw new StorageException("Can't rollback changes", e);
         }
@@ -82,7 +83,7 @@ class TxAHFactory extends AnAHFactory implements ITxAH {
 
         setTransactionDone();
 
-        queryHelper.close();
+        helper.shutdown();
     }
 
     protected boolean rollbackOnClose() {

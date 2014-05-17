@@ -5,6 +5,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.xblackcat.sjpu.storage.*;
+import org.xblackcat.sjpu.storage.connection.IConnectionFactory;
 import org.xblackcat.sjpu.storage.consumer.IRowConsumer;
 import org.xblackcat.sjpu.storage.typemap.EnumToStringMapper;
 
@@ -24,7 +25,7 @@ public class WorkflowTest {
 
     @Before
     public void setupDatabase() throws StorageException {
-        IQueryHelper helper = StorageUtils.buildQueryHelper(Config.TEST_DB_CONFIG);
+        IConnectionFactory helper = StorageUtils.buildQueryHelper(Config.TEST_DB_CONFIG);
         final StorageBuilder builder = new StorageBuilder();
         builder.setQueryHelper(helper);
         builder.addRowSetConsumer(int[].class, ArrayIntConsumer.class);

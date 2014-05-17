@@ -1,8 +1,8 @@
 package org.xblackcat.sjpu.storage.impl;
 
-import org.xblackcat.sjpu.storage.IQueryHelper;
 import org.xblackcat.sjpu.storage.StorageException;
 import org.xblackcat.sjpu.storage.ann.Sql;
+import org.xblackcat.sjpu.storage.connection.IConnectionFactory;
 
 /**
  * 13.12.13 16:32
@@ -10,7 +10,7 @@ import org.xblackcat.sjpu.storage.ann.Sql;
  * @author xBlackCat
  */
 public abstract class Level1AH extends AnAH {
-    protected Level1AH(IQueryHelper helper) {
+    protected Level1AH(IConnectionFactory helper) {
         super(helper);
     }
 

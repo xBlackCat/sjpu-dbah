@@ -2,7 +2,7 @@ package org.xblackcat.sjpu.storage.impl;
 
 import org.xblackcat.sjpu.storage.IAH;
 import org.xblackcat.sjpu.storage.IAHFactory;
-import org.xblackcat.sjpu.storage.IQueryHelper;
+import org.xblackcat.sjpu.storage.connection.IConnectionFactory;
 import org.xblackcat.sjpu.storage.consumer.IRowSetConsumer;
 import org.xblackcat.sjpu.storage.skel.AFactory;
 import org.xblackcat.sjpu.storage.skel.Definer;
@@ -16,16 +16,16 @@ import java.util.Map;
  *
  * @author xBlackCat
  */
-abstract class AnAHFactory extends AFactory<IAH, IQueryHelper> implements IAHFactory {
+abstract class AnAHFactory extends AFactory<IAH, IConnectionFactory> implements IAHFactory {
     protected final TypeMapper typeMapper;
     protected final Map<Class<?>, Class<? extends IRowSetConsumer>> rowSetConsumers;
 
     AnAHFactory(
-            Definer<IAH, IQueryHelper> definer,
-            IQueryHelper queryHelper,
+            Definer<IAH, IConnectionFactory> definer,
+            IConnectionFactory queryHelper,
             TypeMapper typeMapper,
             Map<Class<?>, Class<? extends IRowSetConsumer>> rowSetConsumers,
-            IBuilder<IAH, IQueryHelper> methodBuilder
+            IBuilder<IAH, IConnectionFactory> methodBuilder
     ) {
         super(definer, queryHelper, methodBuilder);
 

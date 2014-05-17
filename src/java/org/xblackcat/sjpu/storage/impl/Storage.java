@@ -1,6 +1,7 @@
 package org.xblackcat.sjpu.storage.impl;
 
 import org.xblackcat.sjpu.storage.*;
+import org.xblackcat.sjpu.storage.connection.IConnectionFactory;
 import org.xblackcat.sjpu.storage.consumer.IRowSetConsumer;
 import org.xblackcat.sjpu.storage.skel.Definer;
 import org.xblackcat.sjpu.storage.skel.MethodBuilder;
@@ -16,14 +17,17 @@ import java.util.Map;
  * @author xBlackCat
  */
 public class Storage extends AnAHFactory implements IStorage {
-    private static final Definer<IAH, IQueryHelper> DEFAULT_DEFINER = new Definer<IAH, IQueryHelper>(AnAH.class, IQueryHelper.class);
+    private static final Definer<IAH, IConnectionFactory> DEFAULT_DEFINER = new Definer<IAH, IConnectionFactory>(
+            AnAH.class,
+            IConnectionFactory.class
+    );
 
-    public Storage(IQueryHelper queryHelper, IMapFactory<?, ?>... mappers) {
+    public Storage(IConnectionFactory queryHelper, IMapFactory<?, ?>... mappers) {
         this(queryHelper, StorageUtils.DEFAULT_ROWSET_CONSUMERS, mappers);
     }
 
     public Storage(
-            IQueryHelper queryHelper,
+            IConnectionFactory queryHelper,
             Map<Class<?>, Class<? extends IRowSetConsumer>> rowSetConsumers,
             IMapFactory<?, ?>... mappers
     ) {
@@ -36,9 +40,9 @@ public class Storage extends AnAHFactory implements IStorage {
     }
 
     private Storage(
-            IQueryHelper queryHelper,
+            IConnectionFactory queryHelper,
             Map<Class<?>, Class<? extends IRowSetConsumer>> rowSetConsumers,
-            Definer<IAH, IQueryHelper> definer,
+            Definer<IAH, IConnectionFactory> definer,
             TypeMapper typeMapper
     ) {
         super(
@@ -62,7 +66,7 @@ public class Storage extends AnAHFactory implements IStorage {
     @Override
     public ITxAH beginTransaction(int transactionIsolationLevel) throws StorageException {
         try {
-            return new TxAHFactory(queryHelper, transactionIsolationLevel, definer, typeMapper, rowSetConsumers, builder);
+            return new TxAHFactory(helper, transactionIsolationLevel, definer, typeMapper, rowSetConsumers, builder);
         } catch (SQLException e) {
             throw new StorageException("An exception occurs while starting a transaction", e);
         }
@@ -70,6 +74,6 @@ public class Storage extends AnAHFactory implements IStorage {
 
     @Override
     public void shutdown() throws StorageException {
-        queryHelper.close();
+        helper.shutdown();
     }
 }

@@ -4,9 +4,9 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.xblackcat.sjpu.storage.Config;
-import org.xblackcat.sjpu.storage.IQueryHelper;
 import org.xblackcat.sjpu.storage.StorageException;
 import org.xblackcat.sjpu.storage.StorageUtils;
+import org.xblackcat.sjpu.storage.connection.IConnectionFactory;
 
 /**
  * 13.12.13 16:36
@@ -18,7 +18,7 @@ public class MultiLevelHelpersTest {
 
     @Before
     public void setupDatabase() throws StorageException {
-        IQueryHelper helper = StorageUtils.buildQueryHelper(Config.TEST_DB_CONFIG);
+        IConnectionFactory helper = StorageUtils.buildQueryHelper(Config.TEST_DB_CONFIG);
         storage = new Storage(helper);
     }
 

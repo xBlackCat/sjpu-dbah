@@ -17,16 +17,16 @@ public class AFactory<Base, Helper> implements IFactory<Base> {
     protected final Map<Class<? extends Base>, Base> helpers = new HashMap<>();
 
     protected final IBuilder<Base, Helper> builder;
-    protected final Helper queryHelper;
+    protected final Helper helper;
     protected final Definer<Base, Helper> definer;
 
     public AFactory(
             Definer<Base, Helper> definer,
-            Helper queryHelper,
+            Helper helper,
             IBuilder<Base, Helper> builder
     ) {
         this.definer = definer;
-        this.queryHelper = queryHelper;
+        this.helper = helper;
         this.builder = builder;
     }
 
@@ -45,7 +45,7 @@ public class AFactory<Base, Helper> implements IFactory<Base> {
 
         lock.writeLock().lock();
         try {
-            final T accessHelper = builder.build(clazz, queryHelper);
+            final T accessHelper = builder.build(clazz, helper);
             @SuppressWarnings({"unchecked"})
             T oldAccessHelper = (T) helpers.get(clazz);
 

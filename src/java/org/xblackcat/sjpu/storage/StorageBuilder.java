@@ -4,7 +4,6 @@ import org.xblackcat.sjpu.storage.connection.IConnectionFactory;
 import org.xblackcat.sjpu.storage.connection.IDBConfig;
 import org.xblackcat.sjpu.storage.connection.SimplePooledConnectionFactory;
 import org.xblackcat.sjpu.storage.consumer.IRowSetConsumer;
-import org.xblackcat.sjpu.storage.impl.QueryHelper;
 import org.xblackcat.sjpu.storage.impl.Storage;
 import org.xblackcat.sjpu.storage.typemap.DateMapper;
 import org.xblackcat.sjpu.storage.typemap.EnumToStringMapper;
@@ -30,7 +29,6 @@ public class StorageBuilder {
     }
 
     private IConnectionFactory connectionFactory = null;
-    private IQueryHelper queryHelper = null;
     private final Map<Class<?>, Class<? extends IRowSetConsumer>> consumers = new HashMap<>();
     private final List<IMapFactory<?, ?>> mappers = new ArrayList<>();
 
@@ -53,11 +51,6 @@ public class StorageBuilder {
         return this;
     }
 
-    public StorageBuilder setQueryHelper(IQueryHelper queryHelper) {
-        this.queryHelper = queryHelper;
-        return this;
-    }
-
     public StorageBuilder addRowSetConsumer(Class<?> returnClass, Class<? extends IRowSetConsumer> consumerClass) {
         consumers.put(returnClass, consumerClass);
         return this;
@@ -69,17 +62,13 @@ public class StorageBuilder {
     }
 
     public IStorage build() {
-        if (queryHelper == null) {
-            if (connectionFactory == null) {
-                throw new StorageSetupException("Connection factory or query helper should be specified.");
-            }
-
-            queryHelper = new QueryHelper(connectionFactory);
+        if (connectionFactory == null) {
+            throw new StorageSetupException("Connection factory should be specified.");
         }
 
         IMapFactory<?, ?>[] mappers = this.mappers.toArray(new IMapFactory<?, ?>[this.mappers.size()]);
 
-        return new Storage(queryHelper, consumers, mappers);
+        return new Storage(connectionFactory, consumers, mappers);
 
     }
 }
