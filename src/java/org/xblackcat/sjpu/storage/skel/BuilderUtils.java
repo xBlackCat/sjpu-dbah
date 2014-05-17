@@ -25,27 +25,6 @@ public class BuilderUtils {
     public static final Pattern FIRST_WORD_SQL = Pattern.compile("(\\w+)(\\s|$)");
 
 
-    public static void initInsertReturn(
-            ClassPool pool,
-            CtClass realReturnType,
-            Class<? extends IToObjectConverter<?>> converter,
-            StringBuilder body
-    ) throws NotFoundException, CannotCompileException {
-        if (realReturnType == null) {
-            body.append("// No need generated keys\n");
-            body.append("helper.insert(\nnull, \n");
-        } else {
-            body.append("return (");
-            body.append(getName(realReturnType));
-            body.append(")helper.insert(\n");
-
-            checkConverterInstance(pool, converter);
-
-            body.append(getName(converter));
-            body.append(".Instance.I,\n");
-        }
-    }
-
     public static void checkConverterInstance(
             ClassPool pool,
             Class<? extends IToObjectConverter<?>> converter

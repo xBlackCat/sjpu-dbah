@@ -12,11 +12,11 @@ import java.util.concurrent.Executor;
  *
  * @author xBlackCat
  */
-public class TxConnectionFactory implements IConnectionFactory {
+public class TxSingleConnectionFactory implements IConnectionFactory {
     private final Connection con;
     private NoCloseConnection noCloseConnection;
 
-    public TxConnectionFactory(IConnectionFactory factory, int transactionIsolationLevel) throws SQLException {
+    public TxSingleConnectionFactory(IConnectionFactory factory, int transactionIsolationLevel) throws SQLException {
         this.con = factory.getConnection();
         con.setAutoCommit(false);
         if (transactionIsolationLevel != -1) {

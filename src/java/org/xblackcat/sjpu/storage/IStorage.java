@@ -7,19 +7,19 @@ package org.xblackcat.sjpu.storage;
  */
 public interface IStorage extends IAHFactory {
     /**
-     * Starts a transaction. See {@linkplain ITxAH} interface description for details
+     * Starts a transaction. See {@linkplain ITx} interface description for details
      *
      * @return an IBatch object associated with transaction
      */
-    ITxAH beginTransaction() throws StorageException;
+    ITx beginTransaction() throws StorageException;
 
     /**
-     * Starts a transaction. See {@linkplain ITxAH} interface description for details
+     * Starts a transaction. See {@linkplain ITx} interface description for details
      *
      * @return an IBatch object associated with transaction
      * @param transactionIsolationLevel
      */
-    ITxAH beginTransaction(int transactionIsolationLevel) throws StorageException;
+    ITx beginTransaction(int transactionIsolationLevel) throws StorageException;
 
     void shutdown() throws StorageException;
 }

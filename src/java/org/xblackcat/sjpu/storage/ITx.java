@@ -21,7 +21,7 @@ package org.xblackcat.sjpu.storage;
  *
  * @author xBlackCat
  */
-public interface ITxAH extends IAHFactory, AutoCloseable {
+public interface ITx extends IAHFactory, AutoCloseable {
     void commit() throws StorageException;
 
     void rollback() throws StorageException;

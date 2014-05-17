@@ -34,7 +34,7 @@ public class TxTest {
         }
 
         // Rollback
-        try (ITxAH b = storage.beginTransaction()) {
+        try (ITx b = storage.beginTransaction()) {
             DBAH tx = b.get(DBAH.class);
             tx.fill(100, "Checkpoint1");
             tx.fill(101, "Checkpoint2");
@@ -44,7 +44,7 @@ public class TxTest {
         Assert.assertNull(dbah.get(101));
         Assert.assertNull(dbah.get(102));
 
-        try (ITxAH b = storage.beginTransaction()) {
+        try (ITx b = storage.beginTransaction()) {
             DBAH tx = b.get(DBAH.class);
             tx.fill(100, "Checkpoint1");
             tx.fill(101, "Checkpoint2");

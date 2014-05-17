@@ -59,14 +59,14 @@ public class Storage extends AnAHFactory implements IStorage {
     }
 
     @Override
-    public ITxAH beginTransaction() throws StorageException {
+    public ITx beginTransaction() throws StorageException {
         return beginTransaction(-1);
     }
 
     @Override
-    public ITxAH beginTransaction(int transactionIsolationLevel) throws StorageException {
+    public ITx beginTransaction(int transactionIsolationLevel) throws StorageException {
         try {
-            return new TxAHFactory(helper, transactionIsolationLevel, definer, typeMapper, rowSetConsumers, builder);
+            return new TxFactory(factory, transactionIsolationLevel, definer, typeMapper, rowSetConsumers, builder);
         } catch (SQLException e) {
             throw new StorageException("An exception occurs while starting a transaction", e);
         }
@@ -74,6 +74,6 @@ public class Storage extends AnAHFactory implements IStorage {
 
     @Override
     public void shutdown() throws StorageException {
-        helper.shutdown();
+        factory.shutdown();
     }
 }
