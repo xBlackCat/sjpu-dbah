@@ -9,6 +9,7 @@ import org.xblackcat.sjpu.storage.consumer.ToListConsumer;
 import org.xblackcat.sjpu.storage.consumer.ToSetConsumer;
 
 import java.util.*;
+import java.util.regex.Matcher;
 
 /**
  * 15.11.13 14:23
@@ -27,12 +28,30 @@ public class StorageUtils {
         DEFAULT_ROWSET_CONSUMERS = Collections.unmodifiableMap(map);
     }
 
-
-    public static IConnectionFactory buildQueryHelper(IDBConfig settings) {
+    public static IConnectionFactory buildConnectionFactory(IDBConfig settings) {
         try {
             return new SimplePooledConnectionFactory(settings);
         } catch (StorageException e) {
             throw new RuntimeException("Can not initialize DB connection factory", e);
         }
+    }
+
+    @SuppressWarnings("UnusedDeclaration")
+    public static String constructDebugSQL(String sql, Object... parameters) {
+        String query = sql;
+
+        for (Object value : parameters) {
+            String str;
+            if (value == null) {
+                str = "NULL";
+            } else if (value instanceof String) {
+                str = "'" + Matcher.quoteReplacement(value.toString()) + "'";
+            } else {
+                str = Matcher.quoteReplacement(value.toString());
+            }
+            query = query.replaceFirst("\\?", str);
+        }
+
+        return query;
     }
 }

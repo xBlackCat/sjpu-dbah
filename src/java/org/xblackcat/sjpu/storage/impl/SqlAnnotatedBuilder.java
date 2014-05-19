@@ -300,7 +300,7 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
             );
             body.append(BuilderUtils.CN_StorageException);
             body.append("(\"Can not consume result for query \"+");
-            body.append(BuilderUtils.CN_QueryHelperUtils);
+            body.append(BuilderUtils.CN_StorageUtils);
             body.append(
                     ".constructDebugSQL(sql, $args),e);\n" +
                             "} catch (java.lang.RuntimeException e) {\n" +
@@ -308,7 +308,7 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
             );
             body.append(BuilderUtils.CN_StorageException);
             body.append("(\"Unexpected exception occurs while consuming result for query \"+");
-            body.append(BuilderUtils.CN_QueryHelperUtils);
+            body.append(BuilderUtils.CN_StorageUtils);
             body.append(
                     ".constructDebugSQL(sql, $args),e);\n" +
                             "} finally {\n" +
@@ -334,7 +334,7 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
         );
         body.append(BuilderUtils.CN_StorageException);
         body.append("(\"Can not execute query \"+");
-        body.append(BuilderUtils.CN_QueryHelperUtils);
+        body.append(BuilderUtils.CN_StorageUtils);
         body.append(
                 ".constructDebugSQL(sql, $args),e);\n" +
                         "}\n" +

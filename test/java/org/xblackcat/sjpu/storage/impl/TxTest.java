@@ -17,7 +17,7 @@ public class TxTest {
 
     @Before
     public void setupDatabase() throws StorageException {
-        IConnectionFactory helper = StorageUtils.buildQueryHelper(Config.TEST_DB_CONFIG);
+        IConnectionFactory helper = StorageUtils.buildConnectionFactory(Config.TEST_DB_CONFIG);
         storage = new Storage(helper);
     }
 

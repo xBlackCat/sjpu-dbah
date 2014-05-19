@@ -25,7 +25,7 @@ public class WorkflowTest {
 
     @Before
     public void setupDatabase() throws StorageException {
-        IConnectionFactory helper = StorageUtils.buildQueryHelper(Config.TEST_DB_CONFIG);
+        IConnectionFactory helper = StorageUtils.buildConnectionFactory(Config.TEST_DB_CONFIG);
         final StorageBuilder builder = new StorageBuilder();
         builder.setConnectionFactory(helper);
         builder.addRowSetConsumer(int[].class, ArrayIntConsumer.class);

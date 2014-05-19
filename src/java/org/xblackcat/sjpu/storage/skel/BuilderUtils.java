@@ -5,10 +5,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.xblackcat.sjpu.storage.ConsumeException;
 import org.xblackcat.sjpu.storage.StorageException;
 import org.xblackcat.sjpu.storage.StorageSetupException;
+import org.xblackcat.sjpu.storage.StorageUtils;
 import org.xblackcat.sjpu.storage.consumer.IRowConsumer;
 import org.xblackcat.sjpu.storage.consumer.IRowSetConsumer;
 import org.xblackcat.sjpu.storage.converter.*;
-import org.xblackcat.sjpu.storage.impl.QueryHelperUtils;
 import org.xblackcat.sjpu.storage.typemap.ITypeMap;
 
 import java.math.BigDecimal;
@@ -38,7 +38,7 @@ public class BuilderUtils {
     public static final String CN_IRowSetConsumer = BuilderUtils.getName(IRowSetConsumer.class);
     public static final String CN_IToObjectConverter = BuilderUtils.getName(IToObjectConverter.class);
     public static final String CN_ITypeMap = BuilderUtils.getName(ITypeMap.class);
-    public static final String CN_QueryHelperUtils = BuilderUtils.getName(QueryHelperUtils.class);
+    public static final String CN_StorageUtils = BuilderUtils.getName(StorageUtils.class);
     public static final String CN_StorageException = BuilderUtils.getName(StorageException.class);
 
     public static void checkConverterInstance(
