@@ -251,7 +251,7 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
         body.append(BuilderUtils.CN_java_sql_PreparedStatement);
         body.append(" st = con.prepareStatement(\nsql,\n");
         body.append(BuilderUtils.CN_java_sql_Statement);
-        if (type == QueryType.Update && void.class.equals(returnType)) {
+        if (type == QueryType.Insert && !void.class.equals(returnType)) {
             body.append(".RETURN_GENERATED_KEYS");
         } else {
             body.append(".NO_GENERATED_KEYS");
@@ -271,8 +271,10 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
             case Insert:
                 processResultSet = returnKeys;
                 body.append("int rows = st.executeUpdate();\n");
-                body.append(BuilderUtils.CN_java_sql_ResultSet);
-                body.append(" rs = st.getGeneratedKeys();\n");
+                if (returnKeys) {
+                    body.append(BuilderUtils.CN_java_sql_ResultSet);
+                    body.append(" rs = st.getGeneratedKeys();\n");
+                }
                 break;
             case Update:
             case Other:
