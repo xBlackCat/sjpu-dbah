@@ -2,7 +2,6 @@ package org.xblackcat.sjpu.storage;
 
 import org.xblackcat.sjpu.storage.connection.IConnectionFactory;
 import org.xblackcat.sjpu.storage.connection.IDBConfig;
-import org.xblackcat.sjpu.storage.connection.SimplePooledConnectionFactory;
 import org.xblackcat.sjpu.storage.consumer.IRowSetConsumer;
 import org.xblackcat.sjpu.storage.impl.Storage;
 import org.xblackcat.sjpu.storage.typemap.DateMapper;
@@ -20,8 +19,8 @@ import java.util.Map;
  * @author xBlackCat
  */
 public class StorageBuilder {
-    public static IStorage defaultStorage(IDBConfig settings) throws StorageException {
-        IConnectionFactory factory = new SimplePooledConnectionFactory(settings);
+    public static IStorage defaultStorage(IDBConfig settings) throws StorageSetupException {
+        IConnectionFactory factory = StorageUtils.buildConnectionFactory(settings);
 
         StorageBuilder builder = new StorageBuilder();
         builder.setConnectionFactory(factory);

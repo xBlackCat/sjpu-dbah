@@ -28,11 +28,11 @@ public class StorageUtils {
         DEFAULT_ROWSET_CONSUMERS = Collections.unmodifiableMap(map);
     }
 
-    public static IConnectionFactory buildConnectionFactory(IDBConfig settings) {
+    public static IConnectionFactory buildConnectionFactory(IDBConfig settings) throws StorageSetupException {
         try {
             return new SimplePooledConnectionFactory(settings);
         } catch (StorageException e) {
-            throw new RuntimeException("Can not initialize DB connection factory", e);
+            throw new StorageSetupException("Can not initialize DB connection factory", e);
         }
     }
 
