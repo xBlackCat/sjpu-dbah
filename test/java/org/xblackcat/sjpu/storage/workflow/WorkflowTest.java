@@ -68,6 +68,11 @@ public class WorkflowTest {
             Assert.assertEquals(n.ordinal(), iElement.getId());
         }
 
+        Assert.assertNull(dataAH.get(null));
+        Assert.assertNull(dataAH.getElement(null));
+        Assert.assertNull(dataAH.getIElement(null));
+
+
         {
             final List<Element> list = dataAH.getListElement();
             for (Element el : list) {
@@ -142,6 +147,10 @@ public class WorkflowTest {
             Assert.assertEquals(n, iElement.getName());
             Assert.assertEquals(n.ordinal(), iElement.getId());
         }
+
+        Assert.assertNull(dataAH.get(null));
+        Assert.assertNull(dataAH.getElement(null));
+        Assert.assertNull(dataAH.getIElement(null));
 
         {
             final List<ElementNumber> list = dataAH.getListElement();

@@ -38,41 +38,41 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
         map.put(long.class, "st.setLong(%1$d, %2$s);\n");
         map.put(
                 Long.class,
-                "java.lang.Long tmp%1$d = %2$s;\nif (tmp%1$d == null) {\nst.setNull(%1$d);\n} else {\nst.setLong(%1$d, tmp%1$d.longValue());\n}\n"
+                "java.lang.Long tmp%1$d = %2$s;\nif (tmp%1$d == null) {\nst.setNull(%1$d, 0);\n} else {\nst.setLong(%1$d, tmp%1$d.longValue());\n}\n"
         );
         map.put(int.class, "st.setInt(%1$d, %2$s);\n");
         map.put(
                 Integer.class,
-                "java.lang.Integer tmp%1$d = %2$s;\nif (tmp%1$d == null) {\nst.setNull(%1$d);\n} else {\nst.setInt(%1$d, tmp%1$d.intValue());\n}\n"
+                "java.lang.Integer tmp%1$d = %2$s;\nif (tmp%1$d == null) {\nst.setNull(%1$d, 0);\n} else {\nst.setInt(%1$d, tmp%1$d.intValue());\n}\n"
         );
         map.put(short.class, "st.setShort(%1$d, %2$s);\n");
         map.put(
                 Short.class,
-                "java.lang.Short tmp%1$d = %2$s;\nif (tmp%1$d == null) {\nst.setNull(%1$d);\n} else {\nst.setShort(%1$d, tmp%1$d.shortValue());\n}\n"
+                "java.lang.Short tmp%1$d = %2$s;\nif (tmp%1$d == null) {\nst.setNull(%1$d, 0);\n} else {\nst.setShort(%1$d, tmp%1$d.shortValue());\n}\n"
         );
         map.put(byte.class, "st.setByte(%1$d, %2$s);\n");
         map.put(
                 Byte.class,
-                "java.lang.Byte tmp%1$d = %2$s;\nif (tmp%1$d == null) {\nst.setNull(%1$d);\n} else {\nst.setByte(%1$d, tmp%1$d.byteValue());\n}\n"
+                "java.lang.Byte tmp%1$d = %2$s;\nif (tmp%1$d == null) {\nst.setNull(%1$d, 0);\n} else {\nst.setByte(%1$d, tmp%1$d.byteValue());\n}\n"
         );
 
         // Float types
         map.put(double.class, "st.setDouble(%1$d, %2$s);\n");
         map.put(
                 Double.class,
-                "java.lang.Double tmp%1$d = %2$s;\nif (tmp%1$d == null) {\nst.setNull(%1$d);\n} else {\nst.setDouble(%1$d, tmp%1$d.doubleValue());\n}\n"
+                "java.lang.Double tmp%1$d = %2$s;\nif (tmp%1$d == null) {\nst.setNull(%1$d, 0);\n} else {\nst.setDouble(%1$d, tmp%1$d.doubleValue());\n}\n"
         );
         map.put(float.class, "st.setFloat(%1$d, %2$s);\n");
         map.put(
                 Float.class,
-                "java.lang.Float tmp%1$d = %2$s;\nif (tmp%1$d == null) {\nst.setNull(%1$d);\n} else {\nst.setFloat(%1$d, tmp%1$d.floatValue());\n}\n"
+                "java.lang.Float tmp%1$d = %2$s;\nif (tmp%1$d == null) {\nst.setNull(%1$d, 0);\n} else {\nst.setFloat(%1$d, tmp%1$d.floatValue());\n}\n"
         );
 
         // Boolean type
         map.put(boolean.class, "st.setBoolean(%1$d, %2$s);\n");
         map.put(
                 Boolean.class,
-                "java.lang.Boolean tmp%1$d = %2$s;\nif (tmp%1$d == null) {\nst.setNull(%1$d);\n} else {\nst.setBoolean(%1$d, tmp%1$d.booleanValue());\n}\n"
+                "java.lang.Boolean tmp%1$d = %2$s;\nif (tmp%1$d == null) {\nst.setNull(%1$d, 0);\n} else {\nst.setBoolean(%1$d, tmp%1$d.booleanValue());\n}\n"
         );
 
         // Other types

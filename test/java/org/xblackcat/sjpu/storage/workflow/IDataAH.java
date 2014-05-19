@@ -18,7 +18,7 @@ public interface IDataAH extends IAH {
                  "  name\n" +
                  "FROM list\n" +
                  "WHERE id = ?")
-    String get(int id) throws StorageException;
+    String get(Integer id) throws StorageException;
 
     @Sql("INSERT INTO list (id, name) VALUES (?, ?)")
     void put(int id, String name) throws StorageException;
@@ -33,14 +33,14 @@ public interface IDataAH extends IAH {
                  "  id, name\n" +
                  "FROM list\n" +
                  "WHERE id = ?")
-    Element getElement(int id) throws StorageException;
+    Element getElement(Integer id) throws StorageException;
 
     @Sql("SELECT\n" +
                  "  id, name\n" +
                  "FROM list\n" +
                  "WHERE id = ?")
     @MapRowTo(Element.class)
-    IElement<String> getIElement(int id) throws StorageException;
+    IElement<String> getIElement(Integer id) throws StorageException;
 
     @Sql("SELECT\n" +
                  "  id, name\n" +

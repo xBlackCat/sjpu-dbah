@@ -22,7 +22,7 @@ public interface IDataEnumAH extends IAH {
                  "  name\n" +
                  "FROM list\n" +
                  "WHERE id = ?")
-    Numbers get(int id) throws StorageException;
+    Numbers get(Integer id) throws StorageException;
 
     @Sql("INSERT INTO list (id, name) VALUES (?, ?)")
     void put(int id, Numbers element) throws StorageException;
@@ -31,14 +31,14 @@ public interface IDataEnumAH extends IAH {
                  "  id, name\n" +
                  "FROM list\n" +
                  "WHERE id = ?")
-    ElementNumber getElement(int id) throws StorageException;
+    ElementNumber getElement(Integer id) throws StorageException;
 
     @Sql("SELECT\n" +
                  "  id, name\n" +
                  "FROM list\n" +
                  "WHERE id = ?")
     @MapRowTo(ElementNumber.class)
-    IElement<Numbers> getIElement(int id) throws StorageException;
+    IElement<Numbers> getIElement(Integer id) throws StorageException;
 
     @Sql("SELECT\n" +
                  "  name\n" +
