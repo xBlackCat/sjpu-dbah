@@ -7,13 +7,11 @@ import org.xblackcat.sjpu.storage.ITx;
 import org.xblackcat.sjpu.storage.StorageException;
 import org.xblackcat.sjpu.storage.connection.IConnectionFactory;
 import org.xblackcat.sjpu.storage.connection.TxSingleConnectionFactory;
-import org.xblackcat.sjpu.storage.consumer.IRowSetConsumer;
-import org.xblackcat.sjpu.storage.skel.Definer;
 import org.xblackcat.sjpu.storage.skel.IBuilder;
 import org.xblackcat.sjpu.storage.typemap.TypeMapper;
 
 import java.sql.SQLException;
-import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * 15.11.13 14:06
@@ -23,23 +21,21 @@ import java.util.Map;
 class TxFactory extends AnAHFactory implements ITx {
     private static final Log log = LogFactory.getLog(TxFactory.class);
 
-    private boolean rollbackOnClose = true;
-    private boolean transactionDone = false;
+    private AtomicBoolean rollbackOnClose = new AtomicBoolean(true);
+    private AtomicBoolean transactionDone = new AtomicBoolean(false);
 
     TxFactory(
             IConnectionFactory connectionFactory,
             int transactionIsolationLevel,
-            Definer<IAH, IConnectionFactory> definer,
             TypeMapper typeMapper,
-            Map<Class<?>, Class<? extends IRowSetConsumer>> rowSetConsumers,
             IBuilder<IAH, IConnectionFactory> methodBuilder
     ) throws SQLException {
-        super(definer, new TxSingleConnectionFactory(connectionFactory, transactionIsolationLevel), typeMapper, rowSetConsumers, methodBuilder);
+        super(new TxSingleConnectionFactory(connectionFactory, transactionIsolationLevel), typeMapper, methodBuilder);
     }
 
     @Override
     public void commit() throws StorageException {
-        if (isTransactionDone()) {
+        if (transactionDone.get()) {
             throw new StorageException("Transaction is already done");
         }
 
@@ -54,7 +50,7 @@ class TxFactory extends AnAHFactory implements ITx {
 
     @Override
     public void rollback() throws StorageException {
-        if (isTransactionDone()) {
+        if (transactionDone.get()) {
             throw new StorageException("Transaction is already done");
         }
 
@@ -69,7 +65,7 @@ class TxFactory extends AnAHFactory implements ITx {
 
     @Override
     public void close() throws StorageException {
-        if (rollbackOnClose()) {
+        if (rollbackOnClose.get()) {
             try {
                 if (log.isInfoEnabled()) {
                     log.info("Perform automatic rollback for non-committed transaction");
@@ -86,32 +82,15 @@ class TxFactory extends AnAHFactory implements ITx {
         factory.shutdown();
     }
 
-    protected boolean rollbackOnClose() {
-        lock.readLock().lock();
-        try {
-            return this.rollbackOnClose;
-        } finally {
-            lock.readLock().unlock();
-        }
-    }
-
-    protected boolean isTransactionDone() {
-        lock.readLock().lock();
-        try {
-            return this.transactionDone;
-        } finally {
-            lock.readLock().unlock();
-        }
-    }
-
     protected void setTransactionDone() {
         lock.writeLock().lock();
         try {
-            transactionDone = true;
-            rollbackOnClose = false;
+            transactionDone.set(true);
+            rollbackOnClose.set(false);
             helpers.clear();
         } finally {
             lock.writeLock().unlock();
         }
+
     }
 }

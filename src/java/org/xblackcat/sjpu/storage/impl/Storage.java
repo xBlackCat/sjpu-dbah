@@ -17,39 +17,42 @@ import java.util.Map;
  * @author xBlackCat
  */
 public class Storage extends AnAHFactory implements IStorage {
-    private static final Definer<IAH, IConnectionFactory> DEFAULT_DEFINER = new Definer<IAH, IConnectionFactory>(
-            AnAH.class,
-            IConnectionFactory.class
-    );
 
-    public Storage(IConnectionFactory queryHelper, IMapFactory<?, ?>... mappers) {
-        this(queryHelper, StorageUtils.DEFAULT_ROWSET_CONSUMERS, mappers);
+    public Storage(IConnectionFactory connectionFactory, IMapFactory<?, ?>... mappers) {
+        this(connectionFactory, StorageUtils.DEFAULT_ROWSET_CONSUMERS, mappers);
     }
 
     public Storage(
-            IConnectionFactory queryHelper,
+            IConnectionFactory connectionFactory,
             Map<Class<?>, Class<? extends IRowSetConsumer>> rowSetConsumers,
             IMapFactory<?, ?>... mappers
     ) {
+        this(connectionFactory, rowSetConsumers, new Definer<IAH, IConnectionFactory>(AnAH.class, IConnectionFactory.class), mappers);
+    }
+
+    private Storage(
+            IConnectionFactory connectionFactory,
+            Map<Class<?>, Class<? extends IRowSetConsumer>> rowSetConsumers,
+            Definer<IAH, IConnectionFactory> definer,
+            IMapFactory<?, ?>... mappers
+    ) {
         this(
-                queryHelper,
+                connectionFactory,
                 rowSetConsumers,
-                DEFAULT_DEFINER,
-                new TypeMapper(DEFAULT_DEFINER.getPool(), mappers)
+                definer,
+                new TypeMapper(definer.getPool(), mappers)
         );
     }
 
     private Storage(
-            IConnectionFactory queryHelper,
+            IConnectionFactory connectionFactory,
             Map<Class<?>, Class<? extends IRowSetConsumer>> rowSetConsumers,
             Definer<IAH, IConnectionFactory> definer,
             TypeMapper typeMapper
     ) {
         super(
-                definer,
-                queryHelper,
+                connectionFactory,
                 typeMapper,
-                rowSetConsumers,
                 new MethodBuilder<>(
                         definer,
                         new SqlAnnotatedBuilder(typeMapper, rowSetConsumers),
@@ -66,7 +69,7 @@ public class Storage extends AnAHFactory implements IStorage {
     @Override
     public ITx beginTransaction(int transactionIsolationLevel) throws StorageException {
         try {
-            return new TxFactory(factory, transactionIsolationLevel, definer, typeMapper, rowSetConsumers, builder);
+            return new TxFactory(factory, transactionIsolationLevel, typeMapper, builder);
         } catch (SQLException e) {
             throw new StorageException("An exception occurs while starting a transaction", e);
         }

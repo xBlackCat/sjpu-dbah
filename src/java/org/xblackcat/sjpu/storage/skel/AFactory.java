@@ -18,14 +18,8 @@ public class AFactory<Base, Helper> implements IFactory<Base> {
 
     protected final IBuilder<Base, Helper> builder;
     protected final Helper factory;
-    protected final Definer<Base, Helper> definer;
 
-    public AFactory(
-            Definer<Base, Helper> definer,
-            Helper factory,
-            IBuilder<Base, Helper> builder
-    ) {
-        this.definer = definer;
+    public AFactory(Helper factory, IBuilder<Base, Helper> builder) {
         this.factory = factory;
         this.builder = builder;
     }

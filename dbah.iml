@@ -113,7 +113,11 @@
           <root url="jar://$MODULE_DIR$/lib/javassist-3.18.0-GA.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://D:/Libs/Javassist/javassist-rel_3_18_2_ga_build.zip!/javassist-rel_3_18_2_ga_build/src/main" />
+          <root url="jar://D:/Libs/Javassist/javassist-rel_3_18_2_ga_build.zip!/javassist-rel_3_18_2_ga_build/src/test" />
+          <root url="jar://D:/Libs/Javassist/javassist-rel_3_18_2_ga_build.zip!/javassist-rel_3_18_2_ga_build" />
+        </SOURCES>
       </library>
     </orderEntry>
   </component>
