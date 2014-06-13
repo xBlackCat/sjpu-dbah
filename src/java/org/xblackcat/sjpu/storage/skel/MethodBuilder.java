@@ -33,7 +33,7 @@ public class MethodBuilder<Base, Helper> implements IBuilder<Base, Helper> {
             // For the first: check if the implementation is exists
 
             try {
-                Class<?> clazz = Class.forName(target.getName() + "$" + definer.getNestedClassName());
+                Class<?> clazz = BuilderUtils.getClass(target.getName() + "$" + definer.getNestedClassName(), definer.getPool());
 
                 if (!target.isAssignableFrom(clazz)) {
                     throw new StorageSetupException(

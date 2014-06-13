@@ -185,7 +185,7 @@ public class ConverterInfo {
             }
 
             final String converterFQN = IToObjectConverter.class.getName() + "$" + converterClassName;
-            final Class<?> aClass = Class.forName(converterFQN);
+            final Class<?> aClass = BuilderUtils.getClass(converterFQN, typeMapper.getParentPool());
 
             if (IToObjectConverter.class.isAssignableFrom(aClass)) {
                 if (log.isTraceEnabled()) {

@@ -133,7 +133,6 @@ public class TypeMapper {
 
         final String converterCN = getTypeMapConverterRef(typeMap.getClass());
         final String realClassName = typeMap.getRealType().getName();
-        final String typeMapperRef = getTypeMapInstanceRef(typeMap.getRealType());
         try {
 
             if (log.isTraceEnabled()) {
@@ -141,7 +140,8 @@ public class TypeMapper {
             }
 
             final String converterFQN = getClass().getName() + "$" + converterCN;
-            final Class<?> aClass = Class.forName(converterFQN);
+            final ClassPool pool = parentPool;
+            final Class<?> aClass = BuilderUtils.getClass(converterFQN, pool);
 
             if (IToObjectConverter.class.isAssignableFrom(aClass)) {
                 if (log.isTraceEnabled()) {

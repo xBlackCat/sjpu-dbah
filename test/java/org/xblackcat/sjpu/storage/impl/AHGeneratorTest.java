@@ -4,6 +4,7 @@ package org.xblackcat.sjpu.storage.impl;
 import org.junit.Assert;
 import org.junit.Test;
 import org.xblackcat.sjpu.storage.IAHFactory;
+import org.xblackcat.sjpu.storage.IStorage;
 import org.xblackcat.sjpu.storage.StorageException;
 import org.xblackcat.sjpu.storage.connection.IConnectionFactory;
 
@@ -21,6 +22,23 @@ import java.util.Set;
  * @author xBlackCat
  */
 public class AHGeneratorTest {
+    @Test
+    public void classLoadingIssues() {
+        IStorage s1 = new Storage(new ConnectionFactoryStub());
+        IStorage s2 = new Storage(new ConnectionFactoryStub());
+
+        final ITIntAH intAH1 = s1.get(ITIntAH.class);
+        final ITIntAH intAH2 = s2.get(ITIntAH.class);
+
+        Assert.assertNotEquals(intAH1.getClass().getClassLoader(), intAH2.getClass().getClassLoader());
+        Assert.assertNotEquals(intAH1.getClass(), intAH2.getClass());
+
+        Assert.assertEquals(intAH1.getClass().getClassLoader(), s1.get(ITIntAH.class).getClass().getClassLoader());
+        Assert.assertEquals(intAH1.getClass(), s1.get(ITIntAH.class).getClass());
+        Assert.assertTrue(intAH1.getClass() == s1.get(ITIntAH.class).getClass());
+        Assert.assertTrue(intAH1 == s1.get(ITIntAH.class));
+    }
+
     @Test
     public void checkPrimitiveAHStructure() throws StorageException {
         IAHFactory storage = new Storage(new ConnectionFactoryStub());

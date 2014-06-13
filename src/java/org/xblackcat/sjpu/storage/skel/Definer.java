@@ -14,11 +14,18 @@ public class Definer<Base, Helper> {
     private final Class<? extends Base> baseClass;
     private final Class<Helper> paramClass;
     private final ClassPool pool;
+    private final ClassLoader classLoader = new ClassLoader(Definer.class.getClassLoader()) {
+    };
 
     public Definer(Class<? extends Base> baseClass, Class<Helper> paramClass) {
         this.baseClass = baseClass;
         this.paramClass = paramClass;
-        pool = new ClassPool(true);
+        pool = new ClassPool(true) {
+            @Override
+            public ClassLoader getClassLoader() {
+                return classLoader;
+            }
+        };
         pool.appendClassPath(new ClassClassPath(baseClass));
         pool.appendClassPath(new ClassClassPath(paramClass));
     }

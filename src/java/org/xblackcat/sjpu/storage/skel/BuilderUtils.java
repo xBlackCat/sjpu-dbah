@@ -181,7 +181,12 @@ public class BuilderUtils {
     }
 
     public static ClassPool getClassPool(ClassPool parent, Class<?> clazz, Class<?>... classes) {
-        ClassPool pool = new ClassPool(parent);
+        ClassPool pool = new ClassPool(parent) {
+            @Override
+            public ClassLoader getClassLoader() {
+                return parent.getClassLoader();
+            }
+        };
 
         Set<ClassLoader> usedLoaders = new HashSet<>();
         usedLoaders.add(ClassLoader.getSystemClassLoader());
@@ -198,5 +203,9 @@ public class BuilderUtils {
         }
 
         return pool;
+    }
+
+    public static Class<?> getClass(String fqn, ClassPool pool) throws ClassNotFoundException {
+        return Class.forName(fqn, true, pool.getClassLoader());
     }
 }
