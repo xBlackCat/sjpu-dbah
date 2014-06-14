@@ -1,7 +1,6 @@
 package org.xblackcat.sjpu.storage.impl;
 
 import javassist.*;
-import org.apache.commons.lang3.StringEscapeUtils;
 import org.xblackcat.sjpu.storage.StorageSetupException;
 import org.xblackcat.sjpu.storage.ann.RowSetConsumer;
 import org.xblackcat.sjpu.storage.ann.Sql;
@@ -17,9 +16,9 @@ import org.xblackcat.sjpu.storage.typemap.TypeMapper;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 
@@ -134,9 +133,9 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
         CtClass ctRealReturnType = pool.get(returnType.getName());
         final StringBuilder body = new StringBuilder("{\n");
 
-        body.append("java.lang.String sql = \"");
-        body.append(StringEscapeUtils.escapeJava(sql));
-        body.append("\";\n");
+        body.append("java.lang.String sql = ");
+        SqlStringUtils.appendSqlWithParts(body, sql, info.getSqlParts());
+        body.append(";\n");
 
         final CtClass targetReturnType;
 
@@ -186,9 +185,9 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
                     if (hasClassParameter(rowSetConsumer)) {
                         body.append("(");
                         body.append(BuilderUtils.getName(realReturnType));
-                        body.append(".class);");
+                        body.append(".class);\n");
                     } else {
-                        body.append("();");
+                        body.append("();\n");
                     }
 
                     returnString = "return (" + BuilderUtils.getName(targetReturnType) + ") consumer.getRowsHolder();\n";
@@ -214,7 +213,7 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
                 body.append(BuilderUtils.CN_IRowConsumer);
                 body.append(" consumer = $args[");
                 body.append(info.getConsumeIndex());
-                body.append("];");
+                body.append("];\n");
 
                 returnKeys = true;
             }
@@ -367,7 +366,7 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
         return false;
     }
 
-    protected void setParameters(List<ConverterInfo.Arg> types, StringBuilder body) {
+    protected void setParameters(Collection<ConverterInfo.Arg> types, StringBuilder body) {
         int idx = 0;
 
         for (ConverterInfo.Arg arg : types) {

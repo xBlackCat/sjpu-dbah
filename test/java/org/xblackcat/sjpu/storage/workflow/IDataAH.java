@@ -4,6 +4,7 @@ import org.xblackcat.sjpu.storage.IAH;
 import org.xblackcat.sjpu.storage.StorageException;
 import org.xblackcat.sjpu.storage.ann.MapRowTo;
 import org.xblackcat.sjpu.storage.ann.Sql;
+import org.xblackcat.sjpu.storage.ann.SqlPart;
 import org.xblackcat.sjpu.storage.consumer.IRowConsumer;
 
 import java.util.List;
@@ -34,6 +35,18 @@ public interface IDataAH extends IAH {
                  "FROM list\n" +
                  "WHERE id = ?")
     Element getElement(Integer id) throws StorageException;
+
+    @Sql("SELECT\n" +
+                 "  id, name\n" +
+                 "FROM {1}\n" +
+                 "WHERE id = ?")
+    Element getElement(@SqlPart(1) String tableName, Integer id) throws StorageException;
+
+    @Sql("SELECT\n" +
+                 "  id, name\n" +
+                 "FROM {1}\n" +
+                 "WHERE id = ?")
+    Element getElement(Integer id, @SqlPart(1) String tableName) throws StorageException;
 
     @Sql("SELECT\n" +
                  "  id, name\n" +

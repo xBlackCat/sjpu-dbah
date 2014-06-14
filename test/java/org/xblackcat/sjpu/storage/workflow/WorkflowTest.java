@@ -57,10 +57,24 @@ public class WorkflowTest {
         }
 
         for (Numbers n : Numbers.values()) {
-            final Element element = dataAH.getElement(n.ordinal());
-            Assert.assertNotNull(element);
-            Assert.assertEquals(n.name(), element.name);
-            Assert.assertEquals(n.ordinal(), element.id);
+            {
+                final Element element = dataAH.getElement(n.ordinal());
+                Assert.assertNotNull(element);
+                Assert.assertEquals(n.name(), element.name);
+                Assert.assertEquals(n.ordinal(), element.id);
+            }
+            {
+                final Element element = dataAH.getElement(n.ordinal(), "list");
+                Assert.assertNotNull(element);
+                Assert.assertEquals(n.name(), element.name);
+                Assert.assertEquals(n.ordinal(), element.id);
+            }
+            {
+                final Element element = dataAH.getElement("list", n.ordinal());
+                Assert.assertNotNull(element);
+                Assert.assertEquals(n.name(), element.name);
+                Assert.assertEquals(n.ordinal(), element.id);
+            }
 
             final IElement<String> iElement = dataAH.getIElement(n.ordinal());
             Assert.assertNotNull(iElement);

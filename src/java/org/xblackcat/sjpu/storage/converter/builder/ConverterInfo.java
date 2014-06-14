@@ -6,20 +6,19 @@ import javassist.NotFoundException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.xblackcat.sjpu.storage.StorageSetupException;
-import org.xblackcat.sjpu.storage.ann.MapRowTo;
-import org.xblackcat.sjpu.storage.ann.RowMap;
-import org.xblackcat.sjpu.storage.ann.RowSetConsumer;
-import org.xblackcat.sjpu.storage.ann.ToObjectConverter;
+import org.xblackcat.sjpu.storage.ann.*;
 import org.xblackcat.sjpu.storage.consumer.IRowConsumer;
 import org.xblackcat.sjpu.storage.consumer.IRowSetConsumer;
 import org.xblackcat.sjpu.storage.converter.IToObjectConverter;
 import org.xblackcat.sjpu.storage.skel.BuilderUtils;
 import org.xblackcat.sjpu.storage.typemap.TypeMapper;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.sql.ResultSet;
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -33,18 +32,21 @@ public class ConverterInfo {
     private final Class<?> realReturnType;
     private final Class<? extends IToObjectConverter<?>> converter;
     private final Integer consumeIndex;
-    private final List<Arg> argumentList;
+    private final Collection<Arg> argumentList;
+    private final Map<Integer, Integer> sqlParts;
 
     ConverterInfo(
             Class<?> realReturnType,
             Class<? extends IToObjectConverter<?>> converter,
             Integer consumeIndex,
-            List<Arg> argumentList
+            Collection<Arg> argumentList,
+            Map<Integer, Integer> parts
     ) {
         this.realReturnType = realReturnType;
         this.converter = converter;
         this.consumeIndex = consumeIndex;
         this.argumentList = argumentList;
+        sqlParts = parts;
     }
 
     public static ConverterInfo analyse(
@@ -57,8 +59,11 @@ public class ConverterInfo {
         final Class<?> realReturnType;
         Integer consumerParamIdx = null;
 
-        List<Arg> parameterTypes = new ArrayList<>();
-        Class<?>[] types = m.getParameterTypes();
+        final Collection<Arg> parameterTypes = new ArrayList<>();
+        final Map<Integer, Integer> parts = new HashMap<>();
+
+        final Class<?>[] types = m.getParameterTypes();
+        final Annotation[][] anns = m.getParameterAnnotations();
         {
             int i = 0;
             while (i < types.length) {
@@ -70,7 +75,29 @@ public class ConverterInfo {
 
                     consumerParamIdx = i;
                 } else {
-                    parameterTypes.add(new Arg(t, i));
+                    SqlPart sqlPart = null;
+                    for (Annotation a : anns[i]) {
+                        if (a instanceof SqlPart) {
+                            sqlPart = (SqlPart) a;
+                            break;
+                        }
+                    }
+
+                    if (sqlPart != null) {
+                        if (!String.class.equals(t)) {
+                            throw new StorageSetupException("Only String argument types could be used as plain sql parts. " + m);
+                        }
+
+                        final Integer oldVal = parts.put(sqlPart.value(), i);
+                        if (oldVal != null) {
+                            throw new StorageSetupException(
+                                    "Two arguments (" + oldVal + " and " + i + ") are referenced to the same sql part index " +
+                                            sqlPart.value() + " in method " + m
+                            );
+                        }
+                    } else {
+                        parameterTypes.add(new Arg(t, i));
+                    }
                 }
                 i++;
             }
@@ -157,7 +184,7 @@ public class ConverterInfo {
                 }
             }
         }
-        return new ConverterInfo(realReturnType, converter, consumerParamIdx, parameterTypes);
+        return new ConverterInfo(realReturnType, converter, consumerParamIdx, parameterTypes, parts);
     }
 
     protected static Class<IToObjectConverter<?>> buildConverter(
@@ -223,8 +250,12 @@ public class ConverterInfo {
         return consumeIndex;
     }
 
-    public List<Arg> getArgumentList() {
+    public Collection<Arg> getArgumentList() {
         return argumentList;
+    }
+
+    public Map<Integer, Integer> getSqlParts() {
+        return sqlParts;
     }
 
     public static final class Arg {
@@ -234,6 +265,16 @@ public class ConverterInfo {
         public Arg(Class<?> clazz, int idx) {
             this.clazz = clazz;
             this.idx = idx;
+        }
+    }
+
+    public static final class SqlPartIdx {
+        public final int referenceIdx;
+        public final int argIdx;
+
+        public SqlPartIdx(int referenceIdx, int argIdx) {
+            this.referenceIdx = referenceIdx;
+            this.argIdx = argIdx;
         }
     }
 }
