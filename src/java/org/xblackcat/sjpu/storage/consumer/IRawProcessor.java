@@ -8,6 +8,6 @@ import java.sql.SQLException;
  *
  * @author xBlackCat
  */
-public interface IRawProcessor<T> {
+public interface IRawProcessor {
     void process(ResultSet rs) throws SQLException;
 }
