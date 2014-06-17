@@ -1,11 +1,14 @@
 package org.xblackcat.sjpu.storage.impl;
 
+import org.apache.commons.lang3.mutable.MutableInt;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.xblackcat.sjpu.storage.*;
+import org.xblackcat.sjpu.storage.ann.MapRowTo;
 import org.xblackcat.sjpu.storage.ann.Sql;
 import org.xblackcat.sjpu.storage.connection.IConnectionFactory;
+import org.xblackcat.sjpu.storage.consumer.IRowConsumer;
 
 /**
  * 18.11.13 12:48
@@ -60,14 +63,34 @@ public class TxTest {
 
     @Test
     public void returnKeysSet() throws StorageException {
-        DBAutoIncAH dbAH = storage.get(DBAutoIncAH.class);
+        final DBAutoIncAH dbAH = storage.get(DBAutoIncAH.class);
 
         dbAH.createDB();
 
-        final String value = "Hello, H2 database :)";
-        int id = dbAH.put(value);
+        {
+            final String value = "Hello, H2 database :)";
+            int id = dbAH.put(value);
 
-        Assert.assertEquals(value, dbAH.get(id));
+            Assert.assertEquals(value, dbAH.get(id));
+        }
+
+        {
+            final String value = "Hello again, H2 database :)";
+            final MutableInt key = new MutableInt();
+
+            dbAH.put(
+                    new IRowConsumer<Integer>() {
+                        @Override
+                        public boolean consume(Integer o) throws ConsumeException {
+                            key.setValue(o);
+                            return false;
+                        }
+                    },
+                    value
+            );
+            
+            Assert.assertEquals(value, dbAH.get(key.intValue()));
+        }
     }
 
     /**
@@ -100,6 +123,10 @@ public class TxTest {
 
         @Sql("INSERT INTO \"autoinc\" (\"txt\") VALUES (?)")
         int put(String value) throws StorageException;
+
+        @Sql("INSERT INTO \"autoinc\" (\"txt\") VALUES (?)")
+        @MapRowTo(Integer.class)
+        void put(IRowConsumer<Integer> id, String value) throws StorageException;
 
         @Sql("SELECT\n" +
                      "  \"txt\"\n" +

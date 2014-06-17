@@ -156,7 +156,14 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
 
         final String returnString;
         final boolean returnKeys;
-        if (type == QueryType.Select || type == QueryType.Insert) {
+        if (info.getRawProcessorParamIndex() != null) {
+            if (!noResult) {
+                throw new StorageSetupException("No return value is allowed for method with raw consumer");
+            }
+
+            returnString = "";
+            returnKeys = true;
+        } else if (type == QueryType.Select || type == QueryType.Insert) {
             if (info.getConsumeIndex() == null) {
                 if (noResult) {
                     if (type == QueryType.Select) {
@@ -211,9 +218,9 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
                 }
 
                 body.append(BuilderUtils.CN_IRowConsumer);
-                body.append(" consumer = $args[");
-                body.append(info.getConsumeIndex());
-                body.append("];\n");
+                body.append(" consumer = $");
+                body.append(info.getConsumeIndex() + 1);
+                body.append(";\n");
 
                 returnKeys = true;
             }
@@ -250,7 +257,7 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
         body.append(BuilderUtils.CN_java_sql_PreparedStatement);
         body.append(" st = con.prepareStatement(\nsql,\n");
         body.append(BuilderUtils.CN_java_sql_Statement);
-        if (type == QueryType.Insert && !void.class.equals(returnType)) {
+        if (returnKeys) {
             body.append(".RETURN_GENERATED_KEYS");
         } else {
             body.append(".NO_GENERATED_KEYS");
@@ -284,17 +291,26 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
         }
 
         if (processResultSet) {
-            body.append(
-                    "try {\n" +
-                            "while (rs.next()) {\n" +
-                            "java.lang.Object obj = converter.convert(rs);\n" +
-                            "if (consumer.consume(obj)) {\n" +
-                            "break;\n" +
-                            "}\n" +
-                            "}\n" +
-                            "} catch ("
-            );
-            body.append(BuilderUtils.CN_ConsumeException);
+            body.append("try {\n");
+            if (info.getRawProcessorParamIndex() == null) {
+                body.append(
+                        "while (rs.next()) {\n" +
+                                "java.lang.Object obj = converter.convert(rs);\n" +
+                                "if (consumer.consume(obj)) {\n" +
+                                "break;\n" +
+                                "}\n" +
+                                "}\n" +
+                                "} catch ("
+                );
+                body.append(BuilderUtils.CN_ConsumeException);
+            } else {
+                body.append("((");
+                body.append(BuilderUtils.CN_IRawProcessor);
+                body.append(")$");
+                body.append(info.getRawProcessorParamIndex() + 1);
+                body.append(").process(rs);\n} catch (");
+                body.append(BuilderUtils.CN_java_sql_SQLException);
+            }
             body.append(
                     " e) {\n" +
                             "throw new "

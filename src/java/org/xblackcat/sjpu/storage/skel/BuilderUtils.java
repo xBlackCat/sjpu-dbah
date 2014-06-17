@@ -6,6 +6,7 @@ import org.xblackcat.sjpu.storage.ConsumeException;
 import org.xblackcat.sjpu.storage.StorageException;
 import org.xblackcat.sjpu.storage.StorageSetupException;
 import org.xblackcat.sjpu.storage.StorageUtils;
+import org.xblackcat.sjpu.storage.consumer.IRawProcessor;
 import org.xblackcat.sjpu.storage.consumer.IRowConsumer;
 import org.xblackcat.sjpu.storage.consumer.IRowSetConsumer;
 import org.xblackcat.sjpu.storage.converter.*;
@@ -34,6 +35,7 @@ public class BuilderUtils {
     public static final String CN_java_sql_Statement = BuilderUtils.getName(Statement.class);
 
     public static final String CN_ConsumeException = BuilderUtils.getName(ConsumeException.class);
+    public static final String CN_IRawProcessor = BuilderUtils.getName(IRawProcessor.class);
     public static final String CN_IRowConsumer = BuilderUtils.getName(IRowConsumer.class);
     public static final String CN_IRowSetConsumer = BuilderUtils.getName(IRowSetConsumer.class);
     public static final String CN_IToObjectConverter = BuilderUtils.getName(IToObjectConverter.class);

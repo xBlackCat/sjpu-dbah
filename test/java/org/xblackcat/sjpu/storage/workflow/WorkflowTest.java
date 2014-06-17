@@ -6,10 +6,13 @@ import org.junit.Before;
 import org.junit.Test;
 import org.xblackcat.sjpu.storage.*;
 import org.xblackcat.sjpu.storage.connection.IConnectionFactory;
+import org.xblackcat.sjpu.storage.consumer.IRawProcessor;
 import org.xblackcat.sjpu.storage.consumer.IRowConsumer;
 import org.xblackcat.sjpu.storage.typemap.EnumToStringMapper;
 
 import java.net.URI;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -234,6 +237,30 @@ public class WorkflowTest {
     }
 
     @Test
+    public void processRaw() throws StorageException {
+        final IDataRawAH dataAH = storage.get(IDataRawAH.class);
+
+        dataAH.dropElements();
+
+        for (Numbers n : Numbers.values()) {
+            dataAH.put(n.ordinal(), n);
+        }
+
+        IRawProcessor rawProcessor = new TestRawProcessor();
+        IRawProcessor rawProcessor5 = new TestRawProcessor(5);
+
+        dataAH.getListElement(rawProcessor);
+        dataAH.getListElement(rawProcessor, "list");
+        dataAH.getListElement("list", rawProcessor);
+
+        dataAH.getListElement(rawProcessor5, 5);
+        dataAH.getListElement(rawProcessor5, "list", 5);
+        dataAH.getListElement(rawProcessor5, 5, "list");
+        dataAH.getListElement("list", rawProcessor5, 5);
+
+    }
+
+    @Test
     public void processDefinedClasses() throws StorageException {
         final IUriTestAH uriTest = storage.get(IUriTestAH.class);
 
@@ -254,4 +281,29 @@ public class WorkflowTest {
         }
     }
 
+    private static class TestRawProcessor implements IRawProcessor {
+        private final int count;
+
+        private TestRawProcessor() {
+            this(-1);
+        }
+
+        public TestRawProcessor(int i) {
+            count = i;
+        }
+
+        @Override
+        public void process(ResultSet rs) throws SQLException {
+            int i = 0;
+            while (rs.next()) {
+                Assert.assertEquals(rs.getInt(1), Numbers.valueOf(rs.getString(2)).ordinal());
+                Assert.assertEquals(rs.getString(2), Numbers.values()[rs.getInt(1)].name());
+                i++;
+            }
+
+            if (count >= 0) {
+                Assert.assertEquals(count, i);
+            }
+        }
+    }
 }
