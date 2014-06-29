@@ -16,10 +16,7 @@ import org.xblackcat.sjpu.storage.typemap.TypeMapper;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 
 /**
@@ -34,55 +31,55 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
         Map<Class<?>, String> map = new HashMap<>();
 
         // Integer types
-        map.put(long.class, "st.setLong(%1$d, %2$s);\n");
+        map.put(long.class, "st.setLong(idx, %s);\n");
         map.put(
                 Long.class,
-                "java.lang.Long tmp%1$d = %2$s;\nif (tmp%1$d == null) {\nst.setNull(%1$d, 0);\n} else {\nst.setLong(%1$d, tmp%1$d.longValue());\n}\n"
+                "{\njava.lang.Long tmpVal = %s;\nif (tmpVal == null) {\nst.setNull(idx, 0);\n} else {\nst.setLong(idx, tmpVal.longValue());\n}\n}\n"
         );
-        map.put(int.class, "st.setInt(%1$d, %2$s);\n");
+        map.put(int.class, "st.setInt(idx, %s);\n");
         map.put(
                 Integer.class,
-                "java.lang.Integer tmp%1$d = %2$s;\nif (tmp%1$d == null) {\nst.setNull(%1$d, 0);\n} else {\nst.setInt(%1$d, tmp%1$d.intValue());\n}\n"
+                "{\njava.lang.Integer tmpVal = %s;\nif (tmpVal == null) {\nst.setNull(idx, 0);\n} else {\nst.setInt(idx, tmpVal.intValue());\n}\n}\n"
         );
-        map.put(short.class, "st.setShort(%1$d, %2$s);\n");
+        map.put(short.class, "st.setShort(idx, %s);\n");
         map.put(
                 Short.class,
-                "java.lang.Short tmp%1$d = %2$s;\nif (tmp%1$d == null) {\nst.setNull(%1$d, 0);\n} else {\nst.setShort(%1$d, tmp%1$d.shortValue());\n}\n"
+                "{\njava.lang.Short tmpVal = %s;\nif (tmpVal == null) {\nst.setNull(idx, 0);\n} else {\nst.setShort(idx, tmpVal.shortValue());\n}\n}\n"
         );
-        map.put(byte.class, "st.setByte(%1$d, %2$s);\n");
+        map.put(byte.class, "st.setByte(idx, %s);\n");
         map.put(
                 Byte.class,
-                "java.lang.Byte tmp%1$d = %2$s;\nif (tmp%1$d == null) {\nst.setNull(%1$d, 0);\n} else {\nst.setByte(%1$d, tmp%1$d.byteValue());\n}\n"
+                "{\njava.lang.Byte tmpVal = %s;\nif (tmpVal == null) {\nst.setNull(idx, 0);\n} else {\nst.setByte(idx, tmpVal.byteValue());\n}\n}\n"
         );
 
         // Float types
-        map.put(double.class, "st.setDouble(%1$d, %2$s);\n");
+        map.put(double.class, "st.setDouble(idx, %s);\n");
         map.put(
                 Double.class,
-                "java.lang.Double tmp%1$d = %2$s;\nif (tmp%1$d == null) {\nst.setNull(%1$d, 0);\n} else {\nst.setDouble(%1$d, tmp%1$d.doubleValue());\n}\n"
+                "{\njava.lang.Double tmpVal = %s;\nif (tmpVal == null) {\nst.setNull(idx, 0);\n} else {\nst.setDouble(idx, tmpVal.doubleValue());\n}\n}\n"
         );
-        map.put(float.class, "st.setFloat(%1$d, %2$s);\n");
+        map.put(float.class, "st.setFloat(idx, %s);\n");
         map.put(
                 Float.class,
-                "java.lang.Float tmp%1$d = %2$s;\nif (tmp%1$d == null) {\nst.setNull(%1$d, 0);\n} else {\nst.setFloat(%1$d, tmp%1$d.floatValue());\n}\n"
+                "{\njava.lang.Float tmpVal = %s;\nif (tmpVal == null) {\nst.setNull(idx, 0);\n} else {\nst.setFloat(idx, tmpVal.floatValue());\n}\n}\n"
         );
 
         // Boolean type
-        map.put(boolean.class, "st.setBoolean(%1$d, %2$s);\n");
+        map.put(boolean.class, "st.setBoolean(idx, %s);\n");
         map.put(
                 Boolean.class,
-                "java.lang.Boolean tmp%1$d = %2$s;\nif (tmp%1$d == null) {\nst.setNull(%1$d, 0);\n} else {\nst.setBoolean(%1$d, tmp%1$d.booleanValue());\n}\n"
+                "{\njava.lang.Boolean tmpVal = %s;\nif (tmpVal == null) {\nst.setNull(idx, 0);\n} else {\nst.setBoolean(idx, tmpVal.booleanValue());\n}\n}\n"
         );
 
         // Other types
-        map.put(byte[].class, "st.setBytes(%1$d, %2$s);\n");
-        map.put(String.class, "st.setString(%1$d, %2$s);\n");
-        map.put(BigDecimal.class, "st.setBigDecimal(%1$d, %2$s);\n");
+        map.put(byte[].class, "st.setBytes(idx, %s);\n");
+        map.put(String.class, "st.setString(idx, %s);\n");
+        map.put(BigDecimal.class, "st.setBigDecimal(idx, %s);\n");
 
         // Time classes
-        map.put(java.sql.Time.class, "st.setTime(%1$d, %2$s);\n");
-        map.put(java.sql.Date.class, "st.setDate(%1$d, %2$s);\n");
-        map.put(java.sql.Timestamp.class, "st.setTimestamp(%1$d, %2$s);\n");
+        map.put(java.sql.Time.class, "st.setTime(idx, %s);\n");
+        map.put(java.sql.Date.class, "st.setDate(idx, %s);\n");
+        map.put(java.sql.Timestamp.class, "st.setTimestamp(idx, %s);\n");
 
         synchronized (BuilderUtils.class) {
             SET_DECLARATIONS = Collections.unmodifiableMap(map);
@@ -133,9 +130,7 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
         CtClass ctRealReturnType = pool.get(returnType.getName());
         final StringBuilder body = new StringBuilder("{\n");
 
-        body.append("java.lang.String sql = ");
-        SqlStringUtils.appendSqlWithParts(body, sql, info.getSqlParts());
-        body.append(";\n");
+        final List<Integer> optionalIndexes = SqlStringUtils.appendSqlWithParts(body, sql, info.getSqlParts());
 
         final CtClass targetReturnType;
 
@@ -367,10 +362,9 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
     }
 
     protected void setParameters(Collection<ConverterInfo.Arg> types, StringBuilder body) {
-        int idx = 0;
+        body.append("int idx = 0;\n");
 
         for (ConverterInfo.Arg arg : types) {
-            idx++;
             Class<?> type = arg.clazz;
             final ITypeMap<?, ?> typeMap = typeMapper.hasTypeMap(type);
 
@@ -378,21 +372,22 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
             if (typeMap != null) {
                 final String value = "(" + BuilderUtils.getName(typeMap.getDbType()) + ") " +
                         typeMapper.getTypeMapInstanceRef(type) + ".forStore($" + (arg.idx + 1) + ")";
-                initString = setParamValue(idx, typeMap.getDbType(), value);
+                initString = setParamValue(typeMap.getDbType(), value);
             } else {
-                initString = setParamValue(idx, type, "$" + (arg.idx + 1));
+                initString = setParamValue(type, "$" + (arg.idx + 1));
             }
+            body.append("idx++;\n");
             body.append(initString);
         }
     }
 
-    protected String setParamValue(int idx, Class<?> type, String value) {
+    protected String setParamValue(Class<?> type, String value) {
         final String setLine = SET_DECLARATIONS.get(type);
         if (setLine == null) {
             throw new StorageSetupException("Can't process type " + type.getName());
         }
 
-        return String.format(setLine, idx, value);
+        return String.format(setLine, value);
     }
 
     protected void addMethod(

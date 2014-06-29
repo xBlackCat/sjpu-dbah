@@ -22,7 +22,7 @@ public class SqlStringUtilsTest {
 
             SqlStringUtils.appendSqlWithParts(bldr, sql, map);
 
-            Assert.assertEquals("\"SELECT * FROM \" + $1 + \" a WHERE a.id = ?\"", bldr.toString());
+            Assert.assertEquals("java.lang.String sql = \"SELECT * FROM \" + $1 + \" a WHERE a.id = ?\";\n", bldr.toString());
         }
         {
             StringBuilder bldr = new StringBuilder();
@@ -31,7 +31,7 @@ public class SqlStringUtilsTest {
 
             SqlStringUtils.appendSqlWithParts(bldr, sql, map);
 
-            Assert.assertEquals("\"SELECT * FROM \" + $1 + \" a WHERE a.{1} = ?\"", bldr.toString());
+            Assert.assertEquals("java.lang.String sql = \"SELECT * FROM \" + $1 + \" a WHERE a.{1} = ?\";\n", bldr.toString());
         }
     }
 }
