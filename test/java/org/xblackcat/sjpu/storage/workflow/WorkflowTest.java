@@ -96,7 +96,41 @@ public class WorkflowTest {
         }
 
         {
+            final List<Element> list = dataAH.getListElement((Integer) null);
+            for (Element el : list) {
+                Assert.assertNotNull(list);
+                Assert.assertEquals(Numbers.values()[el.id].name(), el.name);
+            }
+        }
+
+        {
+            final List<Element> list = dataAH.getListElement(1);
+            Assert.assertEquals(1, list.size());
+            for (Element el : list) {
+                Assert.assertNotNull(list);
+                Assert.assertEquals(Numbers.values()[el.id].name(), el.name);
+            }
+        }
+
+        {
             final List<IElement<String>> list = dataAH.getListIElement();
+            for (IElement<String> el : list) {
+                Assert.assertNotNull(list);
+                Assert.assertEquals(Numbers.values()[el.getId()].name(), el.getName());
+            }
+        }
+
+        {
+            final List<IElement<String>> list = dataAH.getListIElement((Integer) null);
+            for (IElement<String> el : list) {
+                Assert.assertNotNull(list);
+                Assert.assertEquals(Numbers.values()[el.getId()].name(), el.getName());
+            }
+        }
+
+        {
+            final List<IElement<String>> list = dataAH.getListIElement(1);
+            Assert.assertEquals(1, list.size());
             for (IElement<String> el : list) {
                 Assert.assertNotNull(list);
                 Assert.assertEquals(Numbers.values()[el.getId()].name(), el.getName());
@@ -169,6 +203,24 @@ public class WorkflowTest {
         {
             final List<ElementNumber> list = dataAH.getListElement();
             Assert.assertNotNull(list);
+            for (ElementNumber el : list) {
+                Assert.assertEquals(Numbers.values()[el.id], el.name);
+            }
+        }
+
+        {
+            final List<ElementNumber> list = dataAH.getListElement((Numbers) null);
+            Assert.assertNotNull(list);
+            for (ElementNumber el : list) {
+                Assert.assertEquals(Numbers.values()[el.id], el.name);
+            }
+        }
+
+        {
+            final List<ElementNumber> list = dataAH.getListElement(Numbers.One);
+            Assert.assertNotNull(list);
+            Assert.assertEquals(1, list.size());
+
             for (ElementNumber el : list) {
                 Assert.assertEquals(Numbers.values()[el.id], el.name);
             }

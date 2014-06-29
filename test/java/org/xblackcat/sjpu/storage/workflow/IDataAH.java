@@ -4,6 +4,7 @@ import org.xblackcat.sjpu.storage.IAH;
 import org.xblackcat.sjpu.storage.StorageException;
 import org.xblackcat.sjpu.storage.ann.MapRowTo;
 import org.xblackcat.sjpu.storage.ann.Sql;
+import org.xblackcat.sjpu.storage.ann.SqlOptArg;
 import org.xblackcat.sjpu.storage.ann.SqlPart;
 import org.xblackcat.sjpu.storage.consumer.IRowConsumer;
 
@@ -38,15 +39,15 @@ public interface IDataAH extends IAH {
 
     @Sql("SELECT\n" +
                  "  id, name\n" +
-                 "FROM {1}\n" +
+                 "FROM {0}\n" +
                  "WHERE id = ?")
-    Element getElement(@SqlPart(1) String tableName, Integer id) throws StorageException;
+    Element getElement(@SqlPart String tableName, Integer id) throws StorageException;
 
     @Sql("SELECT\n" +
                  "  id, name\n" +
-                 "FROM {1}\n" +
+                 "FROM {0}\n" +
                  "WHERE id = ?")
-    Element getElement(Integer id, @SqlPart(1) String tableName) throws StorageException;
+    Element getElement(Integer id, @SqlPart String tableName) throws StorageException;
 
     @Sql("SELECT\n" +
                  "  id, name\n" +
@@ -63,9 +64,23 @@ public interface IDataAH extends IAH {
 
     @Sql("SELECT\n" +
                  "  id, name\n" +
+                 "FROM list {0}")
+    @MapRowTo(Element.class)
+    List<Element> getListElement(@SqlPart @SqlOptArg("WHERE id = ?") Integer id) throws StorageException;
+
+    @Sql("SELECT\n" +
+                 "  id, name\n" +
                  "FROM list")
     @MapRowTo(Element.class)
     List<IElement<String>> getListIElement() throws StorageException;
+
+    @Sql("SELECT\n" +
+                 "  id, name\n" +
+                 "FROM list \n" +
+                 "WHERE\n" +
+                 "  TRUE {0} {0}")
+    @MapRowTo(Element.class)
+    List<IElement<String>> getListIElement(@SqlPart @SqlOptArg("AND id = ?") Integer id) throws StorageException;
 
     @Sql("SELECT\n" +
                  "  id, name\n" +

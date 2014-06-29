@@ -2,9 +2,7 @@ package org.xblackcat.sjpu.storage.workflow;
 
 import org.xblackcat.sjpu.storage.IAH;
 import org.xblackcat.sjpu.storage.StorageException;
-import org.xblackcat.sjpu.storage.ann.MapRowTo;
-import org.xblackcat.sjpu.storage.ann.RowSetConsumer;
-import org.xblackcat.sjpu.storage.ann.Sql;
+import org.xblackcat.sjpu.storage.ann.*;
 import org.xblackcat.sjpu.storage.consumer.IRowConsumer;
 
 import java.util.EnumSet;
@@ -51,6 +49,12 @@ public interface IDataEnumAH extends IAH {
                  "FROM list")
     @MapRowTo(ElementNumber.class)
     List<ElementNumber> getListElement() throws StorageException;
+
+    @Sql("SELECT\n" +
+                 "  id, name\n" +
+                 "FROM list {0}")
+    @MapRowTo(ElementNumber.class)
+    List<ElementNumber> getListElement(@SqlPart @SqlOptArg("WHERE name = ?") Numbers name) throws StorageException;
 
     @Sql("SELECT\n" +
                  "  id, name\n" +
