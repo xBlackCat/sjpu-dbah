@@ -34,4 +34,12 @@ public class SqlStringUtilsTest {
             Assert.assertEquals("java.lang.String sql = \"SELECT * FROM \" + $1 + \" a WHERE a.{1} = ?\";\n", bldr.toString());
         }
     }
+
+    @Test
+    public void testGetArgumentCount() throws Exception {
+        Assert.assertEquals(1, SqlStringUtils.getArgumentCount("SELECT * FROM {2} a WHERE a.id = ?"));
+        Assert.assertEquals(1, SqlStringUtils.getArgumentCount("SELECT *, 'table ?' FROM {2} a WHERE a.id = ?"));
+        Assert.assertEquals(2, SqlStringUtils.getArgumentCount("SELECT * FROM {2} a WHERE a.id = ? AND a = ? AND `quoted 'str\\`ing' `"));
+        Assert.assertEquals(1, SqlStringUtils.getArgumentCount("SELECT * FROM table a WHERE a.id = ?"));
+    }
 }

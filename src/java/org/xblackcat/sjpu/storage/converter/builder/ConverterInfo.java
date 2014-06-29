@@ -267,10 +267,16 @@ public class ConverterInfo {
     public static final class Arg {
         public final Class<?> clazz;
         public final int idx;
+        public final boolean optional;
 
         public Arg(Class<?> clazz, int idx) {
+            this(clazz, idx, false);
+        }
+
+        public Arg(Class<?> clazz, int idx, boolean optional) {
             this.clazz = clazz;
             this.idx = idx;
+            this.optional = optional;
         }
     }
 
