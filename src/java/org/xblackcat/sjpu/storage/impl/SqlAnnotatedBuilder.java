@@ -253,7 +253,10 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
         body.append(");\n");
         body.append("try {\n");
 
-        setParameters(info.getArgumentList(), body);
+
+        final Class<?>[] types = m.getParameterTypes();
+        final Collection<ConverterInfo.Arg> args = substituteOptionalArgs(info.getArgumentList(), optionalIndexes, types);
+        setParameters(args, body);
 
         final boolean processResultSet;
         switch (type) {
@@ -338,6 +341,30 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
         );
 
         addMethod(accessHelper, m, ctRealReturnType, targetReturnType, body.toString(), pool);
+    }
+
+    protected static Collection<ConverterInfo.Arg> substituteOptionalArgs(
+            Collection<ConverterInfo.Arg> argumentList, List<Integer> optionalIndexes,
+            Class<?>... types
+    ) {
+        final Collection<ConverterInfo.Arg> args;
+        if (optionalIndexes == null || optionalIndexes.isEmpty()) {
+            args = argumentList;
+        } else {
+            final Iterator<ConverterInfo.Arg> staticArgs = argumentList.iterator();
+            args = new ArrayList<>();
+            for (Integer opt : optionalIndexes) {
+                if (opt == null) {
+                    args.add(staticArgs.next());
+                } else {
+                    args.add(new ConverterInfo.Arg(types[opt], opt, true));
+                }
+            }
+            while (staticArgs.hasNext()) {
+                args.add(staticArgs.next());
+            }
+        }
+        return args;
     }
 
     private boolean hasClassParameter(Class<? extends IRowSetConsumer> consumer) throws StorageSetupException {

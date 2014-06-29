@@ -10,6 +10,7 @@ import org.xblackcat.sjpu.storage.ann.*;
 import org.xblackcat.sjpu.storage.consumer.IRowConsumer;
 import org.xblackcat.sjpu.storage.consumer.IRowSetConsumer;
 import org.xblackcat.sjpu.storage.converter.IToObjectConverter;
+import org.xblackcat.sjpu.storage.impl.SqlStringUtils;
 import org.xblackcat.sjpu.storage.skel.BuilderUtils;
 import org.xblackcat.sjpu.storage.typemap.TypeMapper;
 
@@ -90,7 +91,18 @@ public class ConverterInfo {
                             throw new StorageSetupException("Only String argument types could be used as plain sql parts. " + m);
                         }
 
-                        String additional = sqlOptArg == null ? null : sqlOptArg.value();
+                        final String additional;
+                        if (sqlOptArg == null) {
+                            additional = null;
+                        } else {
+                            additional = sqlOptArg.value();
+                            if (SqlStringUtils.getArgumentCount(additional) != 1) {
+                                throw new StorageSetupException(
+                                        "Optional Sql part should have one and only one argument. Got: " +
+                                                additional + " in " + m.toString()
+                                );
+                            }
+                        }
 
                         final SqlArg oldVal = parts.put(sqlPart.value(), new SqlArg(additional, i));
                         if (oldVal != null) {
@@ -277,6 +289,28 @@ public class ConverterInfo {
             this.clazz = clazz;
             this.idx = idx;
             this.optional = optional;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            Arg arg = (Arg) o;
+
+            if (idx != arg.idx) return false;
+            if (optional != arg.optional) return false;
+            if (!clazz.equals(arg.clazz)) return false;
+
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = clazz.hashCode();
+            result = 31 * result + idx;
+            result = 31 * result + (optional ? 1 : 0);
+            return result;
         }
     }
 

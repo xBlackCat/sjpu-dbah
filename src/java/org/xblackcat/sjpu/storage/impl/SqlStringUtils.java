@@ -15,10 +15,10 @@ import java.util.regex.Pattern;
  *
  * @author xBlackCat
  */
-class SqlStringUtils {
+public class SqlStringUtils {
     private final static Pattern SQL_PART_IDX = Pattern.compile("\\{(\\d+)\\}");
 
-    public static List<Integer> appendSqlWithParts(StringBuilder body, String sql, Map<Integer, ConverterInfo.SqlArg> sqlParts) {
+    static List<Integer> appendSqlWithParts(StringBuilder body, String sql, Map<Integer, ConverterInfo.SqlArg> sqlParts) {
         if (sqlParts.isEmpty()) {
             body.append("java.lang.String sql = \"");
             body.append(StringEscapeUtils.escapeJava(sql));
@@ -45,6 +45,8 @@ class SqlStringUtils {
     private static List<Integer> buildStringBuilder(StringBuilder body, String sql, Map<Integer, ConverterInfo.SqlArg> sqlParts) {
         List<Integer> optionalIndexes = new ArrayList<>();
 
+        body.append("java.lang.StringBuilder sqlBuilder = new java.lang.StringBuilder();\n");
+
         Matcher m = SQL_PART_IDX.matcher(sql);
         int startPos = 0;
         while (m.find()) {
@@ -52,20 +54,36 @@ class SqlStringUtils {
             ConverterInfo.SqlArg argRef = sqlParts.get(idx);
 
             if (argRef != null) {
-                body.append("\"");
-                body.append(StringEscapeUtils.escapeJava(sql.substring(startPos, m.start())));
-                body.append("\" + $");
-                body.append(argRef.argIdx + 1);
-                body.append(" + ");
+                body.append("sqlBuilder.append(\"");
+                final String sqlPart = sql.substring(startPos, m.start());
+                int argsAmount = getArgumentCount(sqlPart);
+                while (argsAmount-- > 0) {
+                    optionalIndexes.add(null);
+                }
+                optionalIndexes.add(argRef.argIdx);
+                body.append(StringEscapeUtils.escapeJava(sqlPart));
+                body.append("\");\n");
+                if (argRef.sqlPart == null) {
+                    body.append("sqlBuilder.append($");
+                    body.append(argRef.argIdx + 1);
+                    body.append(");\n");
+                } else {
+                    body.append("if ($");
+                    body.append(argRef.argIdx + 1);
+
+                    body.append(" != null) {\nsqlBuilder.append(\"");
+                    body.append(StringEscapeUtils.escapeJava(argRef.sqlPart));
+                    body.append("\");\n}\n");
+                }
 
                 startPos = m.end();
             }
         }
 
-        body.append("\"");
+        body.append("sqlBuilder.append(\"");
         body.append(StringEscapeUtils.escapeJava(sql.substring(startPos)));
-        body.append("\"");
-        return null;
+        body.append("\");\njava.lang.String sql = sqlBuilder.toString();\n");
+        return optionalIndexes;
     }
 
     protected static void buildConcatenation(StringBuilder body, String sql, Map<Integer, ConverterInfo.SqlArg> sqlParts) {
@@ -96,7 +114,7 @@ class SqlStringUtils {
     /**
      * Scans prepared statement (or it part) and returns amount of argument placeholders
      *
-     * @param sqlPart  sql part to examine
+     * @param sqlPart sql part to examine
      * @return amount of found argument placeholders
      */
     public static int getArgumentCount(String sqlPart) {
