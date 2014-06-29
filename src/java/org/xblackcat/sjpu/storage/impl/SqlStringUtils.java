@@ -60,7 +60,6 @@ public class SqlStringUtils {
                 while (argsAmount-- > 0) {
                     optionalIndexes.add(null);
                 }
-                optionalIndexes.add(argRef.argIdx);
                 body.append(StringEscapeUtils.escapeJava(sqlPart));
                 body.append("\");\n");
                 if (argRef.sqlPart == null) {
@@ -68,6 +67,7 @@ public class SqlStringUtils {
                     body.append(argRef.argIdx + 1);
                     body.append(");\n");
                 } else {
+                    optionalIndexes.add(argRef.argIdx);
                     body.append("if ($");
                     body.append(argRef.argIdx + 1);
 

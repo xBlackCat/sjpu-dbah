@@ -16,7 +16,7 @@ import java.lang.annotation.Target;
  *         void addName(@SqlPart(1) String tableName, String name) throws {@linkplain org.xblackcat.sjpu.storage.StorageException StorageException};
  *     }
  * </code></pre>
- *
+ * <p/>
  * SqlPart string will replace all references in SQL in runtime.
  * 17.02.14 11:21
  *
@@ -25,5 +25,5 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.PARAMETER})
 public @interface SqlPart {
-    int value();
+    int value() default 0;
 }

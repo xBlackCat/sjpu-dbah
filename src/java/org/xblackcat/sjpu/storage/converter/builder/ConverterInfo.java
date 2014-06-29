@@ -87,14 +87,16 @@ public class ConverterInfo {
                     }
 
                     if (sqlPart != null) {
-                        if (!String.class.equals(t)) {
-                            throw new StorageSetupException("Only String argument types could be used as plain sql parts. " + m);
-                        }
-
                         final String additional;
                         if (sqlOptArg == null) {
+                            if (!String.class.equals(t)) {
+                                throw new StorageSetupException("Only String argument types could be used as plain sql parts. " + m);
+                            }
                             additional = null;
                         } else {
+                            if (t.isPrimitive()) {
+                                throw new StorageSetupException("Primitive argument types can't be used as optional sql parts. " + m);
+                            }
                             additional = sqlOptArg.value();
                             if (SqlStringUtils.getArgumentCount(additional) != 1) {
                                 throw new StorageSetupException(

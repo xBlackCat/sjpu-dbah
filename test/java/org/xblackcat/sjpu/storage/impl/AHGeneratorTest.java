@@ -70,6 +70,14 @@ public class AHGeneratorTest {
         Assert.assertEquals("Found unexpected extra methods" + availableMethods, 0, availableMethods.size());
     }
 
+    @Test
+    public void checkOptionalArgGeneration() {
+        IAHFactory storage = new Storage(new ConnectionFactoryStub());
+
+        final IOptTestAH testAH = storage.get(IOptTestAH.class);
+        Assert.assertNotNull(testAH);
+    }
+
     /*    @Test
        public void generatePrimitiveAH() throws StorageException {
            {
