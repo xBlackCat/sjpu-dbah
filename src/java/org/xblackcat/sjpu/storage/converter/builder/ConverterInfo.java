@@ -7,6 +7,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.xblackcat.sjpu.storage.StorageSetupException;
 import org.xblackcat.sjpu.storage.ann.*;
+import org.xblackcat.sjpu.storage.consumer.IRawProcessor;
 import org.xblackcat.sjpu.storage.consumer.IRowConsumer;
 import org.xblackcat.sjpu.storage.consumer.IRowSetConsumer;
 import org.xblackcat.sjpu.storage.converter.IToObjectConverter;
@@ -33,6 +34,7 @@ public class ConverterInfo {
     private final Class<?> realReturnType;
     private final Class<? extends IToObjectConverter<?>> converter;
     private final Integer consumeIndex;
+    private final Integer rawProcessorParamIndex;
     private final Collection<Arg> argumentList;
     private final Map<Integer, SqlArg> sqlParts;
 
@@ -40,12 +42,14 @@ public class ConverterInfo {
             Class<?> realReturnType,
             Class<? extends IToObjectConverter<?>> converter,
             Integer consumeIndex,
+            Integer rawProcessorParamIndex,
             Collection<Arg> argumentList,
             Map<Integer, SqlArg> parts
     ) {
         this.realReturnType = realReturnType;
         this.converter = converter;
         this.consumeIndex = consumeIndex;
+        this.rawProcessorParamIndex = rawProcessorParamIndex;
         this.argumentList = argumentList;
         sqlParts = parts;
     }
@@ -59,6 +63,7 @@ public class ConverterInfo {
         final Class<? extends IToObjectConverter<?>> converter;
         final Class<?> realReturnType;
         Integer consumerParamIdx = null;
+        Integer rawProcessorParamIndex = null;
 
         final Collection<Arg> parameterTypes = new ArrayList<>();
         final Map<Integer, SqlArg> parts = new HashMap<>();
@@ -69,9 +74,19 @@ public class ConverterInfo {
             int i = 0;
             while (i < types.length) {
                 Class<?> t = types[i];
-                if (IRowConsumer.class.isAssignableFrom(t)) {
+                if (IRawProcessor.class.isAssignableFrom(t)) {
+                    if (rawProcessorParamIndex != null) {
+                        throw new StorageSetupException("Only one raw processor could be specified for method. " + m.toString());
+                    } else if (consumerParamIdx != null) {
+                        throw new StorageSetupException("Consumer and raw process can't be specified simultaneously for method. " + m.toString());
+                    }
+
+                    rawProcessorParamIndex = i;
+                } else if (IRowConsumer.class.isAssignableFrom(t)) {
                     if (consumerParamIdx != null) {
                         throw new StorageSetupException("Only one consumer could be specified for method. " + m.toString());
+                    } else if (rawProcessorParamIndex != null) {
+                        throw new StorageSetupException("Consumer and raw process can't be specified simultaneously for method. " + m.toString());
                     }
 
                     consumerParamIdx = i;
@@ -204,7 +219,7 @@ public class ConverterInfo {
                 }
             }
         }
-        return new ConverterInfo(realReturnType, converter, consumerParamIdx, parameterTypes, parts);
+        return new ConverterInfo(realReturnType, converter, consumerParamIdx, rawProcessorParamIndex, parameterTypes, parts);
     }
 
     protected static Class<IToObjectConverter<?>> buildConverter(
@@ -268,6 +283,10 @@ public class ConverterInfo {
 
     public Integer getConsumeIndex() {
         return consumeIndex;
+    }
+
+    public Integer getRawProcessorParamIndex() {
+        return rawProcessorParamIndex;
     }
 
     public Collection<Arg> getArgumentList() {
