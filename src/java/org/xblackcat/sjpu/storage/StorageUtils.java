@@ -1,5 +1,6 @@
 package org.xblackcat.sjpu.storage;
 
+import org.xblackcat.sjpu.skel.GeneratorException;
 import org.xblackcat.sjpu.storage.connection.IConnectionFactory;
 import org.xblackcat.sjpu.storage.connection.IDBConfig;
 import org.xblackcat.sjpu.storage.connection.SimplePooledConnectionFactory;
@@ -28,11 +29,11 @@ public class StorageUtils {
         DEFAULT_ROWSET_CONSUMERS = Collections.unmodifiableMap(map);
     }
 
-    public static IConnectionFactory buildConnectionFactory(IDBConfig settings) throws StorageSetupException {
+    public static IConnectionFactory buildConnectionFactory(IDBConfig settings) throws GeneratorException {
         try {
             return new SimplePooledConnectionFactory(settings);
         } catch (StorageException e) {
-            throw new StorageSetupException("Can not initialize DB connection factory", e);
+            throw new GeneratorException("Can not initialize DB connection factory", e);
         }
     }
 

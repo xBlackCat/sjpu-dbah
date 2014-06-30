@@ -3,7 +3,7 @@ package org.xblackcat.sjpu.storage.consumer;
 import org.xblackcat.sjpu.storage.ConsumeException;
 
 /**
- * 15.02.14 10:21
+ * Default consumer for reading single row. If result set has more than
  *
  * @author xBlackCat
  */

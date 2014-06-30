@@ -3,9 +3,10 @@ package org.xblackcat.sjpu.storage.typemap;
 import javassist.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.xblackcat.sjpu.storage.StorageSetupException;
+import org.xblackcat.sjpu.skel.BuilderUtils;
+import org.xblackcat.sjpu.skel.GeneratorException;
 import org.xblackcat.sjpu.storage.converter.IToObjectConverter;
-import org.xblackcat.sjpu.storage.skel.BuilderUtils;
+import org.xblackcat.sjpu.storage.impl.AHBuilderUtils;
 
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
@@ -87,7 +88,7 @@ public class TypeMapper {
                 java.sql.Timestamp.class.getName() + " value%1$d = $1.getTimestamp(%1$d);\n"
         );
 
-        synchronized (BuilderUtils.class) {
+        synchronized (AHBuilderUtils.class) {
             READ_DECLARATIONS = Collections.unmodifiableMap(map);
         }
     }
@@ -151,7 +152,7 @@ public class TypeMapper {
                 final Class<IToObjectConverter<?>> aClazz = (Class<IToObjectConverter<?>>) aClass;
                 return aClazz;
             } else {
-                throw new StorageSetupException(
+                throw new GeneratorException(
                         converterFQN + " class is already exists and it is not implements " + IToObjectConverter.class.getName()
                 );
             }
@@ -167,7 +168,7 @@ public class TypeMapper {
         StringBuilder bodyTail = new StringBuilder("return ");
 
         if (!appendDeclaration(type, 1, body, bodyTail)) {
-            throw new StorageSetupException("Can't process DB type " + typeMap.getDbType().getName());
+            throw new GeneratorException("Can't process DB type " + typeMap.getDbType().getName());
         }
 
         body.append(bodyTail);
@@ -293,7 +294,7 @@ public class TypeMapper {
                     final CtClass toObjectClazz = pool.get(getClass().getName());
                     CtClass instanceClass = toObjectClazz.makeNestedClass(className, true);
                     CtField instanceField = CtField.make(
-                            "public static " + BuilderUtils.CN_ITypeMap + " I;",
+                            "public static " + AHBuilderUtils.CN_ITypeMap + " I;",
                             instanceClass
                     );
                     instanceClass.addField(instanceField, CtField.Initializer.byExpr("null"));
@@ -311,7 +312,7 @@ public class TypeMapper {
                     final Field field = aClass.getField("I");
                     field.set(null, typeMap);
                 } catch (NotFoundException | CannotCompileException | NoSuchFieldException | IllegalAccessException e) {
-                    throw new StorageSetupException("Can't create instance of type mapper " + typeMap.getClass(), e);
+                    throw new GeneratorException("Can't create instance of type mapper " + typeMap.getClass(), e);
                 }
 
                 initializedMappers.put(objClass, typeMap);

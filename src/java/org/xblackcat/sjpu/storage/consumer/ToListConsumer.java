@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 15.02.14 10:16
+ * Consume all objects into {@linkplain java.util.List List}. {@linkplain java.util.ArrayList ArrayList} is used as default container
  *
  * @author xBlackCat
  */

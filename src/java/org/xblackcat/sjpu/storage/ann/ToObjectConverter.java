@@ -8,8 +8,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * 21.02.13 10:47
+ * Use specified to-object-converter class for building an object from result row.
  *
+ * @see org.xblackcat.sjpu.storage.converter.IToObjectConverter
  * @author xBlackCat
  */
 @Retention(RetentionPolicy.RUNTIME)

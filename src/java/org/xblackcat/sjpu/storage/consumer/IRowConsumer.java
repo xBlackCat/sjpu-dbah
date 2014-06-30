@@ -3,7 +3,8 @@ package org.xblackcat.sjpu.storage.consumer;
 import org.xblackcat.sjpu.storage.ConsumeException;
 
 /**
- * 15.02.14 8:53
+ * Process (consume) an object after conversion from result row. If object can't be consumed a
+ * {@linkplain org.xblackcat.sjpu.storage.ConsumeException ConsumeException} should be thrown.
  *
  * @author xBlackCat
  */

@@ -1,4 +1,4 @@
-package org.xblackcat.sjpu.storage;
+package org.xblackcat.sjpu.skel;
 
 /**
  * 04.04.2014 13:09

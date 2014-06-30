@@ -1,7 +1,4 @@
-package org.xblackcat.sjpu.storage.skel;
-
-import org.xblackcat.sjpu.storage.IFactory;
-import org.xblackcat.sjpu.storage.StorageSetupException;
+package org.xblackcat.sjpu.skel;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -24,7 +21,7 @@ public class AFactory<Base, Helper> implements IFactory<Base> {
         this.builder = builder;
     }
 
-    public <T extends Base> T get(Class<T> clazz) throws StorageSetupException {
+    public <T extends Base> T get(Class<T> clazz) throws GeneratorException {
         lock.readLock().lock();
         try {
             @SuppressWarnings({"unchecked"})

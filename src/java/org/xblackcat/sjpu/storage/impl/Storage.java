@@ -1,10 +1,10 @@
 package org.xblackcat.sjpu.storage.impl;
 
+import org.xblackcat.sjpu.skel.Definer;
+import org.xblackcat.sjpu.skel.MethodBuilder;
 import org.xblackcat.sjpu.storage.*;
 import org.xblackcat.sjpu.storage.connection.IConnectionFactory;
 import org.xblackcat.sjpu.storage.consumer.IRowSetConsumer;
-import org.xblackcat.sjpu.storage.skel.Definer;
-import org.xblackcat.sjpu.storage.skel.MethodBuilder;
 import org.xblackcat.sjpu.storage.typemap.IMapFactory;
 import org.xblackcat.sjpu.storage.typemap.TypeMapper;
 

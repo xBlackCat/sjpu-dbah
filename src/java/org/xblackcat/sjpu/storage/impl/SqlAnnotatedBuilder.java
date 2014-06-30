@@ -1,15 +1,14 @@
 package org.xblackcat.sjpu.storage.impl;
 
 import javassist.*;
-import org.xblackcat.sjpu.storage.StorageSetupException;
+import org.xblackcat.sjpu.skel.BuilderUtils;
+import org.xblackcat.sjpu.skel.GeneratorException;
 import org.xblackcat.sjpu.storage.ann.RowSetConsumer;
 import org.xblackcat.sjpu.storage.ann.Sql;
 import org.xblackcat.sjpu.storage.consumer.IRowSetConsumer;
 import org.xblackcat.sjpu.storage.consumer.SingletonConsumer;
 import org.xblackcat.sjpu.storage.converter.IToObjectConverter;
 import org.xblackcat.sjpu.storage.converter.builder.ConverterInfo;
-import org.xblackcat.sjpu.storage.skel.AMethodBuilder;
-import org.xblackcat.sjpu.storage.skel.BuilderUtils;
 import org.xblackcat.sjpu.storage.typemap.ITypeMap;
 import org.xblackcat.sjpu.storage.typemap.TypeMapper;
 
@@ -24,7 +23,7 @@ import java.util.regex.Matcher;
  *
  * @author xBlackCat
  */
-class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
+class SqlAnnotatedBuilder extends AMappableMethodBuilder<Sql> {
     static final Map<Class<?>, String> SET_DECLARATIONS;
 
     static {
@@ -81,7 +80,7 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
         map.put(java.sql.Date.class, "st.setDate(idx, %s);\n");
         map.put(java.sql.Timestamp.class, "st.setTimestamp(idx, %s);\n");
 
-        synchronized (BuilderUtils.class) {
+        synchronized (AHBuilderUtils.class) {
             SET_DECLARATIONS = Collections.unmodifiableMap(map);
         }
     }
@@ -104,7 +103,7 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
 
         final QueryType type;
         {
-            final Matcher matcher = BuilderUtils.FIRST_WORD_SQL.matcher(sql);
+            final Matcher matcher = AHBuilderUtils.FIRST_WORD_SQL.matcher(sql);
             if (matcher.find()) {
                 final String word = matcher.group(1);
                 if ("select".equalsIgnoreCase(word)) {
@@ -122,7 +121,7 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
         }
 
         if (type == QueryType.Select && converter == null) {
-            throw new StorageSetupException("Converter should be specified for SELECT statement in method " + m.toString());
+            throw new GeneratorException("Converter should be specified for SELECT statement in method " + m.toString());
         }
 
         ClassPool pool = BuilderUtils.getClassPool(typeMapper.getParentPool(), realReturnType, m.getParameterTypes());
@@ -153,7 +152,7 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
         final boolean returnKeys;
         if (info.getRawProcessorParamIndex() != null) {
             if (!noResult) {
-                throw new StorageSetupException("No return value is allowed for method with raw consumer");
+                throw new GeneratorException("No return value is allowed for method with raw consumer");
             }
 
             returnString = "";
@@ -162,7 +161,7 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
             if (info.getConsumeIndex() == null) {
                 if (noResult) {
                     if (type == QueryType.Select) {
-                        throw new StorageSetupException(
+                        throw new GeneratorException(
                                 "Consumer should be specified in the method parameters for select method with void return type: " + m
                         );
                     }
@@ -181,7 +180,7 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
                         rowSetConsumer = SingletonConsumer.class;
                     }
 
-                    body.append(BuilderUtils.CN_IRowSetConsumer);
+                    body.append(AHBuilderUtils.CN_IRowSetConsumer);
                     body.append(" consumer = new ");
                     body.append(BuilderUtils.getName(rowSetConsumer));
                     if (hasClassParameter(rowSetConsumer)) {
@@ -198,12 +197,12 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
             } else {
                 if (!noResult) {
                     if (type == QueryType.Select) {
-                        throw new StorageSetupException("Consumer can't be used with non-void return type: " + m.toString());
+                        throw new GeneratorException("Consumer can't be used with non-void return type: " + m.toString());
                     }
                     if (int.class.equals(returnType)) {
                         returnString = "return rows;";
                     } else {
-                        throw new StorageSetupException(
+                        throw new GeneratorException(
                                 "Insert method with consumer can have only void or int return type: " +
                                         m.toString()
                         );
@@ -212,7 +211,7 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
                     returnString = "";
                 }
 
-                body.append(BuilderUtils.CN_IRowConsumer);
+                body.append(AHBuilderUtils.CN_IRowConsumer);
                 body.append(" consumer = $");
                 body.append(info.getConsumeIndex() + 1);
                 body.append(";\n");
@@ -220,9 +219,9 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
                 returnKeys = true;
             }
 
-            BuilderUtils.checkConverterInstance(pool, converter);
+            AHBuilderUtils.checkConverterInstance(pool, converter);
 
-            body.append(BuilderUtils.CN_IToObjectConverter);
+            body.append(AHBuilderUtils.CN_IToObjectConverter);
             body.append(" converter = ");
             body.append(BuilderUtils.getName(converter));
             body.append(".Instance.I;\n");
@@ -234,7 +233,7 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
                 ctRealReturnType = CtClass.voidType;
                 returnString = "";
             } else {
-                throw new StorageSetupException(
+                throw new GeneratorException(
                         "Invalid return type for updater in method " +
                                 methodName +
                                 "(...): " +
@@ -246,12 +245,12 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
         }
 
         body.append("try {\n");
-        body.append(BuilderUtils.CN_java_sql_Connection);
+        body.append(AHBuilderUtils.CN_java_sql_Connection);
         body.append(" con = this.factory.getConnection();\n");
         body.append("try {\n");
-        body.append(BuilderUtils.CN_java_sql_PreparedStatement);
+        body.append(AHBuilderUtils.CN_java_sql_PreparedStatement);
         body.append(" st = con.prepareStatement(\nsql,\n");
-        body.append(BuilderUtils.CN_java_sql_Statement);
+        body.append(AHBuilderUtils.CN_java_sql_Statement);
         if (returnKeys) {
             body.append(".RETURN_GENERATED_KEYS");
         } else {
@@ -269,14 +268,14 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
         switch (type) {
             case Select:
                 processResultSet = true;
-                body.append(BuilderUtils.CN_java_sql_ResultSet);
+                body.append(AHBuilderUtils.CN_java_sql_ResultSet);
                 body.append(" rs = st.executeQuery();\n");
                 break;
             case Insert:
                 processResultSet = returnKeys;
                 body.append("int rows = st.executeUpdate();\n");
                 if (returnKeys) {
-                    body.append(BuilderUtils.CN_java_sql_ResultSet);
+                    body.append(AHBuilderUtils.CN_java_sql_ResultSet);
                     body.append(" rs = st.getGeneratedKeys();\n");
                 }
                 break;
@@ -300,30 +299,30 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
                                 "}\n" +
                                 "} catch ("
                 );
-                body.append(BuilderUtils.CN_ConsumeException);
+                body.append(AHBuilderUtils.CN_ConsumeException);
             } else {
                 body.append("((");
-                body.append(BuilderUtils.CN_IRawProcessor);
+                body.append(AHBuilderUtils.CN_IRawProcessor);
                 body.append(")$");
                 body.append(info.getRawProcessorParamIndex() + 1);
                 body.append(").process(rs);\n} catch (");
-                body.append(BuilderUtils.CN_java_sql_SQLException);
+                body.append(AHBuilderUtils.CN_java_sql_SQLException);
             }
             body.append(
                     " e) {\n" +
                             "throw new "
             );
-            body.append(BuilderUtils.CN_StorageException);
+            body.append(AHBuilderUtils.CN_StorageException);
             body.append("(\"Can not consume result for query \"+");
-            body.append(BuilderUtils.CN_StorageUtils);
+            body.append(AHBuilderUtils.CN_StorageUtils);
             body.append(
                     ".constructDebugSQL(sql, $args),e);\n" +
                             "} catch (java.lang.RuntimeException e) {\n" +
                             "throw new "
             );
-            body.append(BuilderUtils.CN_StorageException);
+            body.append(AHBuilderUtils.CN_StorageException);
             body.append("(\"Unexpected exception occurs while consuming result for query \"+");
-            body.append(BuilderUtils.CN_StorageUtils);
+            body.append(AHBuilderUtils.CN_StorageUtils);
             body.append(
                     ".constructDebugSQL(sql, $args),e);\n" +
                             "} finally {\n" +
@@ -342,14 +341,14 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
                         "}\n" +
                         "} catch ("
         );
-        body.append(BuilderUtils.CN_java_sql_SQLException);
+        body.append(AHBuilderUtils.CN_java_sql_SQLException);
         body.append(
                 " e) {\n" +
                         "throw new "
         );
-        body.append(BuilderUtils.CN_StorageException);
+        body.append(AHBuilderUtils.CN_StorageException);
         body.append("(\"Can not execute query \"+");
-        body.append(BuilderUtils.CN_StorageUtils);
+        body.append(AHBuilderUtils.CN_StorageUtils);
         body.append(
                 ".constructDebugSQL(sql, $args),e);\n" +
                         "}\n" +
@@ -383,7 +382,7 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
         return args;
     }
 
-    private boolean hasClassParameter(Class<? extends IRowSetConsumer> consumer) throws StorageSetupException {
+    private boolean hasClassParameter(Class<? extends IRowSetConsumer> consumer) throws GeneratorException {
         final Constructor<?>[] constructors = consumer.getConstructors();
         boolean hasDefault = false;
         for (Constructor<?> c : constructors) {
@@ -396,7 +395,7 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
         }
 
         if (!hasDefault) {
-            throw new StorageSetupException(
+            throw new GeneratorException(
                     "Row set consumer should have either default constructor or a constructor with one Class<?> parameter"
             );
         }
@@ -437,7 +436,7 @@ class SqlAnnotatedBuilder extends AMethodBuilder<Sql> {
     protected String setParamValue(Class<?> type, String value) {
         final String setLine = SET_DECLARATIONS.get(type);
         if (setLine == null) {
-            throw new StorageSetupException("Can't process type " + type.getName());
+            throw new GeneratorException("Can't process type " + type.getName());
         }
 
         return String.format(setLine, value);

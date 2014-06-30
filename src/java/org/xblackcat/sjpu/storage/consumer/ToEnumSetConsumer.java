@@ -4,7 +4,7 @@ import java.util.EnumSet;
 import java.util.Set;
 
 /**
- * 15.02.14 10:16
+ * Consume all objects into {@linkplain java.util.EnumSet EnumSet}. Input objects should be enum constants of the same Enum object
  *
  * @author xBlackCat
  */

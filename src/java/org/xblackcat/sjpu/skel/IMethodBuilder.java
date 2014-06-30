@@ -1,4 +1,4 @@
-package org.xblackcat.sjpu.storage.skel;
+package org.xblackcat.sjpu.skel;
 
 import javassist.CannotCompileException;
 import javassist.CtClass;

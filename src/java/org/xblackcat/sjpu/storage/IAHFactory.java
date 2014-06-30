@@ -1,5 +1,7 @@
 package org.xblackcat.sjpu.storage;
 
+import org.xblackcat.sjpu.skel.IFactory;
+
 /**
  * 15.11.13 14:17
  *

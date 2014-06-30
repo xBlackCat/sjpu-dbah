@@ -1,9 +1,8 @@
-package org.xblackcat.sjpu.storage.skel;
+package org.xblackcat.sjpu.skel;
 
 import javassist.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.xblackcat.sjpu.storage.StorageSetupException;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -28,7 +27,7 @@ public class MethodBuilder<Base, Helper> implements IBuilder<Base, Helper> {
         }
     }
 
-    public <T extends Base> T build(Class<T> target, Helper helper) throws StorageSetupException {
+    public <T extends Base> T build(Class<T> target, Helper helper) throws GeneratorException {
         try {
             // For the first: check if the implementation is exists
 
@@ -36,7 +35,7 @@ public class MethodBuilder<Base, Helper> implements IBuilder<Base, Helper> {
                 Class<?> clazz = BuilderUtils.getClass(target.getName() + "$" + definer.getNestedClassName(), definer.getPool());
 
                 if (!target.isAssignableFrom(clazz)) {
-                    throw new StorageSetupException(
+                    throw new GeneratorException(
                             target.getName() +
                                     " already have implemented inner class " +
                                     definer.getNestedClassName() +
@@ -56,7 +55,7 @@ public class MethodBuilder<Base, Helper> implements IBuilder<Base, Helper> {
                 accessHelper = defineCtClassByInterface(target);
             } else {
                 if (!definer.isAssignable(target)) {
-                    throw new StorageSetupException("Access helper class should have " + definer.getBaseClassName() + " as super class");
+                    throw new GeneratorException("Access helper class should have " + definer.getBaseClassName() + " as super class");
                 }
                 if (Modifier.isAbstract(target.getModifiers())) {
                     accessHelper = defineCtClassByAbstract(target);
@@ -81,7 +80,7 @@ public class MethodBuilder<Base, Helper> implements IBuilder<Base, Helper> {
             final Class<T> ahClass = (Class<T>) accessHelper.toClass();
             return definer.build(ahClass, helper);
         } catch (NotFoundException | CannotCompileException e) {
-            throw new StorageSetupException("Exception occurs while build AccessHelper", e);
+            throw new GeneratorException("Exception occurs while build AccessHelper", e);
         }
     }
 
@@ -90,7 +89,7 @@ public class MethodBuilder<Base, Helper> implements IBuilder<Base, Helper> {
             Class<?> target,
             CtClass accessHelper,
             Set<ImplementedMethod> implementedMethods
-    ) throws StorageSetupException {
+    ) throws GeneratorException {
         if (target == null || target == Object.class) {
             // Done
             return;
@@ -147,7 +146,7 @@ public class MethodBuilder<Base, Helper> implements IBuilder<Base, Helper> {
     }
 
     @SuppressWarnings("unchecked")
-    private void implementMethod(CtClass accessHelper, Method m) throws StorageSetupException {
+    private void implementMethod(CtClass accessHelper, Method m) throws GeneratorException {
         if (log.isTraceEnabled()) {
             log.trace("Check method: " + m);
         }
@@ -169,13 +168,13 @@ public class MethodBuilder<Base, Helper> implements IBuilder<Base, Helper> {
         }
 
         if (annotations.isEmpty()) {
-            throw new StorageSetupException(
+            throw new GeneratorException(
                     "Method " + m + " should be annotated with one of the following annotations:  " + methodBuilders.keySet()
             );
         }
 
         if (annotations.size() > 1) {
-            throw new StorageSetupException(
+            throw new GeneratorException(
                     "Method " + m + " should be annotated with ONLY one of the following annotations:  " + methodBuilders.keySet()
             );
         }
@@ -183,9 +182,9 @@ public class MethodBuilder<Base, Helper> implements IBuilder<Base, Helper> {
         try {
             methodBuilders.get(annotations.get(0)).buildMethod(accessHelper, m);
         } catch (NotFoundException | CannotCompileException | ReflectiveOperationException e) {
-            throw new StorageSetupException("Exception occurs while building method " + m, e);
-        } catch (StorageSetupException e) {
-            final StorageSetupException ex = new StorageSetupException(
+            throw new GeneratorException("Exception occurs while building method " + m, e);
+        } catch (GeneratorException e) {
+            final GeneratorException ex = new GeneratorException(
                     "Exception occurs while building method " + m + ": " + e.getMessage(), e.getCause()
             );
             ex.setStackTrace(e.getStackTrace());

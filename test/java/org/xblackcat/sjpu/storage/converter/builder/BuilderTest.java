@@ -4,7 +4,7 @@ import javassist.CannotCompileException;
 import javassist.NotFoundException;
 import org.junit.Assert;
 import org.junit.Test;
-import org.xblackcat.sjpu.storage.StorageSetupException;
+import org.xblackcat.sjpu.skel.GeneratorException;
 import org.xblackcat.sjpu.storage.typemap.TypeMapTest;
 import org.xblackcat.sjpu.storage.typemap.TypeMapper;
 
@@ -138,7 +138,7 @@ public class BuilderTest {
         try {
             builder.buildBody();
             Assert.fail("Exception expected");
-        } catch (StorageSetupException e) {
+        } catch (GeneratorException e) {
             e.printStackTrace();
             // Ignore
         }

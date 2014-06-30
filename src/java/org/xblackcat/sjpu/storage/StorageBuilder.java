@@ -1,5 +1,6 @@
 package org.xblackcat.sjpu.storage;
 
+import org.xblackcat.sjpu.skel.GeneratorException;
 import org.xblackcat.sjpu.storage.connection.IConnectionFactory;
 import org.xblackcat.sjpu.storage.connection.IDBConfig;
 import org.xblackcat.sjpu.storage.consumer.IRowSetConsumer;
@@ -19,7 +20,7 @@ import java.util.Map;
  * @author xBlackCat
  */
 public class StorageBuilder {
-    public static IStorage defaultStorage(IDBConfig settings) throws StorageSetupException {
+    public static IStorage defaultStorage(IDBConfig settings) throws GeneratorException {
         IConnectionFactory factory = StorageUtils.buildConnectionFactory(settings);
 
         StorageBuilder builder = new StorageBuilder();
@@ -62,7 +63,7 @@ public class StorageBuilder {
 
     public IStorage build() {
         if (connectionFactory == null) {
-            throw new StorageSetupException("Connection factory should be specified.");
+            throw new GeneratorException("Connection factory should be specified.");
         }
 
         IMapFactory<?, ?>[] mappers = this.mappers.toArray(new IMapFactory<?, ?>[this.mappers.size()]);

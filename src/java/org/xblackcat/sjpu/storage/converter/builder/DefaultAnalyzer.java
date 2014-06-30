@@ -1,6 +1,6 @@
 package org.xblackcat.sjpu.storage.converter.builder;
 
-import org.xblackcat.sjpu.storage.StorageSetupException;
+import org.xblackcat.sjpu.skel.GeneratorException;
 import org.xblackcat.sjpu.storage.ann.DefaultRowMap;
 import org.xblackcat.sjpu.storage.ann.MapRowTo;
 import org.xblackcat.sjpu.storage.ann.RowMap;
@@ -56,7 +56,7 @@ class DefaultAnalyzer extends AnAnalyser {
         }
 
         if (targetConstructor == null) {
-            throw new StorageSetupException(
+            throw new GeneratorException(
                     "Can't find a way to convert result row to object. Probably one of the following annotations should be used: " +
                             Arrays.asList(ToObjectConverter.class, RowMap.class, MapRowTo.class)
             );

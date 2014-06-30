@@ -1,6 +1,6 @@
 package org.xblackcat.sjpu.storage.converter.builder;
 
-import org.xblackcat.sjpu.storage.StorageSetupException;
+import org.xblackcat.sjpu.skel.GeneratorException;
 import org.xblackcat.sjpu.storage.ann.MapRowTo;
 import org.xblackcat.sjpu.storage.ann.RowMap;
 import org.xblackcat.sjpu.storage.ann.ToObjectConverter;
@@ -77,7 +77,7 @@ class SignatureFinder extends AnAnalyser {
         final Integer matched = isMatched(clazz, 0, stack);
 
         if (matched == null || stack.isEmpty()) {
-            throw new StorageSetupException(
+            throw new GeneratorException(
                     "Can't find a way to convert result row to object. Probably one of the following annotations should be used: " +
                             Arrays.asList(ToObjectConverter.class, RowMap.class, MapRowTo.class)
             );
@@ -97,6 +97,6 @@ class SignatureFinder extends AnAnalyser {
             i++;
         }
 
-        throw new StorageSetupException("Unexpected state: already found constructor is gone with the wind");
+        throw new GeneratorException("Unexpected state: already found constructor is gone with the wind");
     }
 }

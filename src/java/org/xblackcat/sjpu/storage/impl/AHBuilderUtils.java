@@ -1,10 +1,9 @@
-package org.xblackcat.sjpu.storage.skel;
+package org.xblackcat.sjpu.storage.impl;
 
 import javassist.*;
-import org.apache.commons.lang3.StringUtils;
+import org.xblackcat.sjpu.skel.BuilderUtils;
 import org.xblackcat.sjpu.storage.ConsumeException;
 import org.xblackcat.sjpu.storage.StorageException;
-import org.xblackcat.sjpu.storage.StorageSetupException;
 import org.xblackcat.sjpu.storage.StorageUtils;
 import org.xblackcat.sjpu.storage.consumer.IRawProcessor;
 import org.xblackcat.sjpu.storage.consumer.IRowConsumer;
@@ -14,8 +13,6 @@ import org.xblackcat.sjpu.storage.typemap.ITypeMap;
 
 import java.math.BigDecimal;
 import java.sql.*;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
@@ -23,8 +20,7 @@ import java.util.regex.Pattern;
  *
  * @author xBlackCat
  */
-public class BuilderUtils {
-    public static final CtClass[] EMPTY_LIST = new CtClass[]{};
+public class AHBuilderUtils {
 
     public static final Pattern FIRST_WORD_SQL = Pattern.compile("(\\w+)(\\s|$)");
 
@@ -62,82 +58,6 @@ public class BuilderUtils {
 
             instanceClass.toClass();
         }
-    }
-
-    /**
-     * Returns full qualified name of the class in java-source form: inner class names separates with dot ('.') instead of dollar sign ('$')
-     *
-     * @param clazz class to get FQN
-     * @return full qualified name of the class in java-source form
-     */
-    public static String getName(Class<?> clazz) {
-        return StringUtils.replaceChars(checkArray(clazz), '$', '.');
-    }
-
-    protected static String checkArray(Class<?> clazz) {
-        if (!clazz.isArray()) {
-            return clazz.getName();
-        }
-
-        return checkArray(clazz.getComponentType()) + "[]";
-    }
-
-    /**
-     * Returns full qualified name of the class in java-source form: inner class names separates with dot ('.') instead of dollar sign ('$')
-     *
-     * @param clazz class to get FQN
-     * @return full qualified name of the class in java-source form
-     */
-    public static String getName(CtClass clazz) {
-        return StringUtils.replaceChars(clazz.getName(), '$', '.');
-    }
-
-    public static String getUnwrapMethodName(CtClass returnType) {
-        if (!returnType.isPrimitive()) {
-            throw new StorageSetupException("Can't build unwrap method for non-primitive class.");
-        }
-
-        if (CtClass.booleanType.equals(returnType)) {
-            return "booleanValue";
-        }
-        if (CtClass.byteType.equals(returnType)) {
-            return "byteValue";
-        }
-        if (CtClass.doubleType.equals(returnType)) {
-            return "doubleValue";
-        }
-        if (CtClass.floatType.equals(returnType)) {
-            return "floatValue";
-        }
-        if (CtClass.intType.equals(returnType)) {
-            return "intValue";
-        }
-        if (CtClass.longType.equals(returnType)) {
-            return "longValue";
-        }
-        if (CtClass.shortType.equals(returnType)) {
-            return "shortValue";
-        }
-
-        throw new StorageSetupException("Unsupported primitive type: " + returnType);
-    }
-
-    public static CtClass[] toCtClasses(ClassPool pool, Class<?>... classes) throws NotFoundException {
-        CtClass[] ctClasses = new CtClass[classes.length];
-
-        int i = 0;
-        int classesLength = classes.length;
-
-        while (i < classesLength) {
-            ctClasses[i] = pool.get(getName(classes[i]));
-            i++;
-        }
-
-        return ctClasses;
-    }
-
-    public static CtClass toCtClass(ClassPool pool, Class<?> clazz) throws NotFoundException {
-        return pool.get(getName(clazz));
     }
 
     public static Class<? extends IToObjectConverter<?>> checkStandardClassConverter(Class<?> realReturnType) {
@@ -178,36 +98,4 @@ public class BuilderUtils {
         return null;
     }
 
-    public static String asIdentifier(Class<?> typeMap) {
-        return StringUtils.replaceChars(getName(typeMap), '.', '_');
-    }
-
-    public static ClassPool getClassPool(ClassPool parent, Class<?> clazz, Class<?>... classes) {
-        ClassPool pool = new ClassPool(parent) {
-            @Override
-            public ClassLoader getClassLoader() {
-                return parent.getClassLoader();
-            }
-        };
-
-        Set<ClassLoader> usedLoaders = new HashSet<>();
-        usedLoaders.add(ClassLoader.getSystemClassLoader());
-        usedLoaders.add(ClassPool.class.getClassLoader());
-
-        if (usedLoaders.add(clazz.getClassLoader())) {
-            pool.appendClassPath(new ClassClassPath(clazz));
-        }
-
-        for (Class<?> c : classes) {
-            if (usedLoaders.add(c.getClassLoader())) {
-                pool.appendClassPath(new ClassClassPath(c));
-            }
-        }
-
-        return pool;
-    }
-
-    public static Class<?> getClass(String fqn, ClassPool pool) throws ClassNotFoundException {
-        return Class.forName(fqn, true, pool.getClassLoader());
-    }
 }

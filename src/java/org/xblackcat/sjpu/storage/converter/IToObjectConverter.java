@@ -4,7 +4,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 /**
- * @author ASUS
+ *  Implementation of the interface should have a default constructor.
+ *
+ * @author xBlackCat
  */
 
 public interface IToObjectConverter<T> {

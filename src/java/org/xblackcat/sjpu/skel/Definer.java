@@ -1,7 +1,6 @@
-package org.xblackcat.sjpu.storage.skel;
+package org.xblackcat.sjpu.skel;
 
 import javassist.*;
-import org.xblackcat.sjpu.storage.StorageSetupException;
 
 import java.lang.reflect.InvocationTargetException;
 
@@ -46,17 +45,17 @@ public class Definer<Base, Helper> {
         return baseClass.getSimpleName() + "Impl";
     }
 
-    protected <T extends Base> T build(Class<T> target, Helper param) throws StorageSetupException {
+    protected <T extends Base> T build(Class<T> target, Helper param) throws GeneratorException {
         try {
             return target.getConstructor(paramClass).newInstance(param);
         } catch (InstantiationException e) {
-            throw new StorageSetupException("Class is not implemented", e);
+            throw new GeneratorException("Class is not implemented", e);
         } catch (IllegalAccessException e) {
-            throw new StorageSetupException("Access helper constructor should be public", e);
+            throw new GeneratorException("Access helper constructor should be public", e);
         } catch (InvocationTargetException e) {
-            throw new StorageSetupException("Exception occurs in access helper constructor", e);
+            throw new GeneratorException("Exception occurs in access helper constructor", e);
         } catch (NoSuchMethodException e) {
-            throw new StorageSetupException(
+            throw new GeneratorException(
                     "Access helper class constructor should have the following signature: " +
                             target.getName() + "(" + paramClass.getName() + " arg);",
                     e

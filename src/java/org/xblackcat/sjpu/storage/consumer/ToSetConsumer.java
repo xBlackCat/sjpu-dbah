@@ -4,7 +4,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * 15.02.14 10:16
+ * Consume all objects into {@linkplain java.util.Set Set}. {@linkplain java.util.HashSet HashSet} is used as default container
  *
  * @author xBlackCat
  */

@@ -5,10 +5,10 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.xblackcat.sjpu.storage.StorageSetupException;
+import org.xblackcat.sjpu.skel.BuilderUtils;
+import org.xblackcat.sjpu.skel.GeneratorException;
+import org.xblackcat.sjpu.skel.IMethodBuilder;
 import org.xblackcat.sjpu.storage.ann.DDL;
-import org.xblackcat.sjpu.storage.skel.BuilderUtils;
-import org.xblackcat.sjpu.storage.skel.IMethodBuilder;
 
 import java.lang.reflect.Method;
 
@@ -44,19 +44,19 @@ class DDLAnnotatedBuilder implements IMethodBuilder<DDL> {
         }
 
         if (!returnType.equals(void.class)) {
-            throw new StorageSetupException("Invalid return type for updater in method " + methodName + "(): " + returnType.getName());
+            throw new GeneratorException("Invalid return type for updater in method " + methodName + "(): " + returnType.getName());
         }
 
         if (ArrayUtils.isNotEmpty(m.getParameterTypes())) {
-            throw new StorageSetupException("DDL method " + methodName + " should be declared without parameters");
+            throw new GeneratorException("DDL method " + methodName + " should be declared without parameters");
         }
 
         body.append("java.lang.String sql = null;\n");
         body.append("try {\n");
-        body.append(BuilderUtils.CN_java_sql_Connection);
+        body.append(AHBuilderUtils.CN_java_sql_Connection);
         body.append(" con = this.factory.getConnection();\n");
         body.append("try {\n");
-        body.append(BuilderUtils.CN_java_sql_Statement);
+        body.append(AHBuilderUtils.CN_java_sql_Statement);
         body.append(" st = con.createStatement();\n");
         body.append("try {\n");
         for (String sql : ddls) {
@@ -77,12 +77,12 @@ class DDLAnnotatedBuilder implements IMethodBuilder<DDL> {
                         "}\n" +
                         "} catch ("
         );
-        body.append(BuilderUtils.CN_java_sql_SQLException);
+        body.append(AHBuilderUtils.CN_java_sql_SQLException);
         body.append(
                 " e) {\n" +
                         "throw new "
         );
-        body.append(BuilderUtils.CN_StorageException);
+        body.append(AHBuilderUtils.CN_StorageException);
         body.append(
                 "(\"Can not execute query \"+sql,e);\n" +
                         "}\n" +

@@ -1,7 +1,7 @@
 package org.xblackcat.sjpu.storage.converter.builder;
 
-import org.xblackcat.sjpu.storage.StorageSetupException;
-import org.xblackcat.sjpu.storage.skel.BuilderUtils;
+import org.xblackcat.sjpu.skel.BuilderUtils;
+import org.xblackcat.sjpu.skel.GeneratorException;
 import org.xblackcat.sjpu.storage.typemap.TypeMapper;
 
 import java.lang.reflect.Constructor;
@@ -22,7 +22,7 @@ class ConverterMethodBuilder {
         this.constructors = constructors;
     }
 
-    protected String buildBody() throws StorageSetupException {
+    protected String buildBody() throws GeneratorException {
         StringBuilder body = new StringBuilder("{\n");
         String newObject = initializeObject(body, constructors[0]);
 
@@ -32,7 +32,7 @@ class ConverterMethodBuilder {
         return body.toString();
     }
 
-    protected String initializeObject(StringBuilder body, Constructor<?> constructor) throws StorageSetupException {
+    protected String initializeObject(StringBuilder body, Constructor<?> constructor) throws GeneratorException {
         StringBuilder newObject = new StringBuilder("new ");
         newObject.append(BuilderUtils.getName(constructor.getDeclaringClass()));
         newObject.append("(\n");
@@ -50,12 +50,12 @@ class ConverterMethodBuilder {
                 final Class<?> dbType = typeMapper.getDBTypeClass(type);
 
                 if (shift >= constructors.length) {
-                    throw new StorageSetupException("Can't process type " + dbType.getName());
+                    throw new GeneratorException("Can't process type " + dbType.getName());
                 }
 
                 final Constructor<?> subElement = constructors[shift];
                 if (!dbType.equals(subElement.getDeclaringClass())) {
-                    throw new StorageSetupException("Can't process type " + dbType.getName());
+                    throw new GeneratorException("Can't process type " + dbType.getName());
                 }
                 shift++;
 

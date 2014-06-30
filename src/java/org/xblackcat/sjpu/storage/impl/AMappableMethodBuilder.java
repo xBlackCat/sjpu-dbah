@@ -1,7 +1,8 @@
-package org.xblackcat.sjpu.storage.skel;
+package org.xblackcat.sjpu.storage.impl;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.xblackcat.sjpu.skel.IMethodBuilder;
 import org.xblackcat.sjpu.storage.consumer.IRowSetConsumer;
 import org.xblackcat.sjpu.storage.typemap.TypeMapper;
 
@@ -13,13 +14,13 @@ import java.util.Map;
  *
  * @author xBlackCat
  */
-public abstract class AMethodBuilder<T extends Annotation> implements IMethodBuilder<T> {
+public abstract class AMappableMethodBuilder<T extends Annotation> implements IMethodBuilder<T> {
     protected final Log log = LogFactory.getLog(getClass());
     protected final TypeMapper typeMapper;
     protected final Map<Class<?>, Class<? extends IRowSetConsumer>> rowSetConsumers;
     private final Class<T> annClass;
 
-    public AMethodBuilder(
+    public AMappableMethodBuilder(
             Class<T> annClass,
             TypeMapper typeMapper,
             Map<Class<?>, Class<? extends IRowSetConsumer>> rowSetConsumers
