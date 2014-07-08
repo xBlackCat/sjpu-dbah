@@ -8,6 +8,7 @@ import org.xblackcat.sjpu.storage.*;
 import org.xblackcat.sjpu.storage.connection.IConnectionFactory;
 import org.xblackcat.sjpu.storage.consumer.IRawProcessor;
 import org.xblackcat.sjpu.storage.consumer.IRowConsumer;
+import org.xblackcat.sjpu.storage.consumer.SingletonConsumer;
 import org.xblackcat.sjpu.storage.typemap.EnumToStringMapper;
 
 import java.net.URI;
@@ -322,6 +323,29 @@ public class WorkflowTest {
             int id = uriTest.putUri(uri);
 
             URI loaded = uriTest.get(id);
+
+            Assert.assertEquals(uri, loaded);
+        }
+
+        for (int i = 20; i < 30; i++) {
+            URI uri = URI.create("http://example.org/test/" + i);
+
+            int rows = uriTest.putUri(i, uri);
+            Assert.assertEquals(1, rows);
+
+            URI loaded = uriTest.get(i);
+
+            Assert.assertEquals(uri, loaded);
+        }
+
+        for (int i = 50; i < 60; i++) {
+            URI uri = URI.create("http://example.org/test/" + i);
+
+            final SingletonConsumer<Integer> idHolder = new SingletonConsumer<>();
+            int rows = uriTest.putUri(idHolder, uri);
+            Assert.assertEquals(1, rows);
+
+            URI loaded = uriTest.get(idHolder.getRowsHolder());
 
             Assert.assertEquals(uri, loaded);
         }

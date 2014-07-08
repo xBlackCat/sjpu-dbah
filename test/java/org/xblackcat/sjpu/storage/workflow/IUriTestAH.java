@@ -4,6 +4,7 @@ import org.xblackcat.sjpu.storage.IAH;
 import org.xblackcat.sjpu.storage.StorageException;
 import org.xblackcat.sjpu.storage.ann.MapRowTo;
 import org.xblackcat.sjpu.storage.ann.Sql;
+import org.xblackcat.sjpu.storage.consumer.IRowConsumer;
 
 import java.net.URI;
 import java.util.List;
@@ -15,7 +16,14 @@ import java.util.List;
 */
 public interface IUriTestAH extends IAH {
     @Sql("INSERT INTO uri (uri) VALUES (?)")
-    int putUri(URI uri) throws StorageException;
+    Integer putUri(URI uri) throws StorageException;
+
+    @Sql("INSERT INTO uri (id, uri) VALUES (?,?)")
+    int putUri(int i, URI uri) throws StorageException;
+
+    @Sql("INSERT INTO uri (uri) VALUES (?)")
+    @MapRowTo(Integer.class)
+    int putUri(IRowConsumer<Integer> i, URI uri) throws StorageException;
 
     @Sql("SELECT\n" +
                  "  uri\n" +

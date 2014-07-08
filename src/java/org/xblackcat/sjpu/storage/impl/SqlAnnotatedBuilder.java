@@ -134,8 +134,16 @@ class SqlAnnotatedBuilder extends AMappableMethodBuilder<Sql> {
         final CtClass targetReturnType;
 
         final boolean noResult = returnType.equals(void.class);
-        final boolean generateWrapper = (type == QueryType.Select || type == QueryType.Insert) &&
-                (returnType.isPrimitive() && !noResult);
+        final boolean returnRowsAmount = returnType.equals(int.class);
+        final boolean generateWrapper;
+        if (type == QueryType.Select) {
+            generateWrapper = returnType.isPrimitive() && !noResult;
+        } else if (type == QueryType.Insert) {
+            // For INSERT statements return type int means affected rows
+            generateWrapper = returnType.isPrimitive() && !noResult && !returnRowsAmount;
+        } else {
+            generateWrapper = false;
+        }
 
         if (generateWrapper) {
             assert ctRealReturnType instanceof CtPrimitiveType;
@@ -167,6 +175,9 @@ class SqlAnnotatedBuilder extends AMappableMethodBuilder<Sql> {
                     }
 
                     returnString = "";
+                    returnKeys = false;
+                } else if (type == QueryType.Insert && returnRowsAmount) {
+                    returnString = "return rows;\n";
                     returnKeys = false;
                 } else {
                     Class<? extends IRowSetConsumer> rowSetConsumer;
@@ -226,7 +237,7 @@ class SqlAnnotatedBuilder extends AMappableMethodBuilder<Sql> {
             body.append(BuilderUtils.getName(converter));
             body.append(".Instance.I;\n");
         } else {
-            if (returnType.equals(int.class)) {
+            if (returnRowsAmount) {
                 ctRealReturnType = CtClass.intType;
                 returnString = "return rows;";
             } else if (noResult) {
