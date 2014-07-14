@@ -51,6 +51,9 @@ class SignatureFinder extends AnAnalyser {
                 }
 
                 amount += subElement;
+                if (amount + shift > signature.length) {
+                    return null;
+                }
             }
         }
 
@@ -64,7 +67,7 @@ class SignatureFinder extends AnAnalyser {
             if (processed != null) {
                 return processed;
             }
-            stack.removeLast();
+            while (stack.removeLast() != c) ;
         }
 
         return null;

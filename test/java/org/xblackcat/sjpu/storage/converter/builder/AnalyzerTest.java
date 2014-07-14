@@ -51,19 +51,19 @@ public class AnalyzerTest {
         }
     }
 
+    @Test
     public void testSignatureAnalyzer() throws NoSuchMethodException {
         {
             final AnAnalyser analyzer = new SignatureFinder(
                     TypeMapTest.TEST_TYPE_MAPPER,
                     int.class,
-                    String.class,
-                    URI.class,
-                    Date.class,
+                    String.class,   // SimpleObject
+                    URI.class,      //      |
+                    Date.class,     //      /
                     long.class
             );
-            final Info info = analyzer.analyze(SimpleObject.class);
+            final Info info = analyzer.analyze(Complex2.class);
 
-            Assert.assertEquals("1", info.suffix);
             final Constructor<?>[] expected = {
                     Complex2.class.getConstructor(int.class, SimpleObject.class, long.class),
                     SimpleObject.class.getConstructor(String.class, URI.class, Date.class),
@@ -75,16 +75,15 @@ public class AnalyzerTest {
             final AnAnalyser analyzer = new SignatureFinder(
                     TypeMapTest.TEST_TYPE_MAPPER,
                     int.class,
-                    String.class,
-                    URI.class,
-                    Date.class,
-                    String.class,
-                    URI.class,
-                    Date.class
+                    String.class,  // SimpleObject
+                    URI.class,     //      |
+                    Date.class,    // -----/
+                    String.class,  // SimpleObject
+                    URI.class,     //      |
+                    Date.class     // -----/
             );
-            final Info info = analyzer.analyze(SimpleObject.class);
+            final Info info = analyzer.analyze(Complex2.class);
 
-            Assert.assertEquals("3", info.suffix);
             final Constructor<?>[] expected = {
                     Complex2.class.getConstructor(int.class, SimpleObject.class, SimpleObject.class),
                     SimpleObject.class.getConstructor(String.class, URI.class, Date.class),
@@ -96,22 +95,21 @@ public class AnalyzerTest {
         {
             final AnAnalyser analyzer = new SignatureFinder(
                     TypeMapTest.TEST_TYPE_MAPPER,
-                    int.class,
-                    String.class,
-                    URI.class,
+                    int.class,     //  --------- Complex2
+                    String.class,  //  SimpleObject    |
+                    URI.class,     //      |           |
+                    Date.class,    //  ----/           |
+                    long.class,    //  ----------------/
                     Date.class,
-                    long.class,
-                    Date.class,
-                    String.class,
-                    URI.class,
-                    Date.class
+                    String.class,  // SimpleObject
+                    URI.class,     //      |
+                    Date.class     // -----/
             );
-            final Info info = analyzer.analyze(SimpleObject.class);
+            final Info info = analyzer.analyze(DeepComplex.class);
 
-            Assert.assertEquals("1", info.suffix);
             final Constructor<?>[] expected = {
                     DeepComplex.class.getConstructor(Complex2.class, Date.class, SimpleObject.class),
-                    Complex2.class.getConstructor(int.class, SimpleObject.class, SimpleObject.class),
+                    Complex2.class.getConstructor(int.class, SimpleObject.class, long.class),
                     SimpleObject.class.getConstructor(String.class, URI.class, Date.class),
                     SimpleObject.class.getConstructor(String.class, URI.class, Date.class),
             };
