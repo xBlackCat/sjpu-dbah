@@ -8,7 +8,7 @@ package org.xblackcat.sjpu.storage.typemap;
 public class EnumToStringMapper<T extends Enum<T>> implements IMapFactory<T, String> {
     @Override
     public boolean isAccepted(Class<?> obj) {
-        return Enum.class.isAssignableFrom(obj);
+        return Enum.class.isAssignableFrom(obj) && !Enum.class.equals(obj);
     }
 
     @Override

@@ -27,13 +27,13 @@ public class DateMapper implements IMapFactory<Date, Timestamp> {
                 return null;
             }
 
-            return new Date();
+            return new Date(obj.getTime());
         }
     };
 
     @Override
     public boolean isAccepted(Class<?> obj) {
-        return Date.class.isAssignableFrom(obj);
+        return Date.class.equals(obj);
     }
 
     @Override
