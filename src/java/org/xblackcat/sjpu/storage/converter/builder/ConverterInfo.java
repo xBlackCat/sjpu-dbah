@@ -60,21 +60,21 @@ public class ConverterInfo {
             Map<Class<?>, Class<? extends IRowSetConsumer>> rowSetConsumers,
             Method m
     ) throws ReflectiveOperationException, NotFoundException, CannotCompileException {
-        final Class<?> returnType = m.getReturnType();
+        final Class<?> returnClass = m.getReturnType();
         final Class<? extends IToObjectConverter<?>> converter;
-        final Class<?> realReturnType;
+        final Class<?> realReturnClass;
         Integer consumerParamIdx = null;
         Integer rawProcessorParamIndex = null;
 
-        final Collection<Arg> parameterTypes = new ArrayList<>();
+        final Collection<Arg> args = new ArrayList<>();
         final Map<Integer, SqlArg> parts = new HashMap<>();
 
-        final Class<?>[] types = m.getParameterTypes();
+        final Class<?>[] parameterClasses = m.getParameterTypes();
         final Annotation[][] anns = m.getParameterAnnotations();
         {
             int i = 0;
-            while (i < types.length) {
-                Class<?> t = types[i];
+            while (i < parameterClasses.length) {
+                Class<?> t = parameterClasses[i];
                 if (IRawProcessor.class.isAssignableFrom(t)) {
                     if (rawProcessorParamIndex != null) {
                         throw new GeneratorException("Only one raw processor could be specified for method. " + m.toString());
@@ -132,7 +132,7 @@ public class ConverterInfo {
                     } else if (sqlOptArg != null) {
                         throw new GeneratorException("@SqlOptArg should be specified only with @SqlPart annotation in " + m.toString());
                     } else {
-                        parameterTypes.add(new Arg(t, i));
+                        args.add(new Arg(t, i));
                     }
                 }
                 i++;
@@ -148,14 +148,14 @@ public class ConverterInfo {
             }
             final Method converterMethod = converter.getMethod("convert", ResultSet.class);
 
-            realReturnType = converterMethod.getReturnType();
+            realReturnClass = converterMethod.getReturnType();
         } else {
             MapRowTo mapRowTo = m.getAnnotation(MapRowTo.class);
 
             boolean hasRowSetConsumer = m.getAnnotation(RowSetConsumer.class) != null;
             if (!hasRowSetConsumer) {
                 for (Map.Entry<Class<?>, Class<? extends IRowSetConsumer>> cl : rowSetConsumers.entrySet()) {
-                    if (cl.getKey().equals(returnType)) {
+                    if (cl.getKey().equals(returnClass)) {
                         hasRowSetConsumer = true;
 
                         if (mapRowTo == null) {
@@ -175,31 +175,31 @@ public class ConverterInfo {
                     throw new GeneratorException("Set target class with annotation " + MapRowTo.class + " for method " + m);
                 }
 
-                realReturnType = returnType;
+                realReturnClass = returnClass;
             } else {
-                realReturnType = mapRowTo.value();
+                realReturnClass = mapRowTo.value();
                 if (consumerParamIdx == null &&
                         !hasRowSetConsumer &&
-                        !returnType.isAssignableFrom(realReturnType)) {
+                        !returnClass.isAssignableFrom(realReturnClass)) {
                     throw new GeneratorException(
-                            "Mapped object " + realReturnType.getName() + " can not be returned as " + returnType.getName() +
+                            "Mapped object " + realReturnClass.getName() + " can not be returned as " + returnClass.getName() +
                                     " from method " + m
                     );
                 }
             }
 
-            if (realReturnType.isArray()) {
-                if (realReturnType != byte[].class) {
+            if (realReturnClass.isArray()) {
+                if (realReturnClass != byte[].class) {
                     throw new GeneratorException("Invalid array component type: only array of bytes is supported as return value");
                 }
-            } else if (!realReturnType.isPrimitive()) {
-                if (realReturnType.isInterface() || Modifier.isAbstract(realReturnType.getModifiers())) {
+            } else if (!realReturnClass.isPrimitive()) {
+                if (realReturnClass.isInterface() || Modifier.isAbstract(realReturnClass.getModifiers())) {
                     throw new GeneratorException("Row could be mapped only to non-abstract class");
                 }
             }
 
-            Class<? extends IToObjectConverter<?>> standardConverter = AHBuilderUtils.checkStandardClassConverter(realReturnType);
-            final ToObjectConverter objectConverterAnn = realReturnType.getAnnotation(ToObjectConverter.class);
+            Class<? extends IToObjectConverter<?>> standardConverter = AHBuilderUtils.checkStandardClassConverter(realReturnClass);
+            final ToObjectConverter objectConverterAnn = realReturnClass.getAnnotation(ToObjectConverter.class);
 
             if (standardConverter != null) {
                 converter = standardConverter;
@@ -209,18 +209,18 @@ public class ConverterInfo {
                     throw new GeneratorException("Converter should be implemented class");
                 }
             } else {
-                Class<? extends IToObjectConverter<?>> mapperConverter = typeMapper.getTypeMapperConverter(realReturnType);
+                Class<? extends IToObjectConverter<?>> mapperConverter = typeMapper.getTypeMapperConverter(realReturnClass);
                 if (mapperConverter != null) {
                     converter = mapperConverter;
                 } else {
 
                     RowMap constructorSignature = m.getAnnotation(RowMap.class);
 
-                    converter = buildConverter(typeMapper, realReturnType, constructorSignature);
+                    converter = buildConverter(typeMapper, realReturnClass, constructorSignature);
                 }
             }
         }
-        return new ConverterInfo(realReturnType, converter, consumerParamIdx, rawProcessorParamIndex, parameterTypes, parts);
+        return new ConverterInfo(realReturnClass, converter, consumerParamIdx, rawProcessorParamIndex, args, parts);
     }
 
     protected static Class<IToObjectConverter<?>> buildConverter(
