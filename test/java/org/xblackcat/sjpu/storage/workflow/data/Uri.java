@@ -1,4 +1,4 @@
-package org.xblackcat.sjpu.storage.workflow_auto;
+package org.xblackcat.sjpu.storage.workflow.data;
 
 import java.net.URI;
 

@@ -2,7 +2,7 @@ package org.xblackcat.sjpu.storage.typemap;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.xblackcat.sjpu.storage.workflow.Numbers;
+import org.xblackcat.sjpu.storage.workflow.data.Numbers;
 
 import java.sql.Timestamp;
 import java.util.Date;

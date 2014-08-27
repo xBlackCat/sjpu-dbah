@@ -1,10 +1,12 @@
-package org.xblackcat.sjpu.storage.workflow_auto;
+package org.xblackcat.sjpu.storage.workflow.base;
 
 import org.xblackcat.sjpu.storage.IAH;
 import org.xblackcat.sjpu.storage.StorageException;
 import org.xblackcat.sjpu.storage.ann.MapRowTo;
 import org.xblackcat.sjpu.storage.ann.Sql;
 import org.xblackcat.sjpu.storage.consumer.IRowConsumer;
+import org.xblackcat.sjpu.storage.workflow.data.IElement;
+import org.xblackcat.sjpu.storage.workflow.data.Uri;
 
 import java.net.URI;
 import java.util.List;

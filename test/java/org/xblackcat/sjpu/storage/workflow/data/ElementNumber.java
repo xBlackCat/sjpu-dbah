@@ -1,15 +1,15 @@
-package org.xblackcat.sjpu.storage.workflow;
+package org.xblackcat.sjpu.storage.workflow.data;
 
 /**
 * 22.04.2014 18:10
 *
 * @author xBlackCat
 */
-public class Element implements IElement<String> {
+public class ElementNumber implements IElement<Numbers> {
     public final int id;
-    public final String name;
+    public final Numbers name;
 
-    public Element(Integer id, String name) {
+    public ElementNumber(int id, Numbers name) {
         this.id = id;
         this.name = name;
     }
@@ -18,7 +18,7 @@ public class Element implements IElement<String> {
         return id;
     }
 
-    public String getName() {
+    public Numbers getName() {
         return name;
     }
 
@@ -27,14 +27,13 @@ public class Element implements IElement<String> {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof Element)) {
+        if (!(o instanceof ElementNumber)) {
             return false;
         }
 
-        Element element = (Element) o;
+        ElementNumber that = (ElementNumber) o;
 
-        return !(name != null ? !name.equals(element.name) : element.name != null);
-
+        return name == that.name;
     }
 
     @Override

@@ -1,4 +1,4 @@
-package org.xblackcat.sjpu.storage.workflow_auto;
+package org.xblackcat.sjpu.storage.workflow.auto;
 
 import org.xblackcat.sjpu.storage.IAH;
 import org.xblackcat.sjpu.storage.StorageException;
@@ -7,6 +7,8 @@ import org.xblackcat.sjpu.storage.ann.Sql;
 import org.xblackcat.sjpu.storage.ann.SqlOptArg;
 import org.xblackcat.sjpu.storage.ann.SqlPart;
 import org.xblackcat.sjpu.storage.consumer.IRowConsumer;
+import org.xblackcat.sjpu.storage.workflow.data.Element;
+import org.xblackcat.sjpu.storage.workflow.data.IElement;
 
 import java.util.List;
 
@@ -83,7 +85,6 @@ public interface IDataAH extends IAH {
     @Sql("SELECT\n" +
                  "  id, name\n" +
                  "FROM list")
-    @MapRowTo(Element.class)
     void getListElement(IRowConsumer<Element> consumer) throws StorageException;
 
     @Sql("SELECT\n" +
@@ -97,7 +98,6 @@ public interface IDataAH extends IAH {
                  "FROM list\n" +
                  "WHERE\n" +
                  "  id >= ?")
-    @MapRowTo(Element.class)
     void getListElement(IRowConsumer<Element> consumer, int ind) throws StorageException;
 
     @Sql("SELECT\n" +
@@ -113,8 +113,15 @@ public interface IDataAH extends IAH {
                  "FROM list\n" +
                  "WHERE\n" +
                  "  id >= ?")
-    @MapRowTo(Element.class)
     void getListElement(int ind, IRowConsumer<Element> consumer) throws StorageException;
+
+    @Sql("SELECT\n" +
+                 "  id, name\n" +
+                 "FROM list\n" +
+                 "WHERE\n" +
+                 "  id >= ?")
+    @MapRowTo(Element.class)
+    void getListElementRaw(int ind, IRowConsumer consumer) throws StorageException;
 
     @Sql("SELECT\n" +
                  "  id, name\n" +

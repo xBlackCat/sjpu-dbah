@@ -1,9 +1,13 @@
-package org.xblackcat.sjpu.storage.workflow;
+package org.xblackcat.sjpu.storage.workflow.base;
 
 import org.xblackcat.sjpu.storage.IAH;
 import org.xblackcat.sjpu.storage.StorageException;
 import org.xblackcat.sjpu.storage.ann.*;
 import org.xblackcat.sjpu.storage.consumer.IRowConsumer;
+import org.xblackcat.sjpu.storage.workflow.data.ElementNumber;
+import org.xblackcat.sjpu.storage.workflow.data.EnumMapConsumer;
+import org.xblackcat.sjpu.storage.workflow.data.IElement;
+import org.xblackcat.sjpu.storage.workflow.data.Numbers;
 
 import java.util.EnumSet;
 import java.util.List;

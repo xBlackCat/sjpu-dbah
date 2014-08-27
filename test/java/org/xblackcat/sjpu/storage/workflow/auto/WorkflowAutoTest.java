@@ -1,4 +1,4 @@
-package org.xblackcat.sjpu.storage.workflow;
+package org.xblackcat.sjpu.storage.workflow.auto;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -6,14 +6,13 @@ import org.junit.Before;
 import org.junit.Test;
 import org.xblackcat.sjpu.storage.*;
 import org.xblackcat.sjpu.storage.connection.IConnectionFactory;
-import org.xblackcat.sjpu.storage.consumer.IRawProcessor;
 import org.xblackcat.sjpu.storage.consumer.IRowConsumer;
 import org.xblackcat.sjpu.storage.consumer.SingletonConsumer;
 import org.xblackcat.sjpu.storage.typemap.EnumToStringMapper;
+import org.xblackcat.sjpu.storage.workflow.base.IDBInitAH;
+import org.xblackcat.sjpu.storage.workflow.data.*;
 
 import java.net.URI;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -24,7 +23,7 @@ import java.util.Set;
  *
  * @author xBlackCat
  */
-public class WorkflowTest {
+public class WorkflowAutoTest {
     private IStorage storage;
 
     @Before
@@ -278,6 +277,10 @@ public class WorkflowTest {
             dataAH.getListIElement(consumer);
             dataAH.getListIElement(consumer, 0);
             dataAH.getListIElement(0, consumer);
+
+            // Test overriding element types
+            dataAH.getListIElementRaw(((IRowConsumer<IElement>) (IRowConsumer) consumer), 0);
+            dataAH.getListIElementRaw2((IRowConsumer) consumer, 0);
         }
 
         {
@@ -287,30 +290,6 @@ public class WorkflowTest {
                 Assert.assertEquals(e.getKey() + " element", e.getKey().ordinal(), e.getValue().intValue());
             }
         }
-    }
-
-    @Test
-    public void processRaw() throws StorageException {
-        final IDataRawAH dataAH = storage.get(IDataRawAH.class);
-
-        dataAH.dropElements();
-
-        for (Numbers n : Numbers.values()) {
-            dataAH.put(n.ordinal(), n);
-        }
-
-        IRawProcessor rawProcessor = new TestRawProcessor();
-        IRawProcessor rawProcessor5 = new TestRawProcessor(5);
-
-        dataAH.getListElement(rawProcessor);
-        dataAH.getListElement(rawProcessor, "list");
-        dataAH.getListElement("list", rawProcessor);
-
-        dataAH.getListElement(rawProcessor5, 5);
-        dataAH.getListElement(rawProcessor5, "list", 5);
-        dataAH.getListElement(rawProcessor5, 5, "list");
-        dataAH.getListElement("list", rawProcessor5, 5);
-
     }
 
     @Test
@@ -354,32 +333,6 @@ public class WorkflowTest {
             IElement<URI> uri = uriTest.getElement(uriElement.getId());
 
             Assert.assertEquals(uriElement, uri);
-        }
-    }
-
-    private static class TestRawProcessor implements IRawProcessor {
-        private final int count;
-
-        private TestRawProcessor() {
-            this(-1);
-        }
-
-        public TestRawProcessor(int i) {
-            count = i;
-        }
-
-        @Override
-        public void process(ResultSet rs) throws SQLException {
-            int i = 0;
-            while (rs.next()) {
-                Assert.assertEquals(rs.getInt(1), Numbers.valueOf(rs.getString(2)).ordinal());
-                Assert.assertEquals(rs.getString(2), Numbers.values()[rs.getInt(1)].name());
-                i++;
-            }
-
-            if (count >= 0) {
-                Assert.assertEquals(count, i);
-            }
         }
     }
 }

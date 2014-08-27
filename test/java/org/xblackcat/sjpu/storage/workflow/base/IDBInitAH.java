@@ -1,4 +1,4 @@
-package org.xblackcat.sjpu.storage.workflow_auto;
+package org.xblackcat.sjpu.storage.workflow.base;
 
 import org.xblackcat.sjpu.storage.IAH;
 import org.xblackcat.sjpu.storage.StorageException;

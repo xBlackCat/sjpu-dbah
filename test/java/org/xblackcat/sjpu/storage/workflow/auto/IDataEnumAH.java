@@ -1,9 +1,13 @@
-package org.xblackcat.sjpu.storage.workflow_auto;
+package org.xblackcat.sjpu.storage.workflow.auto;
 
 import org.xblackcat.sjpu.storage.IAH;
 import org.xblackcat.sjpu.storage.StorageException;
 import org.xblackcat.sjpu.storage.ann.*;
 import org.xblackcat.sjpu.storage.consumer.IRowConsumer;
+import org.xblackcat.sjpu.storage.workflow.data.ElementNumber;
+import org.xblackcat.sjpu.storage.workflow.data.EnumMapConsumer;
+import org.xblackcat.sjpu.storage.workflow.data.IElement;
+import org.xblackcat.sjpu.storage.workflow.data.Numbers;
 
 import java.util.EnumSet;
 import java.util.List;
@@ -72,7 +76,6 @@ public interface IDataEnumAH extends IAH {
     @Sql("SELECT\n" +
                  "  id, name\n" +
                  "FROM list\n")
-    @MapRowTo(ElementNumber.class)
     void getListElement(IRowConsumer<ElementNumber> consumer) throws StorageException;
 
     @Sql("SELECT\n" +
@@ -93,7 +96,6 @@ public interface IDataEnumAH extends IAH {
                  "FROM list\n" +
                  "WHERE\n" +
                  "  id >= ?")
-    @MapRowTo(ElementNumber.class)
     void getListElement(IRowConsumer<ElementNumber> consumer, int idx) throws StorageException;
 
     @Sql("SELECT\n" +
@@ -110,6 +112,21 @@ public interface IDataEnumAH extends IAH {
                  "WHERE\n" +
                  "  id >= ?")
     @MapRowTo(ElementNumber.class)
+    void getListIElementRaw(IRowConsumer<IElement> consumer, int idx) throws StorageException;
+
+    @Sql("SELECT\n" +
+                 "  id, name\n" +
+                 "FROM list\n" +
+                 "WHERE\n" +
+                 "  id >= ?")
+    @MapRowTo(ElementNumber.class)
+    void getListIElementRaw2(IRowConsumer<IElement<?>> consumer, int idx) throws StorageException;
+
+    @Sql("SELECT\n" +
+                 "  id, name\n" +
+                 "FROM list\n" +
+                 "WHERE\n" +
+                 "  id >= ?")
     void getListElement(int idx, IRowConsumer<ElementNumber> consumer) throws StorageException;
 
     @Sql("SELECT\n" +

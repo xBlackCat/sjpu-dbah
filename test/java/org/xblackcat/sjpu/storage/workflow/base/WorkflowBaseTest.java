@@ -1,4 +1,4 @@
-package org.xblackcat.sjpu.storage.workflow_auto;
+package org.xblackcat.sjpu.storage.workflow.base;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -10,6 +10,7 @@ import org.xblackcat.sjpu.storage.consumer.IRawProcessor;
 import org.xblackcat.sjpu.storage.consumer.IRowConsumer;
 import org.xblackcat.sjpu.storage.consumer.SingletonConsumer;
 import org.xblackcat.sjpu.storage.typemap.EnumToStringMapper;
+import org.xblackcat.sjpu.storage.workflow.data.*;
 
 import java.net.URI;
 import java.sql.ResultSet;
@@ -24,7 +25,7 @@ import java.util.Set;
  *
  * @author xBlackCat
  */
-public class WorkflowTest {
+public class WorkflowBaseTest {
     private IStorage storage;
 
     @Before

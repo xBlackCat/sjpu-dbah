@@ -1,10 +1,11 @@
-package org.xblackcat.sjpu.storage.workflow_auto;
+package org.xblackcat.sjpu.storage.workflow.base;
 
 import org.xblackcat.sjpu.storage.IAH;
 import org.xblackcat.sjpu.storage.StorageException;
 import org.xblackcat.sjpu.storage.ann.Sql;
 import org.xblackcat.sjpu.storage.ann.SqlPart;
 import org.xblackcat.sjpu.storage.consumer.IRawProcessor;
+import org.xblackcat.sjpu.storage.workflow.data.Numbers;
 
 /**
 * 22.04.2014 18:10

@@ -1,10 +1,12 @@
-package org.xblackcat.sjpu.storage.workflow;
+package org.xblackcat.sjpu.storage.workflow.auto;
 
 import org.xblackcat.sjpu.storage.IAH;
 import org.xblackcat.sjpu.storage.StorageException;
 import org.xblackcat.sjpu.storage.ann.MapRowTo;
 import org.xblackcat.sjpu.storage.ann.Sql;
 import org.xblackcat.sjpu.storage.consumer.IRowConsumer;
+import org.xblackcat.sjpu.storage.workflow.data.IElement;
+import org.xblackcat.sjpu.storage.workflow.data.Uri;
 
 import java.net.URI;
 import java.util.List;
@@ -22,7 +24,6 @@ public interface IUriTestAH extends IAH {
     int putUri(int i, URI uri) throws StorageException;
 
     @Sql("INSERT INTO uri (uri) VALUES (?)")
-    @MapRowTo(Integer.class)
     int putUri(IRowConsumer<Integer> i, URI uri) throws StorageException;
 
     @Sql("SELECT\n" +

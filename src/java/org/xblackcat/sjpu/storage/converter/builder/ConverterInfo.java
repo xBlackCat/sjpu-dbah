@@ -17,9 +17,7 @@ import org.xblackcat.sjpu.storage.impl.SqlStringUtils;
 import org.xblackcat.sjpu.storage.typemap.TypeMapper;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
+import java.lang.reflect.*;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -65,8 +63,11 @@ public class ConverterInfo {
         return simpleAnalyse(typeMapper, rowSetConsumers, m);
     }
 
-    private static Class<?> detectTypeArgClass(ParameterizedType returnType) {
-        final Type[] typeArguments = returnType.getActualTypeArguments();
+    private static Class<?> detectTypeArgClass(Type type) {
+        if (!(type instanceof ParameterizedType)) {
+            return null;
+        }
+        final Type[] typeArguments = ((ParameterizedType) type).getActualTypeArguments();
         if (typeArguments.length != 1) {
             return null;
         }
@@ -100,17 +101,19 @@ public class ConverterInfo {
         final Class<?> realReturnClass;
         Integer consumerParamIdx = null;
         Integer rawProcessorParamIndex = null;
+        Class<?> consumerProposalReturnClass = null;
 
         final Collection<Arg> args = new ArrayList<>();
         final Map<Integer, SqlArg> parts = new HashMap<>();
 
-        final Class<?>[] parameterClasses = m.getParameterTypes();
+        final Type[] parameterClasses = m.getGenericParameterTypes();
         final Annotation[][] anns = m.getParameterAnnotations();
         {
             int i = 0;
             while (i < parameterClasses.length) {
-                Class<?> t = parameterClasses[i];
-                if (IRawProcessor.class.isAssignableFrom(t)) {
+                final Type t = parameterClasses[i];
+                final Class<?> rawArgClass = getRaw(t);
+                if (IRawProcessor.class.isAssignableFrom(rawArgClass)) {
                     if (rawProcessorParamIndex != null) {
                         throw new GeneratorException("Only one raw processor could be specified for method. " + m.toString());
                     } else if (consumerParamIdx != null) {
@@ -121,7 +124,7 @@ public class ConverterInfo {
                     }
 
                     rawProcessorParamIndex = i;
-                } else if (IRowConsumer.class.isAssignableFrom(t)) {
+                } else if (IRowConsumer.class.isAssignableFrom(rawArgClass)) {
                     if (consumerParamIdx != null) {
                         throw new GeneratorException("Only one consumer could be specified for method. " + m.toString());
                     } else if (rawProcessorParamIndex != null) {
@@ -131,6 +134,7 @@ public class ConverterInfo {
                         );
                     }
 
+                    consumerProposalReturnClass = detectTypeArgClass(t);
                     consumerParamIdx = i;
                 } else {
                     SqlPart sqlPart = null;
@@ -151,7 +155,7 @@ public class ConverterInfo {
                             }
                             additional = null;
                         } else {
-                            if (t.isPrimitive()) {
+                            if (rawArgClass.isPrimitive()) {
                                 throw new GeneratorException("Primitive argument types can't be used as optional sql parts. " + m);
                             }
                             additional = sqlOptArg.value();
@@ -173,7 +177,7 @@ public class ConverterInfo {
                     } else if (sqlOptArg != null) {
                         throw new GeneratorException("@SqlOptArg should be specified only with @SqlPart annotation in " + m.toString());
                     } else {
-                        args.add(new Arg(t, i));
+                        args.add(new Arg(rawArgClass, i));
                     }
                 }
                 i++;
@@ -209,10 +213,12 @@ public class ConverterInfo {
 
             if (mapRowTo == null) {
                 if (consumerParamIdx != null) {
-                    throw new GeneratorException("Set target class with annotation " + MapRowTo.class + " for method " + m);
-                }
-
-                if (hasRowSetConsumer) {
+                    if (consumerProposalReturnClass == null) {
+                        throw new GeneratorException("Set target class with annotation " + MapRowTo.class + " for method " + m);
+                    } else {
+                        realReturnClass = consumerProposalReturnClass;
+                    }
+                } else if (hasRowSetConsumer) {
                     if (proposalReturnClass != null) {
                         realReturnClass = proposalReturnClass;
                     } else {
@@ -267,6 +273,17 @@ public class ConverterInfo {
             }
         }
         return new ConverterInfo(realReturnClass, converter, consumerParamIdx, rawProcessorParamIndex, args, parts);
+    }
+
+    private static Class<?> getRaw(Type t) {
+        if (t instanceof Class) {
+            return (Class) t;
+        } else if (t instanceof ParameterizedType) {
+            return getRaw(((ParameterizedType) t).getRawType());
+        } else if (t instanceof GenericArrayType) {
+            return Array.newInstance(getRaw(((GenericArrayType) t).getGenericComponentType())).getClass();
+        }
+        throw new GeneratorException("Unexpected type " + t);
     }
 
     protected static Class<IToObjectConverter<?>> buildConverter(

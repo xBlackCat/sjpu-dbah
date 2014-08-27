@@ -1,4 +1,4 @@
-package org.xblackcat.sjpu.storage.workflow;
+package org.xblackcat.sjpu.storage.workflow.data;
 
 import org.xblackcat.sjpu.storage.ConsumeException;
 import org.xblackcat.sjpu.storage.consumer.IRowSetConsumer;
