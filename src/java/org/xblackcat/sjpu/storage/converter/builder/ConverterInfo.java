@@ -18,6 +18,8 @@ import org.xblackcat.sjpu.storage.typemap.TypeMapper;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -60,6 +62,211 @@ public class ConverterInfo {
             Map<Class<?>, Class<? extends IRowSetConsumer>> rowSetConsumers,
             Method m
     ) throws ReflectiveOperationException, NotFoundException, CannotCompileException {
+        if (m.getGenericReturnType() instanceof ParameterizedType) {
+            return complexAnalyse(typeMapper, rowSetConsumers, m);
+        } else {
+            return simpleAnalyse(typeMapper, rowSetConsumers, m);
+        }
+    }
+
+    protected static ConverterInfo complexAnalyse(
+            TypeMapper typeMapper,
+            Map<Class<?>, Class<? extends IRowSetConsumer>> rowSetConsumers,
+            Method m
+    ) throws NotFoundException, CannotCompileException, ReflectiveOperationException {
+        final ParameterizedType returnType = (ParameterizedType) m.getGenericReturnType();
+        if (!(returnType.getRawType() instanceof Class)) {
+            throw new GeneratorException("Raw type is not a class " + returnType + " in method " + m.toString());
+        }
+        final Class<?> rawClass = (Class) returnType.getRawType();
+        final Class<?> proposalReturnClass = detectTypeArgClass(returnType);
+
+        final Class<? extends IToObjectConverter<?>> converter;
+        final Class<?> realReturnClass;
+        Integer consumerParamIdx = null;
+        Integer rawProcessorParamIndex = null;
+
+        final Collection<Arg> args = new ArrayList<>();
+        final Map<Integer, SqlArg> parts = new HashMap<>();
+
+        final Class<?>[] parameterClasses = m.getParameterTypes();
+        final Annotation[][] anns = m.getParameterAnnotations();
+        {
+            int i = 0;
+            while (i < parameterClasses.length) {
+                Class<?> t = parameterClasses[i];
+                if (IRawProcessor.class.isAssignableFrom(t)) {
+                    if (rawProcessorParamIndex != null) {
+                        throw new GeneratorException("Only one raw processor could be specified for method. " + m.toString());
+                    } else if (consumerParamIdx != null) {
+                        throw new GeneratorException(
+                                "Consumer and raw process can't be specified simultaneously for method. " +
+                                        m.toString()
+                        );
+                    }
+
+                    rawProcessorParamIndex = i;
+                } else if (IRowConsumer.class.isAssignableFrom(t)) {
+                    if (consumerParamIdx != null) {
+                        throw new GeneratorException("Only one consumer could be specified for method. " + m.toString());
+                    } else if (rawProcessorParamIndex != null) {
+                        throw new GeneratorException(
+                                "Consumer and raw process can't be specified simultaneously for method. " +
+                                        m.toString()
+                        );
+                    }
+
+                    consumerParamIdx = i;
+                } else {
+                    SqlPart sqlPart = null;
+                    SqlOptArg sqlOptArg = null;
+                    for (Annotation a : anns[i]) {
+                        if (a instanceof SqlPart) {
+                            sqlPart = (SqlPart) a;
+                        } else if (a instanceof SqlOptArg) {
+                            sqlOptArg = (SqlOptArg) a;
+                        }
+                    }
+
+                    if (sqlPart != null) {
+                        final String additional;
+                        if (sqlOptArg == null) {
+                            if (!String.class.equals(t)) {
+                                throw new GeneratorException("Only String argument types could be used as plain sql parts. " + m);
+                            }
+                            additional = null;
+                        } else {
+                            if (t.isPrimitive()) {
+                                throw new GeneratorException("Primitive argument types can't be used as optional sql parts. " + m);
+                            }
+                            additional = sqlOptArg.value();
+                            if (SqlStringUtils.getArgumentCount(additional) != 1) {
+                                throw new GeneratorException(
+                                        "Optional Sql part should have one and only one argument. Got: " +
+                                                additional + " in " + m.toString()
+                                );
+                            }
+                        }
+
+                        final SqlArg oldVal = parts.put(sqlPart.value(), new SqlArg(additional, i));
+                        if (oldVal != null) {
+                            throw new GeneratorException(
+                                    "Two arguments (" + oldVal + " and " + i + ") are referenced to the same sql part index " +
+                                            sqlPart.value() + " in method " + m
+                            );
+                        }
+                    } else if (sqlOptArg != null) {
+                        throw new GeneratorException("@SqlOptArg should be specified only with @SqlPart annotation in " + m.toString());
+                    } else {
+                        args.add(new Arg(t, i));
+                    }
+                }
+                i++;
+            }
+        }
+
+        final ToObjectConverter converterAnn = m.getAnnotation(ToObjectConverter.class);
+
+        if (converterAnn != null) {
+            converter = converterAnn.value();
+            if (converter.isInterface() || Modifier.isAbstract(converter.getModifiers())) {
+                throw new GeneratorException("Converter should be non-abstract class");
+            }
+            final Method converterMethod = converter.getMethod("convert", ResultSet.class);
+
+            realReturnClass = converterMethod.getReturnType();
+        } else {
+            MapRowTo mapRowTo = m.getAnnotation(MapRowTo.class);
+
+            boolean hasRowSetConsumer = m.getAnnotation(RowSetConsumer.class) != null;
+            if (!hasRowSetConsumer) {
+                for (Map.Entry<Class<?>, Class<? extends IRowSetConsumer>> cl : rowSetConsumers.entrySet()) {
+                    if (cl.getKey().equals(rawClass)) {
+                        hasRowSetConsumer = true;
+
+                        if (mapRowTo == null) {
+                            mapRowTo = cl.getValue().getAnnotation(MapRowTo.class);
+                        }
+                        break;
+                    }
+                }
+            }
+
+            if (mapRowTo == null) {
+                if (consumerParamIdx != null) {
+                    throw new GeneratorException("Set target class with annotation " + MapRowTo.class + " for method " + m);
+                }
+
+                if (hasRowSetConsumer && proposalReturnClass != null) {
+                    realReturnClass = proposalReturnClass;
+                } else {
+                    realReturnClass = rawClass;
+                }
+
+            } else {
+                realReturnClass = mapRowTo.value();
+                if (consumerParamIdx == null &&
+                        !hasRowSetConsumer &&
+                        !rawClass.isAssignableFrom(realReturnClass)) {
+                    throw new GeneratorException(
+                            "Mapped object " + realReturnClass.getName() + " can not be returned as " + rawClass.getName() +
+                                    " from method " + m
+                    );
+                }
+            }
+
+            if (realReturnClass.isArray()) {
+                if (realReturnClass != byte[].class) {
+                    throw new GeneratorException("Invalid array component type: only array of bytes is supported as return value");
+                }
+            } else if (!realReturnClass.isPrimitive()) {
+                if (realReturnClass.isInterface() || Modifier.isAbstract(realReturnClass.getModifiers())) {
+                    throw new GeneratorException("Row could be mapped only to non-abstract class");
+                }
+            }
+
+            Class<? extends IToObjectConverter<?>> standardConverter = AHBuilderUtils.checkStandardClassConverter(realReturnClass);
+            final ToObjectConverter objectConverterAnn = realReturnClass.getAnnotation(ToObjectConverter.class);
+
+            if (standardConverter != null) {
+                converter = standardConverter;
+            } else if (objectConverterAnn != null) {
+                converter = objectConverterAnn.value();
+                if (converter.isInterface() || Modifier.isAbstract(converter.getModifiers())) {
+                    throw new GeneratorException("Converter should be implemented class");
+                }
+            } else {
+                Class<? extends IToObjectConverter<?>> mapperConverter = typeMapper.getTypeMapperConverter(realReturnClass);
+                if (mapperConverter != null) {
+                    converter = mapperConverter;
+                } else {
+
+                    RowMap constructorSignature = m.getAnnotation(RowMap.class);
+
+                    converter = buildConverter(typeMapper, realReturnClass, constructorSignature);
+                }
+            }
+        }
+        return new ConverterInfo(realReturnClass, converter, consumerParamIdx, rawProcessorParamIndex, args, parts);
+    }
+
+    private static Class<?> detectTypeArgClass(ParameterizedType returnType) {
+        final Type[] typeArguments = returnType.getActualTypeArguments();
+        if (typeArguments.length != 1) {
+            return null;
+        }
+        final Type argument = typeArguments[0];
+        if (!(argument instanceof Class)) {
+            return null;
+        }
+        return (Class<?>) argument;
+    }
+
+    protected static ConverterInfo simpleAnalyse(
+            TypeMapper typeMapper,
+            Map<Class<?>, Class<? extends IRowSetConsumer>> rowSetConsumers,
+            Method m
+    ) throws NotFoundException, CannotCompileException, ReflectiveOperationException {
         final Class<?> returnClass = m.getReturnType();
         final Class<? extends IToObjectConverter<?>> converter;
         final Class<?> realReturnClass;
@@ -79,7 +286,10 @@ public class ConverterInfo {
                     if (rawProcessorParamIndex != null) {
                         throw new GeneratorException("Only one raw processor could be specified for method. " + m.toString());
                     } else if (consumerParamIdx != null) {
-                        throw new GeneratorException("Consumer and raw process can't be specified simultaneously for method. " + m.toString());
+                        throw new GeneratorException(
+                                "Consumer and raw process can't be specified simultaneously for method. " +
+                                        m.toString()
+                        );
                     }
 
                     rawProcessorParamIndex = i;
@@ -87,7 +297,10 @@ public class ConverterInfo {
                     if (consumerParamIdx != null) {
                         throw new GeneratorException("Only one consumer could be specified for method. " + m.toString());
                     } else if (rawProcessorParamIndex != null) {
-                        throw new GeneratorException("Consumer and raw process can't be specified simultaneously for method. " + m.toString());
+                        throw new GeneratorException(
+                                "Consumer and raw process can't be specified simultaneously for method. " +
+                                        m.toString()
+                        );
                     }
 
                     consumerParamIdx = i;
