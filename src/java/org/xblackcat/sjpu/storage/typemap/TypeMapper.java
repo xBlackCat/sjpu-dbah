@@ -132,7 +132,7 @@ public class TypeMapper {
             return null;
         }
 
-        final String converterCN = getTypeMapConverterRef(typeMap.getClass());
+        final String converterCN = getTypeMapConverterRef(type);
         final String realClassName = typeMap.getRealType().getName();
         try {
 
@@ -252,8 +252,8 @@ public class TypeMapper {
         return converterClass;
     }
 
-    private String getTypeMapConverterRef(Class<? extends ITypeMap> typeMap) {
-        return "ToObjectTypeMapConverter_" + mapperId + "_" + BuilderUtils.asIdentifier(typeMap);
+    private String getTypeMapConverterRef(Class<?> type) {
+        return "ToObjectTypeMapConverter_" + mapperId + "_" + BuilderUtils.asIdentifier(type);
     }
 
     public boolean canProcess(Class<?> objClass) {
