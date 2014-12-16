@@ -13,9 +13,6 @@ import java.sql.SQLException;
 public class ToBooleanConverter implements IToObjectConverter<Boolean> {
     public Boolean convert(ResultSet rs) throws SQLException {
         Object value = rs.getObject(1);
-        if (value == null) {
-            return false;
-        }
         if (value instanceof Boolean) {
             return (Boolean) value;
         }

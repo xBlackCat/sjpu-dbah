@@ -63,35 +63,39 @@ public class AHBuilderUtils {
     public static Class<? extends IToObjectConverter<?>> checkStandardClassConverter(Class<?> realReturnType) {
         if (BigDecimal.class.equals(realReturnType)) {
             return ToBigDecimalConverter.class;
-        }
-        if (boolean.class.equals(realReturnType) || Boolean.class.equals(realReturnType)) {
+        } else if (boolean.class.equals(realReturnType)) {
+            return ToBooleanConverter.class;
+        } else if (Boolean.class.equals(realReturnType)) {
             return ToBooleanObjectConverter.class;
-        }
-        if (byte.class.equals(realReturnType) || Byte.class.equals(realReturnType)) {
+        } else if (byte.class.equals(realReturnType)) {
+            return ToByteConverter.class;
+        } else if (Byte.class.equals(realReturnType)) {
             return ToByteObjectConverter.class;
-        }
-        if (byte[].class.equals(realReturnType)) {
+        } else if (byte[].class.equals(realReturnType)) {
             return ToBytesConverter.class;
-        }
-        if (double.class.equals(realReturnType) || Double.class.equals(realReturnType)) {
+        } else if (double.class.equals(realReturnType)) {
+            return ToDoubleConverter.class;
+        } else if (Double.class.equals(realReturnType)) {
             return ToDoubleObjectConverter.class;
-        }
-        if (float.class.equals(realReturnType) || Float.class.equals(realReturnType)) {
+        } else if (float.class.equals(realReturnType)) {
+            return ToFloatConverter.class;
+        } else if (Float.class.equals(realReturnType)) {
             return ToFloatObjectConverter.class;
-        }
-        if (int.class.equals(realReturnType) || Integer.class.equals(realReturnType)) {
+        } else if (int.class.equals(realReturnType)) {
+            return ToIntConverter.class;
+        } else if (Integer.class.equals(realReturnType)) {
             return ToIntObjectConverter.class;
-        }
-        if (long.class.equals(realReturnType) || Long.class.equals(realReturnType)) {
+        } else if (long.class.equals(realReturnType)) {
+            return ToLongConverter.class;
+        } else if (Long.class.equals(realReturnType)) {
             return ToLongObjectConverter.class;
-        }
-        if (short.class.equals(realReturnType) || Short.class.equals(realReturnType)) {
+        } else if (short.class.equals(realReturnType)) {
+            return ToShortConverter.class;
+        } else if (Short.class.equals(realReturnType)) {
             return ToShortObjectConverter.class;
-        }
-        if (String.class.equals(realReturnType)) {
+        } else if (String.class.equals(realReturnType)) {
             return ToStringConverter.class;
-        }
-        if (void.class.equals(realReturnType) || Void.class.equals(realReturnType)) {
+        } else if (void.class.equals(realReturnType) || Void.class.equals(realReturnType)) {
             return VoidConverter.class;
         }
 
