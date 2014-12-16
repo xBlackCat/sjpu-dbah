@@ -35,14 +35,7 @@ public class Uri implements IElement<URI> {
 
         Uri uri = (Uri) o;
 
-        if (id != uri.id) {
-            return false;
-        }
-        if (name != null ? !name.equals(uri.name) : uri.name != null) {
-            return false;
-        }
-
-        return true;
+        return id == uri.id && (name == null ? uri.name == null : name.equals(uri.name));
     }
 
     @Override

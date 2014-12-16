@@ -7,6 +7,7 @@ import org.apache.commons.logging.LogFactory;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 04.04.2014 16:10
@@ -159,13 +160,8 @@ public class MethodBuilder<Base, Helper> implements IBuilder<Base, Helper> {
             return;
         }
 
-        List<Class<? extends Annotation>> annotations = new ArrayList<>();
-
-        for (Class<? extends Annotation> ann : methodBuilders.keySet()) {
-            if (m.isAnnotationPresent(ann)) {
-                annotations.add(ann);
-            }
-        }
+        List<Class<? extends Annotation>> annotations =
+                methodBuilders.keySet().stream().filter(m::isAnnotationPresent).collect(Collectors.toList());
 
         if (annotations.isEmpty()) {
             throw new GeneratorException(

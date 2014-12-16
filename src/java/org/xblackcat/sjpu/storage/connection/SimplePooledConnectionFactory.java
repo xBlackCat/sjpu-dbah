@@ -32,7 +32,7 @@ public class SimplePooledConnectionFactory extends AConnectionFactory {
                 this.settings.getPassword()
         );
 
-        connectionPool = new GenericObjectPool<Object>(
+        connectionPool = new GenericObjectPool<>(
                 null,
                 this.settings.getPoolSize(),
                 GenericObjectPool.WHEN_EXHAUSTED_BLOCK,

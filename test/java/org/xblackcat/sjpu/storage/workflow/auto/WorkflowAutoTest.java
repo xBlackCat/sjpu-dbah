@@ -141,12 +141,9 @@ public class WorkflowAutoTest {
         }
 
         {
-            IRowConsumer<Element> consumer = new IRowConsumer<Element>() {
-                @Override
-                public boolean consume(Element o) throws ConsumeException {
-                    Assert.assertEquals(Numbers.values()[o.getId()].name(), o.getName());
-                    return false;
-                }
+            IRowConsumer<Element> consumer = o -> {
+                Assert.assertEquals(Numbers.values()[o.getId()].name(), o.getName());
+                return false;
             };
             dataAH.getListElement(consumer);
             dataAH.getListElement(consumer, 0);
@@ -154,12 +151,9 @@ public class WorkflowAutoTest {
         }
 
         {
-            IRowConsumer<IElement<String>> consumer = new IRowConsumer<IElement<String>>() {
-                @Override
-                public boolean consume(IElement<String> o) throws ConsumeException {
-                    Assert.assertEquals(Numbers.values()[o.getId()].name(), o.getName());
-                    return false;
-                }
+            IRowConsumer<IElement<String>> consumer = o -> {
+                Assert.assertEquals(Numbers.values()[o.getId()].name(), o.getName());
+                return false;
             };
             dataAH.getListIElement(consumer);
             dataAH.getListIElement(consumer, 0);
@@ -173,6 +167,7 @@ public class WorkflowAutoTest {
         }
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     public void processEnumData() throws StorageException {
         final IDataEnumAH dataAH = storage.get(IDataEnumAH.class);
@@ -254,12 +249,9 @@ public class WorkflowAutoTest {
         }
 
         {
-            IRowConsumer<ElementNumber> consumer = new IRowConsumer<ElementNumber>() {
-                @Override
-                public boolean consume(ElementNumber o) throws ConsumeException {
-                    Assert.assertEquals(Numbers.values()[o.getId()], o.getName());
-                    return false;
-                }
+            IRowConsumer<ElementNumber> consumer = o -> {
+                Assert.assertEquals(Numbers.values()[o.getId()], o.getName());
+                return false;
             };
             dataAH.getListElement(consumer);
             dataAH.getListElement(consumer, 0);
@@ -267,12 +259,9 @@ public class WorkflowAutoTest {
         }
 
         {
-            IRowConsumer<IElement<Numbers>> consumer = new IRowConsumer<IElement<Numbers>>() {
-                @Override
-                public boolean consume(IElement<Numbers> o) throws ConsumeException {
-                    Assert.assertEquals(Numbers.values()[o.getId()], o.getName());
-                    return false;
-                }
+            IRowConsumer<IElement<Numbers>> consumer = o -> {
+                Assert.assertEquals(Numbers.values()[o.getId()], o.getName());
+                return false;
             };
             dataAH.getListIElement(consumer);
             dataAH.getListIElement(consumer, 0);

@@ -79,16 +79,13 @@ public class TxTest {
             final MutableInt key = new MutableInt();
 
             dbAH.put(
-                    new IRowConsumer<Integer>() {
-                        @Override
-                        public boolean consume(Integer o) throws ConsumeException {
-                            key.setValue(o);
-                            return false;
-                        }
+                    o -> {
+                        key.setValue(o);
+                        return false;
                     },
                     value
             );
-            
+
             Assert.assertEquals(value, dbAH.get(key.intValue()));
         }
     }
@@ -106,9 +103,9 @@ public class TxTest {
         void fill(int id, String txt) throws StorageException;
 
         @Sql("SELECT\n" +
-                     "  \"txt\"\n" +
-                     "FROM \"data\"\n" +
-                     "WHERE \"id\" = ?")
+                "  \"txt\"\n" +
+                "FROM \"data\"\n" +
+                "WHERE \"id\" = ?")
         String get(int id) throws StorageException;
     }
 
@@ -129,9 +126,9 @@ public class TxTest {
         void put(IRowConsumer<Integer> id, String value) throws StorageException;
 
         @Sql("SELECT\n" +
-                     "  \"txt\"\n" +
-                     "FROM \"autoinc\"\n" +
-                     "WHERE \"id\" = ?")
+                "  \"txt\"\n" +
+                "FROM \"autoinc\"\n" +
+                "WHERE \"id\" = ?")
         String get(int id) throws StorageException;
     }
 }

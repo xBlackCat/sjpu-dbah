@@ -136,13 +136,17 @@ class SqlAnnotatedBuilder extends AMappableMethodBuilder<Sql> {
         final boolean noResult = returnType.equals(void.class);
         final boolean returnRowsAmount = returnType.equals(int.class);
         final boolean generateWrapper;
-        if (type == QueryType.Select) {
-            generateWrapper = returnType.isPrimitive() && !noResult;
-        } else if (type == QueryType.Insert) {
-            // For INSERT statements return type int means affected rows
-            generateWrapper = returnType.isPrimitive() && !noResult && !returnRowsAmount;
-        } else {
-            generateWrapper = false;
+        switch (type) {
+            case Select:
+                generateWrapper = returnType.isPrimitive() && !noResult;
+                break;
+            case Insert:
+                // For INSERT statements return type int means affected rows
+                generateWrapper = returnType.isPrimitive() && !noResult && !returnRowsAmount;
+                break;
+            default:
+                generateWrapper = false;
+                break;
         }
 
         if (generateWrapper) {

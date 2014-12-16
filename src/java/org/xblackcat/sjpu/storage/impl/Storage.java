@@ -27,7 +27,7 @@ public class Storage extends AnAHFactory implements IStorage {
             Map<Class<?>, Class<? extends IRowSetConsumer>> rowSetConsumers,
             IMapFactory<?, ?>... mappers
     ) {
-        this(connectionFactory, rowSetConsumers, new Definer<IAH, IConnectionFactory>(AnAH.class, IConnectionFactory.class), mappers);
+        this(connectionFactory, rowSetConsumers, new Definer<>(AnAH.class, IConnectionFactory.class), mappers);
     }
 
     private Storage(
