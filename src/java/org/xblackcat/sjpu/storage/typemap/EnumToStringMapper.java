@@ -13,30 +13,6 @@ public class EnumToStringMapper<T extends Enum<T>> implements IMapFactory<T, Str
 
     @Override
     public ITypeMap<T, String> mapper(Class<T> clazz) {
-        return new EnumStringATypeMap(clazz);
-    }
-
-    private class EnumStringATypeMap extends ATypeMap<T, String> {
-        public EnumStringATypeMap(Class<T> clazz) {
-            super(clazz, String.class);
-        }
-
-        @Override
-        public String forStore(Enum obj) {
-            if (obj == null) {
-                return null;
-            }
-
-            return obj.name();
-        }
-
-        @Override
-        public T forRead(String obj) {
-            if (obj == null) {
-                return null;
-            }
-
-            return Enum.valueOf(getRealType(), obj);
-        }
+        return new NullPassTypeMap<>(clazz, String.class, Enum::name, s -> Enum.valueOf(clazz, s));
     }
 }

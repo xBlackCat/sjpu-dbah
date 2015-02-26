@@ -5,31 +5,18 @@ import java.util.Date;
 
 /**
  * A default mapper between java.sql.Timestamp and java.util.Date objects
- * <p/>
+ * <p>
  * 07.04.2014 16:09
  *
  * @author xBlackCat
  */
 public class DateMapper implements IMapFactory<Date, Timestamp> {
-    private static final ITypeMap<Date, Timestamp> TYPE_MAP = new ATypeMap<Date, Timestamp>(Date.class, Timestamp.class) {
-        @Override
-        public Timestamp forStore(Date obj) {
-            if (obj == null) {
-                return null;
-            }
-
-            return new Timestamp(obj.getTime());
-        }
-
-        @Override
-        public Date forRead(Timestamp obj) {
-            if (obj == null) {
-                return null;
-            }
-
-            return new Date(obj.getTime());
-        }
-    };
+    private static final ITypeMap<Date, Timestamp> TYPE_MAP = new NullPassTypeMap<>(
+            Date.class,
+            Timestamp.class,
+            date -> new Timestamp(date.getTime()),
+            timestamp -> new Date(timestamp.getTime())
+    );
 
     @Override
     public boolean isAccepted(Class<?> obj) {
