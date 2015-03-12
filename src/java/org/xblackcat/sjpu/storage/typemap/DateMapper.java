@@ -10,6 +10,7 @@ import java.util.Date;
  *
  * @author xBlackCat
  */
+@Deprecated
 public class DateMapper implements IMapFactory<Date, Timestamp> {
     private static final ITypeMap<Date, Timestamp> TYPE_MAP = new NullPassTypeMap<>(
             Date.class,
