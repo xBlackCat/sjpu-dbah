@@ -6,7 +6,7 @@ import org.xblackcat.sjpu.storage.typemap.TypeMapTest;
 
 import java.lang.reflect.Constructor;
 import java.net.URI;
-import java.util.Date;
+import java.time.LocalDateTime;
 
 /**
  * 25.04.2014 16:00
@@ -23,7 +23,7 @@ public class AnalyzerTest {
 
             Assert.assertEquals("", info.suffix);
             final Constructor<?>[] expected = {
-                    SimpleObject.class.getConstructor(String.class, URI.class, Date.class)
+                    SimpleObject.class.getConstructor(String.class, URI.class, LocalDateTime.class)
             };
             Assert.assertArrayEquals(expected, info.reference);
         }
@@ -34,7 +34,7 @@ public class AnalyzerTest {
             Assert.assertEquals("", info.suffix);
             final Constructor<?>[] expected = {
                     Complex1.class.getConstructor(int.class, SimpleObject.class, String.class),
-                    SimpleObject.class.getConstructor(String.class, URI.class, Date.class)
+                    SimpleObject.class.getConstructor(String.class, URI.class, LocalDateTime.class)
             };
             Assert.assertArrayEquals(expected, info.reference);
         }
@@ -45,7 +45,7 @@ public class AnalyzerTest {
             Assert.assertEquals("Def", info.suffix);
             final Constructor<?>[] expected = {
                     Complex2.class.getConstructor(String.class, SimpleObject.class, long.class),
-                    SimpleObject.class.getConstructor(String.class, URI.class, Date.class)
+                    SimpleObject.class.getConstructor(String.class, URI.class, LocalDateTime.class)
             };
             Assert.assertArrayEquals(expected, info.reference);
         }
@@ -59,14 +59,14 @@ public class AnalyzerTest {
                     int.class,
                     String.class,   // SimpleObject
                     URI.class,      //      |
-                    Date.class,     //      /
+                    LocalDateTime.class,     //      /
                     long.class
             );
             final Info info = analyzer.analyze(Complex2.class);
 
             final Constructor<?>[] expected = {
                     Complex2.class.getConstructor(int.class, SimpleObject.class, long.class),
-                    SimpleObject.class.getConstructor(String.class, URI.class, Date.class),
+                    SimpleObject.class.getConstructor(String.class, URI.class, LocalDateTime.class),
             };
             Assert.assertArrayEquals(expected, info.reference);
         }
@@ -77,17 +77,17 @@ public class AnalyzerTest {
                     int.class,
                     String.class,  // SimpleObject
                     URI.class,     //      |
-                    Date.class,    // -----/
+                    LocalDateTime.class,    // -----/
                     String.class,  // SimpleObject
                     URI.class,     //      |
-                    Date.class     // -----/
+                    LocalDateTime.class     // -----/
             );
             final Info info = analyzer.analyze(Complex2.class);
 
             final Constructor<?>[] expected = {
                     Complex2.class.getConstructor(int.class, SimpleObject.class, SimpleObject.class),
-                    SimpleObject.class.getConstructor(String.class, URI.class, Date.class),
-                    SimpleObject.class.getConstructor(String.class, URI.class, Date.class),
+                    SimpleObject.class.getConstructor(String.class, URI.class, LocalDateTime.class),
+                    SimpleObject.class.getConstructor(String.class, URI.class, LocalDateTime.class),
             };
             Assert.assertArrayEquals(expected, info.reference);
         }
@@ -98,20 +98,20 @@ public class AnalyzerTest {
                     int.class,     //  --------- Complex2
                     String.class,  //  SimpleObject    |
                     URI.class,     //      |           |
-                    Date.class,    //  ----/           |
+                    LocalDateTime.class,    //  ----/           |
                     long.class,    //  ----------------/
-                    Date.class,
+                    LocalDateTime.class,
                     String.class,  // SimpleObject
                     URI.class,     //      |
-                    Date.class     // -----/
+                    LocalDateTime.class     // -----/
             );
             final Info info = analyzer.analyze(DeepComplex.class);
 
             final Constructor<?>[] expected = {
-                    DeepComplex.class.getConstructor(Complex2.class, Date.class, SimpleObject.class),
+                    DeepComplex.class.getConstructor(Complex2.class, LocalDateTime.class, SimpleObject.class),
                     Complex2.class.getConstructor(int.class, SimpleObject.class, long.class),
-                    SimpleObject.class.getConstructor(String.class, URI.class, Date.class),
-                    SimpleObject.class.getConstructor(String.class, URI.class, Date.class),
+                    SimpleObject.class.getConstructor(String.class, URI.class, LocalDateTime.class),
+                    SimpleObject.class.getConstructor(String.class, URI.class, LocalDateTime.class),
             };
             Assert.assertArrayEquals(expected, info.reference);
         }

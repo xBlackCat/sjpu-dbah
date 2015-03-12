@@ -13,6 +13,7 @@ import java.util.Date;
  *
  * @author xBlackCat
  */
+@SuppressWarnings("deprecation")
 public class MapperTest {
     @Test
     public void testDateMapper() {

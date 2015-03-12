@@ -31,7 +31,7 @@ public class BuilderTest {
                     "return new org.xblackcat.sjpu.storage.converter.builder.SimpleObject(\n" +
                     "value1,\n" +
                     "(java.net.URI) org.xblackcat.sjpu.storage.typemap.TypeMapper.TypeMap_java_net_URI_0_Instance.I.forRead(value2),\n" +
-                    "(java.util.Date) org.xblackcat.sjpu.storage.typemap.TypeMapper.TypeMap_java_util_Date_0_Instance.I.forRead(value3)\n" +
+                    "(java.time.LocalDateTime) org.xblackcat.sjpu.storage.typemap.TypeMapper.TypeMap_java_time_LocalDateTime_0_Instance.I.forRead(value3)\n" +
                     ");\n" +
                     "}";
 
@@ -57,7 +57,7 @@ public class BuilderTest {
                     "new org.xblackcat.sjpu.storage.converter.builder.SimpleObject(\n" +
                     "value2,\n" +
                     "(java.net.URI) org.xblackcat.sjpu.storage.typemap.TypeMapper.TypeMap_java_net_URI_0_Instance.I.forRead(value3),\n" +
-                    "(java.util.Date) org.xblackcat.sjpu.storage.typemap.TypeMapper.TypeMap_java_util_Date_0_Instance.I.forRead(value4)\n" +
+                    "(java.time.LocalDateTime) org.xblackcat.sjpu.storage.typemap.TypeMapper.TypeMap_java_time_LocalDateTime_0_Instance.I.forRead(value4)\n" +
                     "),\n" +
                     "value5\n" +
                     ");\n" +
@@ -81,7 +81,7 @@ public class BuilderTest {
                     "return new org.xblackcat.sjpu.storage.converter.builder.SimpleObject(\n" +
                     "value1,\n" +
                     "(java.net.URI) org.xblackcat.sjpu.storage.typemap.TypeMapper.TypeMap_java_net_URI_0_Instance.I.forRead(value2),\n" +
-                    "(java.util.Date) org.xblackcat.sjpu.storage.typemap.TypeMapper.TypeMap_java_util_Date_0_Instance.I.forRead(value3)\n" +
+                    "(java.time.LocalDateTime) org.xblackcat.sjpu.storage.typemap.TypeMapper.TypeMap_java_time_LocalDateTime_0_Instance.I.forRead(value3)\n" +
                     ");\n" +
                     "}";
 
@@ -103,7 +103,7 @@ public class BuilderTest {
                     "new org.xblackcat.sjpu.storage.converter.builder.SimpleObject(\n" +
                     "value2,\n" +
                     "(java.net.URI) org.xblackcat.sjpu.storage.typemap.TypeMapper.TypeMap_java_net_URI_0_Instance.I.forRead(value3),\n" +
-                    "(java.util.Date) org.xblackcat.sjpu.storage.typemap.TypeMapper.TypeMap_java_util_Date_0_Instance.I.forRead(value4)\n" +
+                    "(java.time.LocalDateTime) org.xblackcat.sjpu.storage.typemap.TypeMapper.TypeMap_java_time_LocalDateTime_0_Instance.I.forRead(value4)\n" +
                     "),\n" +
                     "value5\n" +
                     ");\n" +

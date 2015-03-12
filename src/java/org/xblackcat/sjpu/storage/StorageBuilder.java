@@ -5,9 +5,7 @@ import org.xblackcat.sjpu.storage.connection.IConnectionFactory;
 import org.xblackcat.sjpu.storage.connection.IDBConfig;
 import org.xblackcat.sjpu.storage.consumer.IRowSetConsumer;
 import org.xblackcat.sjpu.storage.impl.Storage;
-import org.xblackcat.sjpu.storage.typemap.DateMapper;
-import org.xblackcat.sjpu.storage.typemap.EnumToStringMapper;
-import org.xblackcat.sjpu.storage.typemap.IMapFactory;
+import org.xblackcat.sjpu.storage.typemap.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -42,7 +40,9 @@ public class StorageBuilder {
         }
         if (defaultMappers) {
             mappers.add(new EnumToStringMapper());
-            mappers.add(new DateMapper());
+            mappers.add(new LocaDateMapper());
+            mappers.add(new LocaDateTimeMapper());
+            mappers.add(new LocaTimeMapper());
         }
     }
 
