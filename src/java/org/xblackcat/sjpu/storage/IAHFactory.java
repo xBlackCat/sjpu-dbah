@@ -8,4 +8,5 @@ import org.xblackcat.sjpu.skel.IFactory;
  * @author xBlackCat
  */
 public interface IAHFactory extends IFactory<IAH> {
+//    <T extends IFunctionalAH> T get(Class<T> functional, String sql);
 }

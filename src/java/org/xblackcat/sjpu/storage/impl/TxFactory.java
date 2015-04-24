@@ -4,6 +4,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.xblackcat.sjpu.skel.IBuilder;
 import org.xblackcat.sjpu.storage.IAH;
+import org.xblackcat.sjpu.storage.IFunctionalAH;
 import org.xblackcat.sjpu.storage.ITx;
 import org.xblackcat.sjpu.storage.StorageException;
 import org.xblackcat.sjpu.storage.connection.IConnectionFactory;
@@ -28,9 +29,10 @@ class TxFactory extends AnAHFactory implements ITx {
             IConnectionFactory connectionFactory,
             int transactionIsolationLevel,
             TypeMapper typeMapper,
-            IBuilder<IAH, IConnectionFactory> methodBuilder
+            IBuilder<IAH, IConnectionFactory> methodBuilder,
+            IBuilder<IFunctionalAH, IConnectionFactory> functionalBuilder
     ) throws SQLException {
-        super(new TxSingleConnectionFactory(connectionFactory, transactionIsolationLevel), typeMapper, methodBuilder);
+        super(new TxSingleConnectionFactory(connectionFactory, transactionIsolationLevel), typeMapper, methodBuilder, functionalBuilder);
     }
 
     @Override

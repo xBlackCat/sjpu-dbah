@@ -37,10 +37,8 @@ public class MethodBuilder<Base, Helper> implements IBuilder<Base, Helper> {
 
                 if (!target.isAssignableFrom(clazz)) {
                     throw new GeneratorException(
-                            target.getName() +
-                                    " already have implemented inner class " +
-                                    definer.getNestedClassName() +
-                                    " with inconsistent structure."
+                            target.getName() + " already have implemented inner class " +
+                                    definer.getNestedClassName() + " with inconsistent structure."
                     );
                 }
 
@@ -75,7 +73,7 @@ public class MethodBuilder<Base, Helper> implements IBuilder<Base, Helper> {
 
             Set<ImplementedMethod> implementedMethods = new HashSet<>();
             // Implement protected and other methods
-            implementNotPublicMethods(target, target, accessHelper, implementedMethods);
+            implementNonPublicMethods(target, target, accessHelper, implementedMethods);
 
             @SuppressWarnings("unchecked")
             final Class<T> ahClass = (Class<T>) accessHelper.toClass();
@@ -85,7 +83,7 @@ public class MethodBuilder<Base, Helper> implements IBuilder<Base, Helper> {
         }
     }
 
-    private void implementNotPublicMethods(
+    private void implementNonPublicMethods(
             Class<?> root,
             Class<?> target,
             CtClass accessHelper,
@@ -120,7 +118,7 @@ public class MethodBuilder<Base, Helper> implements IBuilder<Base, Helper> {
             }
         }
 
-        implementNotPublicMethods(root, target.getSuperclass(), accessHelper, implementedMethods);
+        implementNonPublicMethods(root, target.getSuperclass(), accessHelper, implementedMethods);
     }
 
     private <T extends Base> CtClass defineCtClassByInterface(Class<T> target) throws NotFoundException, CannotCompileException {

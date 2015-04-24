@@ -3,6 +3,7 @@ package org.xblackcat.sjpu.storage.impl;
 import javassist.*;
 import org.xblackcat.sjpu.skel.BuilderUtils;
 import org.xblackcat.sjpu.skel.GeneratorException;
+import org.xblackcat.sjpu.storage.ann.QueryType;
 import org.xblackcat.sjpu.storage.ann.RowSetConsumer;
 import org.xblackcat.sjpu.storage.ann.Sql;
 import org.xblackcat.sjpu.storage.consumer.IRowSetConsumer;
@@ -218,8 +219,7 @@ class SqlAnnotatedBuilder extends AMappableMethodBuilder<Sql> {
                         returnString = "return rows;";
                     } else {
                         throw new GeneratorException(
-                                "Insert method with consumer can have only void or int return type: " +
-                                        m.toString()
+                                "Insert method with consumer can have only void or int return type: " + m.toString()
                         );
                     }
                 } else {
@@ -249,10 +249,7 @@ class SqlAnnotatedBuilder extends AMappableMethodBuilder<Sql> {
                 returnString = "";
             } else {
                 throw new GeneratorException(
-                        "Invalid return type for updater in method " +
-                                methodName +
-                                "(...): " +
-                                returnType.getName()
+                        "Invalid return type for updater in method " + methodName + "(...): " + returnType.getName()
                 );
             }
 

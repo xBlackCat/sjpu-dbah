@@ -13,10 +13,8 @@ public class Definer<Base, Helper> {
     private final Class<? extends Base> baseClass;
     private final Class<Helper> paramClass;
     private final ClassPool pool;
-    private final ClassLoader classLoader = new ClassLoader(Definer.class.getClassLoader()) {
-    };
 
-    public Definer(Class<? extends Base> baseClass, Class<Helper> paramClass) {
+    public Definer(Class<? extends Base> baseClass, Class<Helper> paramClass, ClassLoader classLoader) {
         this.baseClass = baseClass;
         this.paramClass = paramClass;
         pool = new ClassPool(true) {
@@ -68,7 +66,7 @@ public class Definer<Base, Helper> {
         return CtNewConstructor.make(
                 new CtClass[]{pool.get(getParamClassName())},
                 BuilderUtils.EMPTY_LIST,
-                "{ super($1); }",
+                "{ super($$); }",
                 accessHelper
         );
     }
