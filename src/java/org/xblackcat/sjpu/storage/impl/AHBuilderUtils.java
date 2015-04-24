@@ -2,6 +2,7 @@ package org.xblackcat.sjpu.storage.impl;
 
 import javassist.*;
 import org.xblackcat.sjpu.skel.BuilderUtils;
+import org.xblackcat.sjpu.skel.GeneratorException;
 import org.xblackcat.sjpu.storage.ConsumeException;
 import org.xblackcat.sjpu.storage.StorageException;
 import org.xblackcat.sjpu.storage.StorageUtils;
@@ -13,6 +14,9 @@ import org.xblackcat.sjpu.storage.typemap.ITypeMap;
 
 import java.math.BigDecimal;
 import java.sql.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 /**
@@ -38,6 +42,67 @@ public class AHBuilderUtils {
     public static final String CN_ITypeMap = BuilderUtils.getName(ITypeMap.class);
     public static final String CN_StorageUtils = BuilderUtils.getName(StorageUtils.class);
     public static final String CN_StorageException = BuilderUtils.getName(StorageException.class);
+
+    private static final Map<Class<?>, String> SET_DECLARATIONS;
+
+    static {
+        Map<Class<?>, String> map = new HashMap<>();
+
+        // Integer types
+        map.put(long.class, "st.setLong(idx, %s);\n");
+        map.put(
+                Long.class,
+                "{\njava.lang.Long tmpVal = %s;\nif (tmpVal == null) {\nst.setNull(idx, 0);\n} else {\nst.setLong(idx, tmpVal.longValue());\n}\n}\n"
+        );
+        map.put(int.class, "st.setInt(idx, %s);\n");
+        map.put(
+                Integer.class,
+                "{\njava.lang.Integer tmpVal = %s;\nif (tmpVal == null) {\nst.setNull(idx, 0);\n} else {\nst.setInt(idx, tmpVal.intValue());\n}\n}\n"
+        );
+        map.put(short.class, "st.setShort(idx, %s);\n");
+        map.put(
+                Short.class,
+                "{\njava.lang.Short tmpVal = %s;\nif (tmpVal == null) {\nst.setNull(idx, 0);\n} else {\nst.setShort(idx, tmpVal.shortValue());\n}\n}\n"
+        );
+        map.put(byte.class, "st.setByte(idx, %s);\n");
+        map.put(
+                Byte.class,
+                "{\njava.lang.Byte tmpVal = %s;\nif (tmpVal == null) {\nst.setNull(idx, 0);\n} else {\nst.setByte(idx, tmpVal.byteValue());\n}\n}\n"
+        );
+
+        // Float types
+        map.put(double.class, "st.setDouble(idx, %s);\n");
+        map.put(
+                Double.class,
+                "{\njava.lang.Double tmpVal = %s;\nif (tmpVal == null) {\nst.setNull(idx, 0);\n} else {\nst.setDouble(idx, tmpVal.doubleValue());\n}\n}\n"
+        );
+        map.put(float.class, "st.setFloat(idx, %s);\n");
+        map.put(
+                Float.class,
+                "{\njava.lang.Float tmpVal = %s;\nif (tmpVal == null) {\nst.setNull(idx, 0);\n} else {\nst.setFloat(idx, tmpVal.floatValue());\n}\n}\n"
+        );
+
+        // Boolean type
+        map.put(boolean.class, "st.setBoolean(idx, %s);\n");
+        map.put(
+                Boolean.class,
+                "{\njava.lang.Boolean tmpVal = %s;\nif (tmpVal == null) {\nst.setNull(idx, 0);\n} else {\nst.setBoolean(idx, tmpVal.booleanValue());\n}\n}\n"
+        );
+
+        // Other types
+        map.put(byte[].class, "st.setBytes(idx, %s);\n");
+        map.put(String.class, "st.setString(idx, %s);\n");
+        map.put(BigDecimal.class, "st.setBigDecimal(idx, %s);\n");
+
+        // Time classes
+        map.put(java.sql.Time.class, "st.setTime(idx, %s);\n");
+        map.put(java.sql.Date.class, "st.setDate(idx, %s);\n");
+        map.put(java.sql.Timestamp.class, "st.setTimestamp(idx, %s);\n");
+
+        synchronized (AHBuilderUtils.class) {
+            SET_DECLARATIONS = Collections.unmodifiableMap(map);
+        }
+    }
 
     public static void checkConverterInstance(
             ClassPool pool,
@@ -102,4 +167,12 @@ public class AHBuilderUtils {
         return null;
     }
 
+    protected static String setParamValue(Class<?> type, String value) {
+        final String setLine = SET_DECLARATIONS.get(type);
+        if (setLine == null) {
+            throw new GeneratorException("Can't process type " + type.getName());
+        }
+
+        return String.format(setLine, value);
+    }
 }

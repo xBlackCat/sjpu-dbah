@@ -10,13 +10,12 @@ import org.xblackcat.sjpu.storage.consumer.IRowSetConsumer;
 import org.xblackcat.sjpu.storage.consumer.SingletonConsumer;
 import org.xblackcat.sjpu.storage.converter.IToObjectConverter;
 import org.xblackcat.sjpu.storage.converter.builder.ConverterInfo;
-import org.xblackcat.sjpu.storage.typemap.ITypeMap;
 import org.xblackcat.sjpu.storage.typemap.TypeMapper;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
-import java.math.BigDecimal;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 
 /**
@@ -24,68 +23,7 @@ import java.util.regex.Matcher;
  *
  * @author xBlackCat
  */
-class SqlAnnotatedBuilder extends AMappableMethodBuilder<Sql> {
-    static final Map<Class<?>, String> SET_DECLARATIONS;
-
-    static {
-        Map<Class<?>, String> map = new HashMap<>();
-
-        // Integer types
-        map.put(long.class, "st.setLong(idx, %s);\n");
-        map.put(
-                Long.class,
-                "{\njava.lang.Long tmpVal = %s;\nif (tmpVal == null) {\nst.setNull(idx, 0);\n} else {\nst.setLong(idx, tmpVal.longValue());\n}\n}\n"
-        );
-        map.put(int.class, "st.setInt(idx, %s);\n");
-        map.put(
-                Integer.class,
-                "{\njava.lang.Integer tmpVal = %s;\nif (tmpVal == null) {\nst.setNull(idx, 0);\n} else {\nst.setInt(idx, tmpVal.intValue());\n}\n}\n"
-        );
-        map.put(short.class, "st.setShort(idx, %s);\n");
-        map.put(
-                Short.class,
-                "{\njava.lang.Short tmpVal = %s;\nif (tmpVal == null) {\nst.setNull(idx, 0);\n} else {\nst.setShort(idx, tmpVal.shortValue());\n}\n}\n"
-        );
-        map.put(byte.class, "st.setByte(idx, %s);\n");
-        map.put(
-                Byte.class,
-                "{\njava.lang.Byte tmpVal = %s;\nif (tmpVal == null) {\nst.setNull(idx, 0);\n} else {\nst.setByte(idx, tmpVal.byteValue());\n}\n}\n"
-        );
-
-        // Float types
-        map.put(double.class, "st.setDouble(idx, %s);\n");
-        map.put(
-                Double.class,
-                "{\njava.lang.Double tmpVal = %s;\nif (tmpVal == null) {\nst.setNull(idx, 0);\n} else {\nst.setDouble(idx, tmpVal.doubleValue());\n}\n}\n"
-        );
-        map.put(float.class, "st.setFloat(idx, %s);\n");
-        map.put(
-                Float.class,
-                "{\njava.lang.Float tmpVal = %s;\nif (tmpVal == null) {\nst.setNull(idx, 0);\n} else {\nst.setFloat(idx, tmpVal.floatValue());\n}\n}\n"
-        );
-
-        // Boolean type
-        map.put(boolean.class, "st.setBoolean(idx, %s);\n");
-        map.put(
-                Boolean.class,
-                "{\njava.lang.Boolean tmpVal = %s;\nif (tmpVal == null) {\nst.setNull(idx, 0);\n} else {\nst.setBoolean(idx, tmpVal.booleanValue());\n}\n}\n"
-        );
-
-        // Other types
-        map.put(byte[].class, "st.setBytes(idx, %s);\n");
-        map.put(String.class, "st.setString(idx, %s);\n");
-        map.put(BigDecimal.class, "st.setBigDecimal(idx, %s);\n");
-
-        // Time classes
-        map.put(java.sql.Time.class, "st.setTime(idx, %s);\n");
-        map.put(java.sql.Date.class, "st.setDate(idx, %s);\n");
-        map.put(java.sql.Timestamp.class, "st.setTimestamp(idx, %s);\n");
-
-        synchronized (AHBuilderUtils.class) {
-            SET_DECLARATIONS = Collections.unmodifiableMap(map);
-        }
-    }
-
+class SqlAnnotatedBuilder extends ASelectAnnotatedBuilder<Sql> {
     public SqlAnnotatedBuilder(TypeMapper typeMapper, Map<Class<?>, Class<? extends IRowSetConsumer>> rowSetConsumers) {
         super(Sql.class, typeMapper, rowSetConsumers);
     }
@@ -370,161 +308,4 @@ class SqlAnnotatedBuilder extends AMappableMethodBuilder<Sql> {
         addMethod(accessHelper, m, ctRealReturnType, targetReturnType, body.toString(), pool);
     }
 
-    protected static Collection<ConverterInfo.Arg> substituteOptionalArgs(
-            Collection<ConverterInfo.Arg> argumentList, List<Integer> optionalIndexes,
-            Class<?>... types
-    ) {
-        final Collection<ConverterInfo.Arg> args;
-        if (optionalIndexes == null || optionalIndexes.isEmpty()) {
-            args = argumentList;
-        } else {
-            final Iterator<ConverterInfo.Arg> staticArgs = argumentList.iterator();
-            args = new ArrayList<>();
-            for (Integer opt : optionalIndexes) {
-                if (opt == null) {
-                    args.add(staticArgs.next());
-                } else {
-                    args.add(new ConverterInfo.Arg(types[opt], opt, true));
-                }
-            }
-            while (staticArgs.hasNext()) {
-                args.add(staticArgs.next());
-            }
-        }
-        return args;
-    }
-
-    private boolean hasClassParameter(Class<? extends IRowSetConsumer> consumer) throws GeneratorException {
-        final Constructor<?>[] constructors = consumer.getConstructors();
-        boolean hasDefault = false;
-        for (Constructor<?> c : constructors) {
-            final Class<?>[] types = c.getParameterTypes();
-            if (types.length == 1 && types[0].equals(Class.class)) {
-                return true;
-            } else if (types.length == 0) {
-                hasDefault = true;
-            }
-        }
-
-        if (!hasDefault) {
-            throw new GeneratorException(
-                    "Row set consumer should have either default constructor or a constructor with one Class<?> parameter"
-            );
-        }
-
-        return false;
-    }
-
-    protected void setParameters(Collection<ConverterInfo.Arg> types, StringBuilder body) {
-        body.append("int idx = 0;\n");
-
-        for (ConverterInfo.Arg arg : types) {
-            Class<?> type = arg.clazz;
-            final ITypeMap<?, ?> typeMap = typeMapper.hasTypeMap(type);
-
-            final String initString;
-            final int idx = arg.idx + 1;
-            if (typeMap != null) {
-                final String value = "(" + BuilderUtils.getName(typeMap.getDbType()) + ") " +
-                        typeMapper.getTypeMapInstanceRef(type) + ".forStore($" + idx + ")";
-                initString = setParamValue(typeMap.getDbType(), value);
-            } else {
-                initString = setParamValue(type, "$" + idx);
-            }
-
-            if (arg.optional) {
-                body.append("if ($");
-                body.append(idx);
-                body.append(" != null) {\n");
-            }
-            body.append("idx++;\n");
-            body.append(initString);
-            if (arg.optional) {
-                body.append("}\n");
-            }
-        }
-    }
-
-    protected String setParamValue(Class<?> type, String value) {
-        final String setLine = SET_DECLARATIONS.get(type);
-        if (setLine == null) {
-            throw new GeneratorException("Can't process type " + type.getName());
-        }
-
-        return String.format(setLine, value);
-    }
-
-    protected void addMethod(
-            CtClass accessHelper,
-            Method m,
-            CtClass realReturnType,
-            CtClass targetReturnType,
-            String methodBody,
-            ClassPool pool
-    ) throws CannotCompileException, NotFoundException {
-        final boolean generateWrapper = !targetReturnType.equals(realReturnType);
-
-        final String methodName = m.getName();
-        final Class<?>[] types = m.getParameterTypes();
-
-        final String targetMethodName;
-        final int targetModifiers;
-
-        if (log.isTraceEnabled()) {
-            log.trace("Method " + realReturnType.getName() + " " + methodName + "(...)");
-            if (generateWrapper) {
-                log.trace(" [ + Wrapper for unboxing ]");
-            }
-            log.trace("Method body: " + methodBody);
-        }
-
-        if (generateWrapper) {
-            targetMethodName = "$" + methodName + "$Wrap";
-            targetModifiers = Modifier.PRIVATE;
-        } else {
-            targetMethodName = methodName;
-            targetModifiers = m.getModifiers() | Modifier.FINAL;
-        }
-
-
-        final CtMethod method = CtNewMethod.make(
-                targetModifiers,
-                targetReturnType,
-                targetMethodName,
-                BuilderUtils.toCtClasses(pool, types),
-                BuilderUtils.toCtClasses(pool, m.getExceptionTypes()),
-                methodBody,
-                accessHelper
-        );
-
-        accessHelper.addMethod(method);
-
-        if (generateWrapper) {
-            final String unwrapBody = "{\n" +
-                    targetReturnType.getName() +
-                    " value = " +
-                    targetMethodName +
-                    "($$);\n" +
-                    "if (value == null) {\nthrow new java.lang.NullPointerException(\"Can't unwrap null value.\");\n}\n" +
-                    "return value." +
-                    BuilderUtils.getUnwrapMethodName(realReturnType) +
-                    "();\n}";
-
-            final CtMethod coverMethod = CtNewMethod.make(
-                    m.getModifiers() | Modifier.FINAL,
-                    realReturnType,
-                    methodName,
-                    BuilderUtils.toCtClasses(pool, types),
-                    BuilderUtils.toCtClasses(pool, m.getExceptionTypes()),
-                    unwrapBody,
-                    accessHelper
-            );
-
-            accessHelper.addMethod(coverMethod);
-        }
-
-        if (log.isTraceEnabled()) {
-            log.trace("Result method: " + method);
-        }
-    }
 }

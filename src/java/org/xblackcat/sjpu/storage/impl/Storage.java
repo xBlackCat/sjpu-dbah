@@ -1,5 +1,7 @@
 package org.xblackcat.sjpu.storage.impl;
 
+import javassist.ClassClassPath;
+import javassist.ClassPool;
 import org.xblackcat.sjpu.skel.ClassBuilder;
 import org.xblackcat.sjpu.skel.Definer;
 import org.xblackcat.sjpu.skel.FunctionalClassBuilder;
@@ -22,6 +24,22 @@ public class Storage extends AnAHFactory implements IStorage {
         this(connectionFactory, StorageUtils.DEFAULT_ROWSET_CONSUMERS, mappers);
     }
 
+    private static ClassPool createPool(Class<?>... paramClasses) {
+        final ClassLoader classLoader = new ClassLoader(Storage.class.getClassLoader()) {
+        };
+        ClassPool pool = new ClassPool(true) {
+            @Override
+            public ClassLoader getClassLoader() {
+                return classLoader;
+            }
+        };
+        for (Class<?> cl : paramClasses) {
+            pool.appendClassPath(new ClassClassPath(cl));
+        }
+
+        return pool;
+    }
+
     public Storage(
             IConnectionFactory connectionFactory,
             Map<Class<?>, Class<? extends IRowSetConsumer>> rowSetConsumers,
@@ -30,8 +48,7 @@ public class Storage extends AnAHFactory implements IStorage {
         this(
                 connectionFactory,
                 rowSetConsumers,
-                new ClassLoader(Storage.class.getClassLoader()) {
-                },
+                createPool(AnAH.class, AFunctionalAH.class, IConnectionFactory.class, String.class),
                 mappers
         );
     }
@@ -39,39 +56,23 @@ public class Storage extends AnAHFactory implements IStorage {
     private Storage(
             IConnectionFactory connectionFactory,
             Map<Class<?>, Class<? extends IRowSetConsumer>> rowSetConsumers,
-            ClassLoader classLoader,
+            ClassPool pool,
             IMapFactory<?, ?>... mappers
     ) {
         this(
                 connectionFactory,
                 rowSetConsumers,
-                new Definer<>(classLoader, AnAH.class, IConnectionFactory.class),
-                new Definer<>(classLoader, AFunctionalAH.class, IConnectionFactory.class, String.class),
-                mappers
+                new Definer<>(pool, AnAH.class, IConnectionFactory.class),
+                new Definer<>(pool, AFunctionalAH.class, IConnectionFactory.class, String.class),
+                new TypeMapper(pool, mappers)
         );
     }
 
     private Storage(
             IConnectionFactory connectionFactory,
             Map<Class<?>, Class<? extends IRowSetConsumer>> rowSetConsumers,
-            Definer<IAH, IConnectionFactory> definer,
-            Definer<IFunctionalAH, IConnectionFactory> definerF,
-            IMapFactory<?, ?>... mappers
-    ) {
-        this(
-                connectionFactory,
-                rowSetConsumers,
-                definer,
-                definerF,
-                new TypeMapper(definer.getPool(), mappers)
-        );
-    }
-
-    private Storage(
-            IConnectionFactory connectionFactory,
-            Map<Class<?>, Class<? extends IRowSetConsumer>> rowSetConsumers,
-            Definer<IAH, IConnectionFactory> definer,
-            Definer<IFunctionalAH, IConnectionFactory> definerF,
+            Definer<IAH> definer,
+            Definer<IFunctionalAH> definerF,
             TypeMapper typeMapper
     ) {
         super(

@@ -14,14 +14,14 @@ import java.util.Map;
  *
  * @author xBlackCat
  */
-public abstract class AMappableMethodBuilder<T extends Annotation> implements IMethodBuilder<T> {
+public abstract class AMappableMethodBuilder<A extends Annotation> implements IMethodBuilder<A> {
     protected final Log log = LogFactory.getLog(getClass());
     protected final TypeMapper typeMapper;
     protected final Map<Class<?>, Class<? extends IRowSetConsumer>> rowSetConsumers;
-    private final Class<T> annClass;
+    private final Class<A> annClass;
 
     public AMappableMethodBuilder(
-            Class<T> annClass,
+            Class<A> annClass,
             TypeMapper typeMapper,
             Map<Class<?>, Class<? extends IRowSetConsumer>> rowSetConsumers
     ) {
@@ -41,7 +41,7 @@ public abstract class AMappableMethodBuilder<T extends Annotation> implements IM
     }
 
     @Override
-    public Class<T> getAnnotationClass() {
+    public Class<A> getAnnotationClass() {
         return annClass;
     }
 }

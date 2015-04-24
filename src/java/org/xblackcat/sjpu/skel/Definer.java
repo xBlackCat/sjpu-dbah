@@ -7,24 +7,15 @@ import javassist.*;
  *
  * @author xBlackCat
  */
-public class Definer<Base, Helper> implements IDefiner<Base> {
+public class Definer<Base> implements IDefiner<Base> {
     private final Class<? extends Base> baseClass;
     private final Class<?>[] paramClasses;
     private final ClassPool pool;
 
-    public Definer(ClassLoader classLoader, Class<? extends Base> baseClass, Class<?>... paramClasses) {
+    public Definer(ClassPool pool, Class<? extends Base> baseClass, Class<?>... paramClasses) {
         this.baseClass = baseClass;
+        this.pool = pool;
         this.paramClasses = paramClasses;
-        pool = new ClassPool(true) {
-            @Override
-            public ClassLoader getClassLoader() {
-                return classLoader;
-            }
-        };
-        pool.appendClassPath(new ClassClassPath(baseClass));
-        for (Class<?> cl : this.paramClasses) {
-            pool.appendClassPath(new ClassClassPath(cl));
-        }
     }
 
     @Override
