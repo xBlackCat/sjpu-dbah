@@ -1,6 +1,5 @@
 package org.xblackcat.sjpu.storage.impl;
 
-import org.jetbrains.annotations.NotNull;
 import org.xblackcat.sjpu.storage.ann.QueryType;
 import org.xblackcat.sjpu.storage.ann.Sql;
 import org.xblackcat.sjpu.storage.consumer.IRowSetConsumer;
@@ -23,7 +22,6 @@ class SqlAnnotatedBuilder extends ASelectAnnotatedBuilder<Sql> {
     }
 
     @Override
-    @NotNull
     protected QueryType getQueryType(Method m) {
         final String sql = m.getAnnotation(getAnnotationClass()).value();
 
