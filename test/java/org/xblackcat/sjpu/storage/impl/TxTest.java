@@ -95,7 +95,7 @@ public class TxTest {
      *
      * @author xBlackCat
      */
-    public static interface DBAH extends IAH {
+    public interface DBAH extends IAH {
         @Sql("CREATE TABLE \"data\" (\"id\" INT PRIMARY KEY NOT NULL, \"txt\" VARCHAR NOT NULL)")
         void createDB() throws StorageException;
 
@@ -114,7 +114,7 @@ public class TxTest {
      *
      * @author xBlackCat
      */
-    public static interface DBAutoIncAH extends IAH {
+    public interface DBAutoIncAH extends IAH {
         @Sql("CREATE TABLE \"autoinc\" (\"id\" INT PRIMARY KEY AUTO_INCREMENT NOT NULL, \"txt\" VARCHAR NOT NULL)")
         void createDB() throws StorageException;
 

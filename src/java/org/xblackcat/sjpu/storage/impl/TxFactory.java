@@ -13,6 +13,7 @@ import org.xblackcat.sjpu.storage.typemap.TypeMapper;
 
 import java.sql.SQLException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReadWriteLock;
 
 /**
  * 15.11.13 14:06
@@ -29,8 +30,8 @@ class TxFactory extends AnAHFactory implements ITx {
             IConnectionFactory connectionFactory,
             int transactionIsolationLevel,
             TypeMapper typeMapper,
-            IBuilder<IAH, IConnectionFactory> methodBuilder,
-            IBuilder<IFunctionalAH, IConnectionFactory> functionalBuilder
+            IBuilder<IAH> methodBuilder,
+            IBuilder<IFunctionalAH> functionalBuilder
     ) throws SQLException {
         super(new TxSingleConnectionFactory(connectionFactory, transactionIsolationLevel), typeMapper, methodBuilder, functionalBuilder);
     }
@@ -85,13 +86,22 @@ class TxFactory extends AnAHFactory implements ITx {
     }
 
     protected void setTransactionDone() {
-        lock.writeLock().lock();
+        ReadWriteLock commonFactoryLock = commonFactory.getLock();
+        ReadWriteLock functionalFactoryLock = functionalFactory.getLock();
+        commonFactoryLock.writeLock().lock();
         try {
-            transactionDone.set(true);
-            rollbackOnClose.set(false);
-            helpers.clear();
+            functionalFactoryLock.writeLock().lock();
+            try {
+                transactionDone.set(true);
+                rollbackOnClose.set(false);
+
+                commonFactory.purge();
+                functionalFactory.purge();
+            } finally {
+                functionalFactoryLock.writeLock().unlock();
+            }
         } finally {
-            lock.writeLock().unlock();
+            commonFactoryLock.writeLock().unlock();
         }
 
     }

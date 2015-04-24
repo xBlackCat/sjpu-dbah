@@ -1,6 +1,5 @@
 package org.xblackcat.sjpu.skel;
 
-import org.xblackcat.sjpu.skel.*;
 import org.xblackcat.sjpu.storage.IFunctionalAH;
 
 import java.lang.reflect.Method;
@@ -11,15 +10,14 @@ import java.lang.reflect.Modifier;
  *
  * @author xBlackCat
  */
-public class FunctionalMethodBuilder<Base, Helper> extends MethodBuilder<Base, Helper> {
-    public FunctionalMethodBuilder(Definer<Base, Helper> definerF, IMethodBuilder<?>... builders) {
+public class FunctionalClassBuilder<Base> extends ClassBuilder<Base> {
+    public FunctionalClassBuilder(IDefiner<Base> definerF, IMethodBuilder<?>... builders) {
         super(definerF, builders);
     }
 
     @Override
-    public <T extends Base> T build(
-            Class<T> target,
-            Helper cf
+    public <T extends Base> Class<? extends T> build(
+            Class<T> target
     ) throws GeneratorException {
         int abstractCount = 0;
         for (Method m : target.getMethods()) {
@@ -41,6 +39,6 @@ public class FunctionalMethodBuilder<Base, Helper> extends MethodBuilder<Base, H
             );
         }
 
-        return super.build(target, cf);
+        return super.build(target);
     }
 }

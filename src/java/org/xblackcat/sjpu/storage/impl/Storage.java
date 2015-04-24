@@ -1,8 +1,8 @@
 package org.xblackcat.sjpu.storage.impl;
 
+import org.xblackcat.sjpu.skel.ClassBuilder;
 import org.xblackcat.sjpu.skel.Definer;
-import org.xblackcat.sjpu.skel.FunctionalMethodBuilder;
-import org.xblackcat.sjpu.skel.MethodBuilder;
+import org.xblackcat.sjpu.skel.FunctionalClassBuilder;
 import org.xblackcat.sjpu.storage.*;
 import org.xblackcat.sjpu.storage.connection.IConnectionFactory;
 import org.xblackcat.sjpu.storage.consumer.IRowSetConsumer;
@@ -45,8 +45,8 @@ public class Storage extends AnAHFactory implements IStorage {
         this(
                 connectionFactory,
                 rowSetConsumers,
-                new Definer<>(AnAH.class, IConnectionFactory.class, classLoader),
-                new Definer<>(AFunctionalAH.class, IConnectionFactory.class, classLoader),
+                new Definer<>(classLoader, AnAH.class, IConnectionFactory.class),
+                new Definer<>(classLoader, AFunctionalAH.class, IConnectionFactory.class, String.class),
                 mappers
         );
     }
@@ -77,12 +77,12 @@ public class Storage extends AnAHFactory implements IStorage {
         super(
                 connectionFactory,
                 typeMapper,
-                new MethodBuilder<>(
+                new ClassBuilder<>(
                         definer,
                         new SqlAnnotatedBuilder(typeMapper, rowSetConsumers),
                         new DDLAnnotatedBuilder(typeMapper.getParentPool())
                 ),
-                new FunctionalMethodBuilder<>(
+                new FunctionalClassBuilder<>(
                         definerF,
                         new FunctionalAHBuilder(typeMapper, rowSetConsumers)
                 )
@@ -97,7 +97,7 @@ public class Storage extends AnAHFactory implements IStorage {
     @Override
     public ITx beginTransaction(int transactionIsolationLevel) throws StorageException {
         try {
-            return new TxFactory(factory, transactionIsolationLevel, typeMapper, builder, functionalBuilder);
+            return new TxFactory(factory, transactionIsolationLevel, typeMapper, commonBuilder, functionalBuilder);
         } catch (SQLException e) {
             throw new StorageException("An exception occurs while starting a transaction", e);
         }

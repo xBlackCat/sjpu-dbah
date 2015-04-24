@@ -1,7 +1,8 @@
 package org.xblackcat.sjpu.storage.impl;
 
-import org.xblackcat.sjpu.skel.AFactory;
 import org.xblackcat.sjpu.skel.IBuilder;
+import org.xblackcat.sjpu.skel.IFactory;
+import org.xblackcat.sjpu.skel.InstanceFactory;
 import org.xblackcat.sjpu.storage.IAH;
 import org.xblackcat.sjpu.storage.IAHFactory;
 import org.xblackcat.sjpu.storage.IFunctionalAH;
@@ -13,18 +14,36 @@ import org.xblackcat.sjpu.storage.typemap.TypeMapper;
  *
  * @author xBlackCat
  */
-abstract class AnAHFactory extends AFactory<IAH, IConnectionFactory> implements IAHFactory {
+abstract class AnAHFactory implements IAHFactory {
+    protected final IFactory<IAH> commonFactory;
+    protected final IFactory<IFunctionalAH> functionalFactory;
+
+    protected final IConnectionFactory factory;
     protected final TypeMapper typeMapper;
-    protected final IBuilder<IFunctionalAH, IConnectionFactory> functionalBuilder;
+    protected final IBuilder<IAH> commonBuilder;
+    protected final IBuilder<IFunctionalAH> functionalBuilder;
 
     AnAHFactory(
-            IConnectionFactory connectionFactory,
+            IConnectionFactory factory,
             TypeMapper typeMapper,
-            IBuilder<IAH, IConnectionFactory> methodBuilder,
-            IBuilder<IFunctionalAH, IConnectionFactory> functionalBuilder
+            IBuilder<IAH> commonBuilder,
+            IBuilder<IFunctionalAH> functionalBuilder
     ) {
-        super(connectionFactory, methodBuilder);
+        this.factory = factory;
         this.typeMapper = typeMapper;
+        this.commonBuilder = commonBuilder;
         this.functionalBuilder = functionalBuilder;
+        commonFactory = new InstanceFactory<>(commonBuilder, IConnectionFactory.class);
+        functionalFactory = new InstanceFactory<>(functionalBuilder, IConnectionFactory.class, String.class);
+    }
+
+    @Override
+    final public <I extends IAH> I get(Class<I> clazz) {
+        return commonFactory.get(clazz, factory);
+    }
+
+    @Override
+    final public <T extends IFunctionalAH> T get(Class<T> functionalAH, String sql) {
+        return functionalFactory.get(functionalAH, factory, sql);
     }
 }

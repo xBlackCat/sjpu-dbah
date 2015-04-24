@@ -2,21 +2,19 @@ package org.xblackcat.sjpu.skel;
 
 import javassist.*;
 
-import java.lang.reflect.InvocationTargetException;
-
 /**
  * 15.11.13 15:37
  *
  * @author xBlackCat
  */
-public class Definer<Base, Helper> {
+public class Definer<Base, Helper> implements IDefiner<Base> {
     private final Class<? extends Base> baseClass;
-    private final Class<Helper> paramClass;
+    private final Class<?>[] paramClasses;
     private final ClassPool pool;
 
-    public Definer(Class<? extends Base> baseClass, Class<Helper> paramClass, ClassLoader classLoader) {
+    public Definer(ClassLoader classLoader, Class<? extends Base> baseClass, Class<?>... paramClasses) {
         this.baseClass = baseClass;
-        this.paramClass = paramClass;
+        this.paramClasses = paramClasses;
         pool = new ClassPool(true) {
             @Override
             public ClassLoader getClassLoader() {
@@ -24,53 +22,37 @@ public class Definer<Base, Helper> {
             }
         };
         pool.appendClassPath(new ClassClassPath(baseClass));
-        pool.appendClassPath(new ClassClassPath(paramClass));
+        for (Class<?> cl : this.paramClasses) {
+            pool.appendClassPath(new ClassClassPath(cl));
+        }
     }
 
-    protected String getParamClassName() {
-        return paramClass.getName();
+    @Override
+    public CtClass getBaseCtClass() throws NotFoundException {
+        return pool.get(baseClass.getName());
     }
 
-    public String getBaseClassName() {
-        return baseClass.getName();
-    }
-
-    protected boolean isAssignable(Class<?> clazz) {
+    @Override
+    public boolean isAssignable(Class<?> clazz) {
         return baseClass.isAssignableFrom(clazz);
     }
 
+    @Override
     public String getNestedClassName() {
         return baseClass.getSimpleName() + "Impl";
     }
 
-    protected <T extends Base> T build(Class<T> target, Helper param) throws GeneratorException {
-        try {
-            return target.getConstructor(paramClass).newInstance(param);
-        } catch (InstantiationException e) {
-            throw new GeneratorException("Class is not implemented", e);
-        } catch (IllegalAccessException e) {
-            throw new GeneratorException("Access helper constructor should be public", e);
-        } catch (InvocationTargetException e) {
-            throw new GeneratorException("Exception occurs in access helper constructor", e);
-        } catch (NoSuchMethodException e) {
-            throw new GeneratorException(
-                    "Access helper class constructor should have the following signature: " +
-                            target.getName() + "(" + paramClass.getName() + " arg);",
-                    e
-            );
-        }
-
-    }
-
+    @Override
     public CtConstructor buildCtConstructor(CtClass accessHelper) throws NotFoundException, CannotCompileException {
         return CtNewConstructor.make(
-                new CtClass[]{pool.get(getParamClassName())},
+                BuilderUtils.toCtClasses(pool, paramClasses),
                 BuilderUtils.EMPTY_LIST,
                 "{ super($$); }",
                 accessHelper
         );
     }
 
+    @Override
     public ClassPool getPool() {
         return pool;
     }

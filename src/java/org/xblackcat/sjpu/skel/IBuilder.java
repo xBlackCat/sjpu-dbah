@@ -5,6 +5,6 @@ package org.xblackcat.sjpu.skel;
  *
  * @author xBlackCat
  */
-public interface IBuilder<Base, Helper> {
-    <T extends Base> T build(Class<T> target, Helper helper) throws GeneratorException;
+public interface IBuilder<Base> {
+    <T extends Base> Class<? extends T> build(Class<T> target) throws GeneratorException;
 }
