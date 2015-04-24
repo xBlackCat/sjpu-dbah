@@ -161,7 +161,7 @@ public class WorkflowAutoTest {
         }
 
         {
-            int[] expect = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+            int[] expect = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
             int[] got = dataAH.getIds();
             Assert.assertArrayEquals(expect, got);
         }

@@ -6,6 +6,7 @@ package org.xblackcat.sjpu.storage.workflow.data;
 * @author xBlackCat
 */
 public enum Numbers {
+    Zero,
     One,
     Two,
     Three,

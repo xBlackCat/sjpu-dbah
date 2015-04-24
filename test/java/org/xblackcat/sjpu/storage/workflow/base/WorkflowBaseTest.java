@@ -163,7 +163,7 @@ public class WorkflowBaseTest {
         }
 
         {
-            int[] expect = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+            int[] expect = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
             int[] got = dataAH.getIds();
             Assert.assertArrayEquals(expect, got);
         }
@@ -295,10 +295,10 @@ public class WorkflowBaseTest {
         dataAH.getListElement(rawProcessor, "list");
         dataAH.getListElement("list", rawProcessor);
 
-        dataAH.getListElement(rawProcessor5, 5);
-        dataAH.getListElement(rawProcessor5, "list", 5);
-        dataAH.getListElement(rawProcessor5, 5, "list");
-        dataAH.getListElement("list", rawProcessor5, 5);
+        dataAH.getListElement(rawProcessor5, 6);
+        dataAH.getListElement(rawProcessor5, "list", 6);
+        dataAH.getListElement(rawProcessor5, 6, "list");
+        dataAH.getListElement("list", rawProcessor5, 6);
 
     }
 
