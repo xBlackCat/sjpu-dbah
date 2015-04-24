@@ -13,9 +13,9 @@ public class TypeMapTest {
     public static final TypeMapper TEST_TYPE_MAPPER = new TypeMapper(
             new ClassPool(true),
             0,
-            new LocaDateTimeMapper(),
-            new LocaDateMapper(),
-            new LocaTimeMapper(),
+            new LocalDateTimeMapper(),
+            new LocalDateMapper(),
+            new LocalTimeMapper(),
             new EnumToStringMapper(),
             new UriTypeMap()
     );

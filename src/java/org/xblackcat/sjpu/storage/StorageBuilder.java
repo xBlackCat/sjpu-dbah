@@ -40,9 +40,9 @@ public class StorageBuilder {
         }
         if (defaultMappers) {
             mappers.add(new EnumToStringMapper());
-            mappers.add(new LocaDateMapper());
-            mappers.add(new LocaDateTimeMapper());
-            mappers.add(new LocaTimeMapper());
+            mappers.add(new LocalDateMapper());
+            mappers.add(new LocalDateTimeMapper());
+            mappers.add(new LocalTimeMapper());
         }
     }
 
