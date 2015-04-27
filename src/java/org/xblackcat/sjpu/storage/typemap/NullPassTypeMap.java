@@ -9,7 +9,7 @@ import java.util.function.Function;
  * @author xBlackCat
  */
 public class NullPassTypeMap<RealObject, DBObject> extends TypeMap<RealObject, DBObject> {
-    protected NullPassTypeMap(
+    public NullPassTypeMap(
             Class<RealObject> realType,
             Class<DBObject> dbType,
             Function<RealObject, DBObject> forStore,
