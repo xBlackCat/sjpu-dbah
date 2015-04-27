@@ -242,7 +242,7 @@ public abstract class ASelectAnnotatedBuilder<A extends Annotation> extends AMap
             }
 
             returnString = "";
-            returnKeys = true;
+            returnKeys = type != QueryType.Select;
         } else if (type == QueryType.Select || type == QueryType.Insert) {
             if (info.getConsumeIndex() == null) {
                 if (noResult) {
@@ -281,7 +281,7 @@ public abstract class ASelectAnnotatedBuilder<A extends Annotation> extends AMap
                     }
 
                     returnString = "return (" + BuilderUtils.getName(targetReturnType) + ") consumer.getRowsHolder();\n";
-                    returnKeys = true;
+                    returnKeys = type != QueryType.Select;
                 }
             } else {
                 if (!noResult) {
@@ -304,7 +304,7 @@ public abstract class ASelectAnnotatedBuilder<A extends Annotation> extends AMap
                 body.append(info.getConsumeIndex() + 1);
                 body.append(";\n");
 
-                returnKeys = true;
+                returnKeys = type != QueryType.Select;
             }
 
             AHBuilderUtils.checkConverterInstance(pool, converter);
