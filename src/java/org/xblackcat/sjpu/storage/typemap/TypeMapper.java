@@ -73,6 +73,7 @@ public class TypeMapper {
         map.put(byte[].class, "byte[] value%1$d = $1.getBytes(%1$d);\n");
         map.put(String.class, String.class.getName() + " value%1$d = $1.getString(%1$d);\n");
         map.put(BigDecimal.class, BigDecimal.class.getName() + " value%1$d = $1.getBigDecimal(%1$d);\n");
+        map.put(Object.class, Object.class.getName() + " value%1$d = $1.getObject(%1$d);\n");
 
         // Time classes
         map.put(

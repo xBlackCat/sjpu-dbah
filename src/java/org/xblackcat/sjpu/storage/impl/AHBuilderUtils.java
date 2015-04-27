@@ -93,6 +93,7 @@ public class AHBuilderUtils {
         map.put(byte[].class, "st.setBytes(idx, %s);\n");
         map.put(String.class, "st.setString(idx, %s);\n");
         map.put(BigDecimal.class, "st.setBigDecimal(idx, %s);\n");
+        map.put(Object.class, "st.setObject(idx, %s);\n");
 
         // Time classes
         map.put(java.sql.Time.class, "st.setTime(idx, %s);\n");
