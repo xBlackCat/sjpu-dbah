@@ -89,6 +89,10 @@ public class BuilderUtils {
         return ctClasses;
     }
 
+    public static CtClass toCtClass(ClassPool pool, Class<?> clazz) throws NotFoundException {
+        return pool.get(getName(clazz));
+    }
+
     public static String asIdentifier(Class<?> typeMap) {
         return StringUtils.replaceChars(getName(typeMap), '.', '_');
     }
