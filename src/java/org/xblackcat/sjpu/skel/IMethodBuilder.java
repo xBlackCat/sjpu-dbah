@@ -13,7 +13,7 @@ import java.lang.reflect.Method;
  * @author xBlackCat
  */
 public interface IMethodBuilder<T extends Annotation> {
-    void buildMethod(CtClass accessHelper, Method m) throws NotFoundException, ReflectiveOperationException, CannotCompileException;
+    void buildMethod(CtClass accessHelper, Class<?> targetClass, Method m) throws NotFoundException, ReflectiveOperationException, CannotCompileException;
 
     Class<T> getAnnotationClass();
 }

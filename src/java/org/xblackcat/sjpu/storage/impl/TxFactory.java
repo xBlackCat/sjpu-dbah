@@ -3,10 +3,7 @@ package org.xblackcat.sjpu.storage.impl;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.xblackcat.sjpu.skel.IBuilder;
-import org.xblackcat.sjpu.storage.IAH;
-import org.xblackcat.sjpu.storage.IFunctionalAH;
-import org.xblackcat.sjpu.storage.ITx;
-import org.xblackcat.sjpu.storage.StorageException;
+import org.xblackcat.sjpu.storage.*;
 import org.xblackcat.sjpu.storage.connection.IConnectionFactory;
 import org.xblackcat.sjpu.storage.connection.TxSingleConnectionFactory;
 import org.xblackcat.sjpu.storage.typemap.TypeMapper;
@@ -31,9 +28,16 @@ class TxFactory extends AnAHFactory implements ITx {
             int transactionIsolationLevel,
             TypeMapper typeMapper,
             IBuilder<IAH> methodBuilder,
-            IBuilder<IFunctionalAH> functionalBuilder
+            IBuilder<IFunctionalAH> functionalBuilder,
+            IBuilder<IBatchedAH> batchedBuilder
     ) throws SQLException {
-        super(new TxSingleConnectionFactory(connectionFactory, transactionIsolationLevel), typeMapper, methodBuilder, functionalBuilder);
+        super(
+                new TxSingleConnectionFactory(connectionFactory, transactionIsolationLevel),
+                typeMapper,
+                methodBuilder,
+                functionalBuilder,
+                batchedBuilder
+        );
     }
 
     @Override
@@ -45,7 +49,7 @@ class TxFactory extends AnAHFactory implements ITx {
         setTransactionDone();
 
         try {
-            factory.getConnection().commit();
+            connectionFactory.getConnection().commit();
         } catch (SQLException e) {
             throw new StorageException("Can't commit changes to database", e);
         }
@@ -60,7 +64,7 @@ class TxFactory extends AnAHFactory implements ITx {
         setTransactionDone();
 
         try {
-            factory.getConnection().rollback();
+            connectionFactory.getConnection().rollback();
         } catch (SQLException e) {
             throw new StorageException("Can't rollback changes", e);
         }
@@ -82,7 +86,7 @@ class TxFactory extends AnAHFactory implements ITx {
 
         setTransactionDone();
 
-        factory.shutdown();
+        connectionFactory.shutdown();
     }
 
     protected void setTransactionDone() {
@@ -97,6 +101,7 @@ class TxFactory extends AnAHFactory implements ITx {
 
                 commonFactory.purge();
                 functionalFactory.purge();
+                batchedFactory.purge();
             } finally {
                 functionalFactoryLock.writeLock().unlock();
             }

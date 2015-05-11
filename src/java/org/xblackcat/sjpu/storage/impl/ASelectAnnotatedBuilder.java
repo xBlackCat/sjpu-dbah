@@ -23,7 +23,6 @@ import java.util.*;
  * @author xBlackCat
  */
 public abstract class ASelectAnnotatedBuilder<A extends Annotation> extends AMappableMethodBuilder<A> {
-
     public ASelectAnnotatedBuilder(
             Class<A> annClass,
             TypeMapper typeMapper,
@@ -183,7 +182,7 @@ public abstract class ASelectAnnotatedBuilder<A extends Annotation> extends AMap
     }
 
     @Override
-    public void buildMethod(CtClass accessHelper, Method m) throws NotFoundException, ReflectiveOperationException, CannotCompileException {
+    public void buildMethod(CtClass accessHelper, Class<?> targetClass, Method m) throws NotFoundException, ReflectiveOperationException, CannotCompileException {
         final String methodName = m.getName();
 
         final Class<?> returnType = m.getReturnType();
@@ -329,21 +328,8 @@ public abstract class ASelectAnnotatedBuilder<A extends Annotation> extends AMap
             returnKeys = false;
         }
 
+        appendPrepareStatement(body, m, returnKeys);
         body.append("try {\n");
-        body.append(AHBuilderUtils.CN_java_sql_Connection);
-        body.append(" con = this.factory.getConnection();\n");
-        body.append("try {\n");
-        body.append(AHBuilderUtils.CN_java_sql_PreparedStatement);
-        body.append(" st = con.prepareStatement(\nsql,\n");
-        body.append(AHBuilderUtils.CN_java_sql_Statement);
-        if (returnKeys) {
-            body.append(".RETURN_GENERATED_KEYS");
-        } else {
-            body.append(".NO_GENERATED_KEYS");
-        }
-        body.append(");\n");
-        body.append("try {\n");
-
 
         final Class<?>[] types = m.getParameterTypes();
         final Collection<ConverterInfo.Arg> args = substituteOptionalArgs(info.getArgumentList(), optionalIndexes, types);
@@ -417,15 +403,8 @@ public abstract class ASelectAnnotatedBuilder<A extends Annotation> extends AMap
         }
 
         body.append(returnString);
-        body.append(
-                "} finally {\n" +
-                        "st.close();\n" +
-                        "}\n" +
-                        "} finally {\n" +
-                        "con.close();\n" +
-                        "}\n" +
-                        "} catch ("
-        );
+        appendCloseStatement(body);
+        body.append("} catch (");
         body.append(AHBuilderUtils.CN_java_sql_SQLException);
         body.append(
                 " e) {\n" +
@@ -441,6 +420,33 @@ public abstract class ASelectAnnotatedBuilder<A extends Annotation> extends AMap
         );
 
         addMethod(accessHelper, m, ctRealReturnType, targetReturnType, body.toString(), pool);
+    }
+
+    protected void appendCloseStatement(StringBuilder body) {
+        body.append(
+                "} finally {\n" +
+                        "st.close();\n" +
+                        "}\n" +
+                        "} finally {\n" +
+                        "con.close();\n" +
+                        "}\n"
+        );
+    }
+
+    protected void appendPrepareStatement(StringBuilder body, Method m, boolean returnKeys) {
+        body.append("try {\n");
+        body.append(AHBuilderUtils.CN_java_sql_Connection);
+        body.append(" con = this.factory.getConnection();\n");
+        body.append("try {\n");
+        body.append(AHBuilderUtils.CN_java_sql_PreparedStatement);
+        body.append(" st = con.prepareStatement(\nsql,\n");
+        body.append(AHBuilderUtils.CN_java_sql_Statement);
+        if (returnKeys) {
+            body.append(".RETURN_GENERATED_KEYS");
+        } else {
+            body.append(".NO_GENERATED_KEYS");
+        }
+        body.append(");\n");
     }
 
     protected abstract QueryType getQueryType(Method m);

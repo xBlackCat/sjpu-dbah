@@ -6,6 +6,7 @@ import javassist.CtClass;
 import javassist.NotFoundException;
 import org.apache.commons.lang3.StringUtils;
 
+import java.lang.reflect.Method;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -95,6 +96,10 @@ public class BuilderUtils {
 
     public static String asIdentifier(Class<?> typeMap) {
         return StringUtils.replaceChars(getName(typeMap), '.', '_');
+    }
+
+    public static String asIdentifier(Method mm) {
+        return mm.getName() + "_" + Integer.toHexString(mm.toGenericString().hashCode());
     }
 
     public static ClassPool getClassPool(ClassPool parent, Class<?> clazz, Class<?>... classes) {

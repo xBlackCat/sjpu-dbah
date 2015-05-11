@@ -2,6 +2,8 @@ package org.xblackcat.sjpu.skel;
 
 import javassist.*;
 
+import java.lang.reflect.Method;
+
 /**
  * 15.11.13 15:37
  *
@@ -26,6 +28,17 @@ public class Definer<Base> implements IDefiner<Base> {
     @Override
     public boolean isAssignable(Class<?> clazz) {
         return baseClass.isAssignableFrom(clazz);
+    }
+
+
+    @Override
+    public boolean isImplemented(Method m) {
+        try {
+            final Method method = baseClass.getDeclaredMethod(m.getName(), m.getParameterTypes());
+            return !Modifier.isAbstract(method.getModifiers());
+        } catch (NoSuchMethodException e) {
+            return false;
+        }
     }
 
     @Override

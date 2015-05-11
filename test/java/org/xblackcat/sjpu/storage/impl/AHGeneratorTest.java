@@ -40,6 +40,37 @@ public class AHGeneratorTest {
     }
 
     @Test
+    public void checkPrimitiveFunctionalAHStructure() throws StorageException {
+        IAHFactory storage = new Storage(new ConnectionFactoryStub());
+
+        final IPrimitiveFunctionalAH testAH = storage.get(IPrimitiveFunctionalAH.class, "");
+
+        Set<Method> availableMethods = new HashSet<>(Arrays.asList(testAH.getClass().getMethods()));
+
+        // Remove standard methods
+        for (Method m : Object.class.getMethods()) {
+            Assert.assertTrue("Standard method is not found: " + m.getName(), availableMethods.remove(m));
+        }
+
+        NextMethod:
+        for (Method m : IPrimitiveFunctionalAH.class.getMethods()) {
+            Iterator<Method> iterator = availableMethods.iterator();
+            while (iterator.hasNext()) {
+                Method mm = iterator.next();
+
+                if (m.getName().equals(mm.getName()) && Arrays.equals(m.getParameterTypes(), mm.getParameterTypes())) {
+                    iterator.remove();
+                    continue NextMethod;
+                }
+            }
+
+            Assert.fail("Method " + m + " is not implemented");
+        }
+
+        Assert.assertEquals("Found unexpected extra methods" + availableMethods, 0, availableMethods.size());
+    }
+
+    @Test
     public void checkPrimitiveAHStructure() throws StorageException {
         IAHFactory storage = new Storage(new ConnectionFactoryStub());
 

@@ -15,14 +15,14 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  *
  * @author xBlackCat
  */
-public class InstanceFactory<Base> implements IFactory<Base> {
+public class InstanceCachedFactory<Base> implements IFactory<Base> {
     protected final ReadWriteLock lock = new ReentrantReadWriteLock();
-    protected final Map<Key, Class<? extends Base>> helpers = new HashMap<>();
+    protected final Map<Key, Base> helpers = new HashMap<>();
 
     protected final IBuilder<Base> builder;
     private final Class<?>[] argClasses;
 
-    public InstanceFactory(IBuilder<Base> builder, Class<?>... argClasses) {
+    public InstanceCachedFactory(IBuilder<Base> builder, Class<?>... argClasses) {
         this.builder = builder;
         this.argClasses = argClasses;
     }
@@ -30,33 +30,35 @@ public class InstanceFactory<Base> implements IFactory<Base> {
     public <T extends Base> T get(Class<T> clazz, Object... args) throws GeneratorException {
         Key key = new Key(clazz, args);
 
-        Class<? extends Base> accessHelperClass;
-
         lock.readLock().lock();
         try {
-            accessHelperClass = helpers.get(key);
+            @SuppressWarnings({"unchecked"})
+            T accessHelper = (T) helpers.get(key);
 
+            if (accessHelper != null) {
+                return accessHelper;
+            }
         } finally {
             lock.readLock().unlock();
         }
 
-        if (accessHelperClass == null) {
-            lock.writeLock().lock();
-            try {
-                final Class<? extends T> builtClass = builder.build(clazz);
-                Class<? extends Base> oldAccessHelper = helpers.get(key);
+        lock.writeLock().lock();
+        try {
+            final Class<? extends T> builtClass = builder.build(clazz);
+            T accessHelper = instantiate(builtClass, args);
+            @SuppressWarnings({"unchecked"})
+            T oldAccessHelper = (T) helpers.get(key);
 
-                if (oldAccessHelper != null) {
-                    accessHelperClass = oldAccessHelper;
-                } else {
-                    accessHelperClass = builtClass;
-                }
-            } finally {
-                lock.writeLock().unlock();
+            if (oldAccessHelper != null) {
+                return oldAccessHelper;
             }
-        }
 
-        return instantiate((Class<? extends T>) accessHelperClass, args);
+            helpers.put(key, accessHelper);
+
+            return accessHelper;
+        } finally {
+            lock.writeLock().unlock();
+        }
     }
 
     private <T extends Base> T instantiate(Class<? extends T> builtClass, Object[] args) throws GeneratorException {

@@ -1,8 +1,5 @@
 package org.xblackcat.sjpu.storage.impl;
 
-import javassist.CannotCompileException;
-import javassist.CtClass;
-import javassist.NotFoundException;
 import org.xblackcat.sjpu.skel.BuilderUtils;
 import org.xblackcat.sjpu.skel.GeneratorException;
 import org.xblackcat.sjpu.storage.ann.QueryType;
@@ -25,11 +22,6 @@ import java.util.Map;
 class FunctionalAHBuilder extends ASelectAnnotatedBuilder<SqlType> {
     public FunctionalAHBuilder(TypeMapper typeMapper, Map<Class<?>, Class<? extends IRowSetConsumer>> rowSetConsumers) {
         super(SqlType.class, typeMapper, rowSetConsumers);
-    }
-
-    @Override
-    public void buildMethod(CtClass accessHelper, Method m) throws NotFoundException, ReflectiveOperationException, CannotCompileException {
-        super.buildMethod(accessHelper, m);
     }
 
     protected QueryType getQueryType(Method m) {

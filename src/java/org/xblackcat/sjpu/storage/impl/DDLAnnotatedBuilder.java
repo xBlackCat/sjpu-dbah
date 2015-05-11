@@ -31,7 +31,7 @@ class DDLAnnotatedBuilder implements IMethodBuilder<DDL> {
     }
 
     @Override
-    public void buildMethod(CtClass accessHelper, Method m) throws NotFoundException, ReflectiveOperationException, CannotCompileException {
+    public void buildMethod(CtClass accessHelper, Class<?> targetClass, Method m) throws NotFoundException, ReflectiveOperationException, CannotCompileException {
         final String[] ddls = m.getAnnotation(getAnnotationClass()).value();
 
         final String methodName = m.getName();

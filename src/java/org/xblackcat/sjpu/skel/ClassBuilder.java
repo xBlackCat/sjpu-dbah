@@ -68,7 +68,7 @@ public class ClassBuilder<Base> implements IBuilder<Base> {
             accessHelper.addConstructor(constructor);
 
             for (Method m : target.getMethods()) {
-                implementMethod(accessHelper, m);
+                implementMethod(accessHelper, target, m);
             }
 
             Set<ImplementedMethod> implementedMethods = new HashSet<>();
@@ -113,7 +113,7 @@ public class ClassBuilder<Base> implements IBuilder<Base> {
                 // Method is not found - build it!
 
                 if (implementedMethods.add(method)) {
-                    implementMethod(accessHelper, m);
+                    implementMethod(accessHelper, target, m);
                 }
             }
         }
@@ -145,7 +145,7 @@ public class ClassBuilder<Base> implements IBuilder<Base> {
     }
 
     @SuppressWarnings("unchecked")
-    private void implementMethod(CtClass accessHelper, Method m) throws GeneratorException {
+    private void implementMethod(CtClass accessHelper, Class<?> targetClass, Method m) throws GeneratorException {
         if (log.isTraceEnabled()) {
             log.trace("Check method: " + m);
         }
@@ -174,7 +174,7 @@ public class ClassBuilder<Base> implements IBuilder<Base> {
         }
 
         try {
-            methodBuilders.get(annotations.get(0)).buildMethod(accessHelper, m);
+            methodBuilders.get(annotations.get(0)).buildMethod(accessHelper, targetClass, m);
         } catch (NotFoundException | CannotCompileException | ReflectiveOperationException e) {
             throw new GeneratorException("Exception occurs while building method " + m, e);
         } catch (GeneratorException e) {

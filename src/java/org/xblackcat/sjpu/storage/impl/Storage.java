@@ -6,6 +6,7 @@ import org.xblackcat.sjpu.skel.ClassBuilder;
 import org.xblackcat.sjpu.skel.Definer;
 import org.xblackcat.sjpu.skel.FunctionalClassBuilder;
 import org.xblackcat.sjpu.storage.*;
+import org.xblackcat.sjpu.storage.ann.Sql;
 import org.xblackcat.sjpu.storage.connection.IConnectionFactory;
 import org.xblackcat.sjpu.storage.consumer.IRowSetConsumer;
 import org.xblackcat.sjpu.storage.typemap.IMapFactory;
@@ -24,7 +25,7 @@ public class Storage extends AnAHFactory implements IStorage {
         this(connectionFactory, StorageUtils.DEFAULT_ROWSET_CONSUMERS, mappers);
     }
 
-    private static ClassPool createPool(Class<?>... paramClasses) {
+    private static TypeMapper buildTypeMapper(IMapFactory<?, ?>[] mappers) {
         final ClassLoader classLoader = new ClassLoader(Storage.class.getClassLoader()) {
         };
         ClassPool pool = new ClassPool(true) {
@@ -33,11 +34,11 @@ public class Storage extends AnAHFactory implements IStorage {
                 return classLoader;
             }
         };
-        for (Class<?> cl : paramClasses) {
+        for (Class<?> cl : new Class<?>[]{AnAH.class, AFunctionalAH.class, IConnectionFactory.class, String.class}) {
             pool.appendClassPath(new ClassClassPath(cl));
         }
 
-        return pool;
+        return new TypeMapper(pool, mappers);
     }
 
     public Storage(
@@ -45,35 +46,31 @@ public class Storage extends AnAHFactory implements IStorage {
             Map<Class<?>, Class<? extends IRowSetConsumer>> rowSetConsumers,
             IMapFactory<?, ?>... mappers
     ) {
-        this(
-                connectionFactory,
-                rowSetConsumers,
-                createPool(AnAH.class, AFunctionalAH.class, IConnectionFactory.class, String.class),
-                mappers
-        );
+        this(connectionFactory, rowSetConsumers, buildTypeMapper(mappers));
     }
 
     private Storage(
             IConnectionFactory connectionFactory,
             Map<Class<?>, Class<? extends IRowSetConsumer>> rowSetConsumers,
-            ClassPool pool,
-            IMapFactory<?, ?>... mappers
+            TypeMapper typeMapper
     ) {
         this(
                 connectionFactory,
                 rowSetConsumers,
-                new Definer<>(pool, AnAH.class, IConnectionFactory.class),
-                new Definer<>(pool, AFunctionalAH.class, IConnectionFactory.class, String.class),
-                new TypeMapper(pool, mappers)
+                typeMapper,
+                new Definer<>(typeMapper.getParentPool(), AnAH.class, IConnectionFactory.class),
+                new Definer<>(typeMapper.getParentPool(), AFunctionalAH.class, IConnectionFactory.class, String.class),
+                new Definer<>(typeMapper.getParentPool(), ABatchedAH.class, IConnectionFactory.class)
         );
     }
 
     private Storage(
             IConnectionFactory connectionFactory,
             Map<Class<?>, Class<? extends IRowSetConsumer>> rowSetConsumers,
+            TypeMapper typeMapper,
             Definer<IAH> definer,
             Definer<IFunctionalAH> definerF,
-            TypeMapper typeMapper
+            Definer<IBatchedAH> definerB
     ) {
         super(
                 connectionFactory,
@@ -86,6 +83,12 @@ public class Storage extends AnAHFactory implements IStorage {
                 new FunctionalClassBuilder<>(
                         definerF,
                         new FunctionalAHBuilder(typeMapper, rowSetConsumers)
+                ),
+                new ClassBuilder<>(
+                        definerB,
+                        new BatchedSqlAnnotatedBuilder(typeMapper, rowSetConsumers),
+                        new DDLAnnotatedBuilder(typeMapper.getParentPool()),
+                        new CloseResourcesAnnotatedBuilder(typeMapper.getParentPool(), Sql.class)
                 )
         );
     }
@@ -98,7 +101,14 @@ public class Storage extends AnAHFactory implements IStorage {
     @Override
     public ITx beginTransaction(int transactionIsolationLevel) throws StorageException {
         try {
-            return new TxFactory(factory, transactionIsolationLevel, typeMapper, commonBuilder, functionalBuilder);
+            return new TxFactory(
+                    connectionFactory,
+                    transactionIsolationLevel,
+                    typeMapper,
+                    commonBuilder,
+                    functionalBuilder,
+                    batchedBuilder
+            );
         } catch (SQLException e) {
             throw new StorageException("An exception occurs while starting a transaction", e);
         }
@@ -106,6 +116,6 @@ public class Storage extends AnAHFactory implements IStorage {
 
     @Override
     public void shutdown() throws StorageException {
-        factory.shutdown();
+        connectionFactory.shutdown();
     }
 }
