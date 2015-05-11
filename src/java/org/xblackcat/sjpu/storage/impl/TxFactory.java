@@ -3,6 +3,7 @@ package org.xblackcat.sjpu.storage.impl;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.xblackcat.sjpu.skel.IBuilder;
+import org.xblackcat.sjpu.skel.IFactory;
 import org.xblackcat.sjpu.storage.*;
 import org.xblackcat.sjpu.storage.connection.IConnectionFactory;
 import org.xblackcat.sjpu.storage.connection.TxSingleConnectionFactory;
@@ -29,14 +30,14 @@ class TxFactory extends AnAHFactory implements ITx {
             TypeMapper typeMapper,
             IBuilder<IAH> methodBuilder,
             IBuilder<IFunctionalAH> functionalBuilder,
-            IBuilder<IBatchedAH> batchedBuilder
+            IFactory<IBatchedAH> batchedFactory
     ) throws SQLException {
         super(
                 new TxSingleConnectionFactory(connectionFactory, transactionIsolationLevel),
                 typeMapper,
                 methodBuilder,
                 functionalBuilder,
-                batchedBuilder
+                batchedFactory
         );
     }
 

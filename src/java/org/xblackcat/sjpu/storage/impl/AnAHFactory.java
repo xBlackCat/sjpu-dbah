@@ -3,7 +3,6 @@ package org.xblackcat.sjpu.storage.impl;
 import org.xblackcat.sjpu.skel.IBuilder;
 import org.xblackcat.sjpu.skel.IFactory;
 import org.xblackcat.sjpu.skel.InstanceCachedFactory;
-import org.xblackcat.sjpu.skel.InstanceFactory;
 import org.xblackcat.sjpu.storage.IAH;
 import org.xblackcat.sjpu.storage.IAHFactory;
 import org.xblackcat.sjpu.storage.IBatchedAH;
@@ -25,24 +24,22 @@ abstract class AnAHFactory implements IAHFactory {
     protected final TypeMapper typeMapper;
     protected final IBuilder<IAH> commonBuilder;
     protected final IBuilder<IFunctionalAH> functionalBuilder;
-    protected final IBuilder<IBatchedAH> batchedBuilder;
 
     AnAHFactory(
             IConnectionFactory connectionFactory,
             TypeMapper typeMapper,
             IBuilder<IAH> commonBuilder,
             IBuilder<IFunctionalAH> functionalBuilder,
-            IBuilder<IBatchedAH> batchedBuilder
+            IFactory<IBatchedAH> batchedFactory
     ) {
         this.connectionFactory = connectionFactory;
         this.typeMapper = typeMapper;
         this.commonBuilder = commonBuilder;
         this.functionalBuilder = functionalBuilder;
-        this.batchedBuilder = batchedBuilder;
 
         commonFactory = new InstanceCachedFactory<>(commonBuilder, IConnectionFactory.class);
         functionalFactory = new InstanceCachedFactory<>(functionalBuilder, IConnectionFactory.class, String.class);
-        batchedFactory = new InstanceFactory<>(batchedBuilder, IConnectionFactory.class);
+        this.batchedFactory = batchedFactory;
     }
 
     @Override

@@ -15,14 +15,14 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  *
  * @author xBlackCat
  */
-public class InstanceFactory<Base> implements IFactory<Base> {
+public class InstanceClassCachedFactory<Base> implements IFactory<Base> {
     protected final ReadWriteLock lock = new ReentrantReadWriteLock();
     protected final Map<Key, Class<? extends Base>> helpers = new HashMap<>();
 
     protected final IBuilder<Base> builder;
     private final Class<?>[] argClasses;
 
-    public InstanceFactory(IBuilder<Base> builder, Class<?>... argClasses) {
+    public InstanceClassCachedFactory(IBuilder<Base> builder, Class<?>... argClasses) {
         this.builder = builder;
         this.argClasses = argClasses;
     }

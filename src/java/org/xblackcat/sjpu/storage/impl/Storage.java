@@ -5,6 +5,7 @@ import javassist.ClassPool;
 import org.xblackcat.sjpu.skel.ClassBuilder;
 import org.xblackcat.sjpu.skel.Definer;
 import org.xblackcat.sjpu.skel.FunctionalClassBuilder;
+import org.xblackcat.sjpu.skel.InstanceClassCachedFactory;
 import org.xblackcat.sjpu.storage.*;
 import org.xblackcat.sjpu.storage.ann.Sql;
 import org.xblackcat.sjpu.storage.connection.IConnectionFactory;
@@ -84,11 +85,14 @@ public class Storage extends AnAHFactory implements IStorage {
                         definerF,
                         new FunctionalAHBuilder(typeMapper, rowSetConsumers)
                 ),
-                new ClassBuilder<>(
-                        definerB,
-                        new BatchedSqlAnnotatedBuilder(typeMapper, rowSetConsumers),
-                        new DDLAnnotatedBuilder(typeMapper.getParentPool()),
-                        new CloseResourcesAnnotatedBuilder(typeMapper.getParentPool(), Sql.class)
+                new InstanceClassCachedFactory<>(
+                        new ClassBuilder<>(
+                                definerB,
+                                new BatchedSqlAnnotatedBuilder(typeMapper, rowSetConsumers),
+                                new DDLAnnotatedBuilder(typeMapper.getParentPool()),
+                                new CloseResourcesAnnotatedBuilder(typeMapper.getParentPool(), Sql.class)
+                        ),
+                        IConnectionFactory.class
                 )
         );
     }
@@ -107,7 +111,7 @@ public class Storage extends AnAHFactory implements IStorage {
                     typeMapper,
                     commonBuilder,
                     functionalBuilder,
-                    batchedBuilder
+                    batchedFactory
             );
         } catch (SQLException e) {
             throw new StorageException("An exception occurs while starting a transaction", e);
