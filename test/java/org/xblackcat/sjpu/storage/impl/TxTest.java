@@ -62,6 +62,64 @@ public class TxTest {
     }
 
     @Test
+    public void checkDataBatch() throws StorageException {
+        DBAH dbah = storage.get(DBAH.class);
+        dbah.createDB();
+        for (int i = 0; i < 10; i++) {
+            dbah.fill(i, "Text-" + i);
+        }
+
+        for (int i = 0; i < 10; i++) {
+            Assert.assertEquals("Index [" + i + "]", "Text-" + i, dbah.get(i));
+        }
+
+        // Rollback
+        try (ITx b = storage.beginTransaction()) {
+            try (DBBAH tx = b.startBatch(DBBAH.class)) {
+                tx.fill(100, "Checkpoint1");
+                tx.fill(101, "Checkpoint2");
+                tx.fill(102, "Checkpoint3");
+            }
+        }
+        Assert.assertNull(dbah.get(100));
+        Assert.assertNull(dbah.get(101));
+        Assert.assertNull(dbah.get(102));
+
+        try (ITx b = storage.beginTransaction()) {
+            try (DBBAH tx = b.startBatch(DBBAH.class)) {
+                tx.fill(100, "Checkpoint1");
+                tx.fill(101, "Checkpoint2");
+                tx.fill(102, "Checkpoint3");
+            }
+            b.commit();
+        }
+        Assert.assertEquals("Checkpoint1", dbah.get(100));
+        Assert.assertEquals("Checkpoint2", dbah.get(101));
+        Assert.assertEquals("Checkpoint3", dbah.get(102));
+
+        try (ITx b = storage.beginTransaction()) {
+            try (DBBAH tx = b.startBatch(DBBAH.class)) {
+                tx.fill(103, "Checkpoint4");
+                tx.fill(104, "Checkpoint5");
+                tx.fill(105, "Checkpoint6");
+            }
+            try (DBBAH tx = b.startBatch(DBBAH.class)) {
+                tx.fill(106, "Checkpoint7");
+                tx.fill(107, "Checkpoint8");
+                tx.fill(108, "Checkpoint9");
+            }
+            b.commit();
+        }
+        Assert.assertEquals("Checkpoint4", dbah.get(103));
+        Assert.assertEquals("Checkpoint5", dbah.get(104));
+        Assert.assertEquals("Checkpoint6", dbah.get(105));
+        Assert.assertEquals("Checkpoint7", dbah.get(106));
+        Assert.assertEquals("Checkpoint8", dbah.get(107));
+        Assert.assertEquals("Checkpoint9", dbah.get(108));
+
+    }
+
+    @Test
     public void returnKeysSet() throws StorageException {
         final DBAutoIncAH dbAH = storage.get(DBAutoIncAH.class);
 
@@ -99,6 +157,22 @@ public class TxTest {
         @Sql("CREATE TABLE \"data\" (\"id\" INT PRIMARY KEY NOT NULL, \"txt\" VARCHAR NOT NULL)")
         void createDB() throws StorageException;
 
+        @Sql("INSERT INTO \"data\" (\"id\", \"txt\") VALUES (?, ?)")
+        void fill(int id, String txt) throws StorageException;
+
+        @Sql("SELECT\n" +
+                "  \"txt\"\n" +
+                "FROM \"data\"\n" +
+                "WHERE \"id\" = ?")
+        String get(int id) throws StorageException;
+    }
+
+    /**
+     * 18.11.13 12:53
+     *
+     * @author xBlackCat
+     */
+    public interface DBBAH extends IBatchedAH {
         @Sql("INSERT INTO \"data\" (\"id\", \"txt\") VALUES (?, ?)")
         void fill(int id, String txt) throws StorageException;
 
