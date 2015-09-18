@@ -1,7 +1,6 @@
 package org.xblackcat.sjpu.storage.connection;
 
 import org.apache.commons.dbcp2.*;
-import org.apache.commons.pool2.ObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.xblackcat.sjpu.storage.StorageException;
 
@@ -28,8 +27,22 @@ public class SimplePooledConnectionFactory extends AConnectionFactory {
                 this.settings.getPassword()
         );
 
+        final int poolSize = settings.getPoolSize();
+
         final PoolableConnectionFactory poolableConnectionFactory = new PoolableConnectionFactory(connectionFactory, null);
-        final ObjectPool<PoolableConnection> connectionPool = new GenericObjectPool<>(poolableConnectionFactory);
+        poolableConnectionFactory.setValidationQuery("SELECT 1+1");
+
+        final GenericObjectPool<PoolableConnection> connectionPool = new GenericObjectPool<>(poolableConnectionFactory);
+
+        poolableConnectionFactory.setPool(connectionPool);
+
+        connectionPool.setMaxIdle(poolSize);
+        connectionPool.setMinIdle(poolSize);
+        connectionPool.setMaxTotal(poolSize);
+        connectionPool.setTestOnBorrow(true);
+        connectionPool.setTestWhileIdle(true);
+        connectionPool.setTimeBetweenEvictionRunsMillis(5000);
+        connectionPool.setBlockWhenExhausted(true);
 
         try {
             Class.forName("org.apache.commons.dbcp2.PoolingDriver");
@@ -44,6 +57,8 @@ public class SimplePooledConnectionFactory extends AConnectionFactory {
             driver.registerPool(poolName, connectionPool);
         } catch (SQLException e) {
             throw new StorageException("Can not obtain pooling driver", e);
+        } catch (Exception e) {
+            throw new StorageException("Failed to pre-initialize pool", e);
         }
     }
 
