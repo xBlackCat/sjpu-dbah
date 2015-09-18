@@ -3,6 +3,7 @@ package org.xblackcat.sjpu.storage.typemap;
 import java.sql.Time;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.function.Function;
 
 /**
  * A default mapper between java.sql.Timestamp and java.util.Date objects
@@ -12,7 +13,12 @@ import java.time.LocalTime;
  * @author xBlackCat
  */
 public class LocalTimeMapper implements IMapFactory<LocalTime, Time> {
-    private final ITypeMap<LocalTime, Time> typeMap = new NullPassTypeMap<>(LocalTime.class, Time.class, Time::valueOf, Time::toLocalTime);
+    private final ITypeMap<LocalTime, Time> typeMap = new NullPassTypeMap<>(
+            LocalTime.class,
+            Time.class,
+            (Function<LocalTime, Time>) Time::valueOf,
+            Time::toLocalTime
+    );
 
     @Override
     public boolean isAccepted(Class<?> obj) {
