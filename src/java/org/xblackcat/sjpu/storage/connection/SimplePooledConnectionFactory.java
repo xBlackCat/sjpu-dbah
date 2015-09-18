@@ -1,11 +1,8 @@
 package org.xblackcat.sjpu.storage.connection;
 
-import org.apache.commons.dbcp.ConnectionFactory;
-import org.apache.commons.dbcp.DriverManagerConnectionFactory;
-import org.apache.commons.dbcp.PoolableConnectionFactory;
-import org.apache.commons.dbcp.PoolingDriver;
-import org.apache.commons.pool.ObjectPool;
-import org.apache.commons.pool.impl.GenericObjectPool;
+import org.apache.commons.dbcp2.*;
+import org.apache.commons.pool2.ObjectPool;
+import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.xblackcat.sjpu.storage.StorageException;
 
 import java.sql.Connection;
@@ -21,7 +18,6 @@ public class SimplePooledConnectionFactory extends AConnectionFactory {
     private static final AtomicInteger POOL_NUMBER = new AtomicInteger();
 
     private final String poolName;
-    private final ObjectPool connectionPool;
 
     public SimplePooledConnectionFactory(IDBConfig settings) throws StorageException {
         super(settings);
@@ -32,31 +28,11 @@ public class SimplePooledConnectionFactory extends AConnectionFactory {
                 this.settings.getPassword()
         );
 
-        connectionPool = new GenericObjectPool<>(
-                null,
-                this.settings.getPoolSize(),
-                GenericObjectPool.WHEN_EXHAUSTED_BLOCK,
-                0,
-                13,
-                13,
-                true,
-                true,
-                5000,
-                5,
-                1000,
-                true
-        );
-        new PoolableConnectionFactory(
-                connectionFactory,
-                connectionPool,
-                null,
-                "SELECT 1+1",
-                false,
-                true
-        );
+        final PoolableConnectionFactory poolableConnectionFactory = new PoolableConnectionFactory(connectionFactory, null);
+        final ObjectPool<PoolableConnection> connectionPool = new GenericObjectPool<>(poolableConnectionFactory);
 
         try {
-            Class.forName("org.apache.commons.dbcp.PoolingDriver");
+            Class.forName("org.apache.commons.dbcp2.PoolingDriver");
         } catch (ClassNotFoundException e) {
             throw new StorageException("Can not initialize pooling driver", e);
         }
@@ -76,9 +52,10 @@ public class SimplePooledConnectionFactory extends AConnectionFactory {
     }
 
     @Override
-    public void shutdown() throws StorageException{
+    public void shutdown() throws StorageException {
         try {
-            connectionPool.close();
+            PoolingDriver driver = (PoolingDriver) DriverManager.getDriver("jdbc:apache:commons:dbcp:");
+            driver.closePool(poolName);
         } catch (Exception e) {
             throw new StorageException("Can't dismiss connection pool", e);
         }
