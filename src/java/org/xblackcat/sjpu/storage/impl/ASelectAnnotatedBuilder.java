@@ -88,7 +88,7 @@ public abstract class ASelectAnnotatedBuilder<A extends Annotation> extends AMap
             final int idx = arg.idx + 1;
             if (typeMap != null) {
                 final String value = "(" + BuilderUtils.getName(typeMap.getDbType()) + ") " +
-                        typeMapper.getTypeMapInstanceRef(type) + ".forStore($" + idx + ")";
+                        typeMapper.getTypeMapInstanceRef(type) + ".forStore(con, $" + idx + ")";
                 initString = AHBuilderUtils.setParamValue(typeMap.getDbType(), value);
             } else {
                 initString = AHBuilderUtils.setParamValue(type, "$" + idx);

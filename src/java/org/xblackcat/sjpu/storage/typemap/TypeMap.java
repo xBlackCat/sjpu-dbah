@@ -1,5 +1,7 @@
 package org.xblackcat.sjpu.storage.typemap;
 
+import java.sql.Connection;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /**
@@ -9,13 +11,22 @@ import java.util.function.Function;
  * @author xBlackCat
  */
 public class TypeMap<RealObject, DBObject> extends ATypeMap<RealObject, DBObject> {
-    private final Function<RealObject, DBObject> forStore;
+    private final BiFunction<Connection, RealObject, DBObject> forStore;
     private final Function<DBObject, RealObject> forRead;
 
-    protected TypeMap(
+    public TypeMap(
             Class<RealObject> realType,
             Class<DBObject> dbType,
             Function<RealObject, DBObject> forStore,
+            Function<DBObject, RealObject> forRead
+    ) {
+        this(realType, dbType, (c, realObject) -> forStore.apply(realObject), forRead);
+    }
+
+    public TypeMap(
+            Class<RealObject> realType,
+            Class<DBObject> dbType,
+            BiFunction<Connection, RealObject, DBObject> forStore,
             Function<DBObject, RealObject> forRead
     ) {
         super(realType, dbType);
@@ -24,8 +35,8 @@ public class TypeMap<RealObject, DBObject> extends ATypeMap<RealObject, DBObject
     }
 
     @Override
-    public DBObject forStore(RealObject obj) {
-        return forStore.apply(obj);
+    public DBObject forStore(Connection con, RealObject obj) {
+        return forStore.apply(con, obj);
     }
 
     @Override

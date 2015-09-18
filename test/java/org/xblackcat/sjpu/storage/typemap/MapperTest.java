@@ -32,15 +32,15 @@ public class MapperTest {
         Assert.assertEquals(java.util.Date.class, map.getRealType());
 
         {
-            final Date date = new Date(1407481451844l);
-            final Timestamp timestamp = map.forStore(date);
+            final Date date = new Date(1407481451844L);
+            final Timestamp timestamp = map.forStore(null, date);
             Assert.assertEquals(date, map.forRead(timestamp));
         }
 
         {
-            final Timestamp timestamp = new Timestamp(1407481451844l);
+            final Timestamp timestamp = new Timestamp(1407481451844L);
             final Date date = map.forRead(timestamp);
-            Assert.assertEquals(timestamp, map.forStore(date));
+            Assert.assertEquals(timestamp, map.forStore(null, date));
         }
     }
 
@@ -62,14 +62,14 @@ public class MapperTest {
 
             {
                 Numbers n = Numbers.Four;
-                String value = map.forStore(n);
+                String value = map.forStore(null, n);
                 Assert.assertEquals(n, map.forRead(value));
             }
 
             {
                 String value = "Four";
                 Numbers n = map.forRead(value);
-                Assert.assertEquals(value, map.forStore(n));
+                Assert.assertEquals(value, map.forStore(null, n));
             }
         }
 
@@ -80,19 +80,19 @@ public class MapperTest {
 
             {
                 TestEnum n = TestEnum.Second;
-                String value = map.forStore(n);
+                String value = map.forStore(null, n);
                 Assert.assertEquals(n, map.forRead(value));
             }
 
             {
                 String value = "Second";
                 TestEnum n = map.forRead(value);
-                Assert.assertEquals(value, map.forStore(n));
+                Assert.assertEquals(value, map.forStore(null, n));
             }
         }
     }
 
-    private static enum TestEnum {
+    private enum TestEnum {
         First,
         Second,
         Third

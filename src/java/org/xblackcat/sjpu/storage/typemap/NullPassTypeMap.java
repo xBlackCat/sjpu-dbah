@@ -1,5 +1,7 @@
 package org.xblackcat.sjpu.storage.typemap;
 
+import java.sql.Connection;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /**
@@ -18,13 +20,22 @@ public class NullPassTypeMap<RealObject, DBObject> extends TypeMap<RealObject, D
         super(realType, dbType, forStore, forRead);
     }
 
+    public NullPassTypeMap(
+            Class<RealObject> realType,
+            Class<DBObject> dbType,
+            BiFunction<Connection, RealObject, DBObject> forStore,
+            Function<DBObject, RealObject> forRead
+    ) {
+        super(realType, dbType, forStore, forRead);
+    }
+
     @Override
-    public DBObject forStore(RealObject obj) {
+    public DBObject forStore(Connection con, RealObject obj) {
         if (obj == null) {
             return null;
         }
 
-        return super.forStore(obj);
+        return super.forStore(con, obj);
     }
 
     @Override

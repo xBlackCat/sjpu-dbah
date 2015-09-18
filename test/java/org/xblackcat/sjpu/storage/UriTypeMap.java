@@ -1,8 +1,8 @@
 package org.xblackcat.sjpu.storage;
 
-import org.xblackcat.sjpu.storage.typemap.ATypeMap;
 import org.xblackcat.sjpu.storage.typemap.IMapFactory;
 import org.xblackcat.sjpu.storage.typemap.ITypeMap;
+import org.xblackcat.sjpu.storage.typemap.NullPassTypeMap;
 
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -20,24 +20,11 @@ public class UriTypeMap implements IMapFactory<URI, byte[]> {
 
     @Override
     public ITypeMap<URI, byte[]> mapper(Class<URI> clazz) {
-        return new ATypeMap<URI, byte[]>(URI.class, byte[].class) {
-            @Override
-            public byte[] forStore(URI obj) {
-                if (obj == null) {
-                    return null;
-                }
-
-                return obj.toString().getBytes(StandardCharsets.UTF_8);
-            }
-
-            @Override
-            public URI forRead(byte[] obj) {
-                if (obj == null) {
-                    return null;
-                }
-
-                return URI.create(new String(obj, StandardCharsets.UTF_8));
-            }
-        };
+        return new NullPassTypeMap<>(
+                URI.class,
+                byte[].class,
+                uri -> uri.toString().getBytes(StandardCharsets.UTF_8),
+                bytes -> URI.create(new String(bytes, StandardCharsets.UTF_8))
+        );
     }
 }

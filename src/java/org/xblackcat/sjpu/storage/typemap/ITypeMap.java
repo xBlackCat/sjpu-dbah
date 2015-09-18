@@ -1,5 +1,7 @@
 package org.xblackcat.sjpu.storage.typemap;
 
+import java.sql.Connection;
+
 /**
  * 19.12.13 16:42
  *
@@ -10,7 +12,7 @@ public interface ITypeMap<RealObject, DBObject> {
 
     Class<DBObject> getDbType();
 
-    DBObject forStore(RealObject obj);
+    DBObject forStore(Connection con, RealObject obj);
 
     RealObject forRead(DBObject obj);
 }
