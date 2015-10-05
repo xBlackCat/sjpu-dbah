@@ -6,17 +6,13 @@ package org.xblackcat.sjpu.storage;
  * {@linkplain #commit()} nor {@linkplain #rollback()} is invoked before {@linkplain #close()} the transaction all changes will be
  * reverted automatically on closing. After It is not allowed to obtain new AccessHelper objects after {@linkplain #commit()}
  * or {@linkplain #rollback()}.
- * <p/>
- * <p/>
- * <code><pre>
+ * <pre><code>
  * try (IBatch tx = s.openTransaction()) {
  *   ISimpleAH ah = tx.get(ISimpleAH.class);
- * <p/>
  *   // do action
- * <p/>
  *   tx.commit();
  * }
- * </pre></code>
+ * </code></pre>
  * 15.11.13 14:05
  *
  * @author xBlackCat
@@ -27,5 +23,5 @@ public interface ITx extends IAHFactory, AutoCloseable {
     void rollback() throws StorageException;
 
     @Override
-    public void close() throws StorageException;
+    void close() throws StorageException;
 }

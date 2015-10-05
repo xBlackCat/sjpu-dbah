@@ -8,7 +8,7 @@ import java.lang.annotation.Target;
 /**
  * Mark with the annotation a method parameter to substitute in runtime a part of SQL. Value of the annotation represent an indexed
  * argument in SQL query. Indexed argument represented with '<code>{&lt;index&gt;}</code>' construction. Argument should be String type.
- * <p/>
+ * <p>
  * Example:
  * <pre><code>
  *     interface ITestAH extends IAH {
@@ -16,7 +16,7 @@ import java.lang.annotation.Target;
  *         void addName(@SqlPart(1) String tableName, String name) throws {@linkplain org.xblackcat.sjpu.storage.StorageException StorageException};
  *     }
  * </code></pre>
- * <p/>
+ * <p>
  * SqlPart string will replace all references in SQL in runtime.
  * 17.02.14 11:21
  *

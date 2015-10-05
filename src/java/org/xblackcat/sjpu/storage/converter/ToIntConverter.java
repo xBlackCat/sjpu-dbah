@@ -5,7 +5,7 @@ import java.sql.SQLException;
 
 /**
  * The class to convert a single-column result to Int primitive.
- * <p/>
+ * <p>
  * Valid values are threaded as <code>true</code>: boolean true, non-zero number value.
  * All other values are threaded as <code>false</code>. NULL threaded as null.
  */

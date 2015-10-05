@@ -139,8 +139,7 @@ public class BuilderTest {
             builder.buildBody();
             Assert.fail("Exception expected");
         } catch (GeneratorException e) {
-            e.printStackTrace();
-            // Ignore
+            Assert.assertEquals("Can't process type org.xblackcat.sjpu.storage.converter.builder.SimpleObject", e.getMessage());
         }
     }
 }

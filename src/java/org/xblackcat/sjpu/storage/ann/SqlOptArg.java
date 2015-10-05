@@ -8,7 +8,7 @@ import java.lang.annotation.Target;
 /**
  * Mark with the annotation a method parameter to substitute in runtime a part of SQL. Value of the annotation represent an indexed
  * argument in SQL query. Indexed argument represented with '<code>{&lt;index&gt;}</code>' construction. Argument should be String type.
- * <p/>
+ * <p>
  * Example:
  * <pre><code>
  *     interface ITestAH extends IAH {

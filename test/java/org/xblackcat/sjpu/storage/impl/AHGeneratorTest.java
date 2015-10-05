@@ -218,21 +218,30 @@ public class AHGeneratorTest {
             storage.get(ITObjFail1AH.class);
             Assert.fail("Exception expected");
         } catch (Exception e) {
-            e.printStackTrace();
+            Assert.assertEquals(
+                    "Exception occurs while building method public abstract org.xblackcat.sjpu.storage.impl.FailData org.xblackcat.sjpu.storage.impl.ITObjFail1AH.getException() throws org.xblackcat.sjpu.storage.StorageException: Can't find a way to convert result row to object. Probably one of the following annotations should be used: [interface org.xblackcat.sjpu.storage.ann.ToObjectConverter, interface org.xblackcat.sjpu.storage.ann.RowMap, interface org.xblackcat.sjpu.storage.ann.MapRowTo]",
+                    e.getMessage()
+            );
         }
 
         try {
             storage.get(ITObjFail2AH.class);
             Assert.fail("Exception expected");
         } catch (Exception e) {
-            e.printStackTrace();
+            Assert.assertEquals(
+                    "Exception occurs while building method public abstract org.xblackcat.sjpu.storage.impl.NoDefaultData org.xblackcat.sjpu.storage.impl.ITObjFail2AH.getException() throws org.xblackcat.sjpu.storage.StorageException: Can't find a way to convert result row to object. Probably one of the following annotations should be used: [interface org.xblackcat.sjpu.storage.ann.ToObjectConverter, interface org.xblackcat.sjpu.storage.ann.RowMap, interface org.xblackcat.sjpu.storage.ann.MapRowTo]",
+                    e.getMessage()
+            );
         }
 
         try {
             storage.get(ITObjFail3AH.class);
             Assert.fail("Exception expected");
         } catch (Exception e) {
-            e.printStackTrace();
+            Assert.assertEquals(
+                    "Method public abstract org.xblackcat.sjpu.storage.impl.NoDefaultData org.xblackcat.sjpu.storage.impl.ITObjFail3AH.getException() throws org.xblackcat.sjpu.storage.StorageException should be annotated with ONLY one of the following annotations:  [interface org.xblackcat.sjpu.storage.ann.Sql, interface org.xblackcat.sjpu.storage.ann.DDL]",
+                    e.getMessage()
+            );
         }
     }
 

@@ -8,7 +8,7 @@ import java.lang.annotation.Target;
 /**
  * Annotation to specify a target constructor signature for converting a result row to target object if the target object has more than one
  * constructor.
- * <p/>
+ * <p>
  * 11.12.13 12:36
  *
  * @author xBlackCat

@@ -14,6 +14,7 @@ public interface IRowConsumer<O> {
      *
      * @param o object to consume
      * @return true to stop consuming rows
+     * @throws ConsumeException if passed object can't be consumed
      */
     boolean consume(O o) throws ConsumeException;
 }

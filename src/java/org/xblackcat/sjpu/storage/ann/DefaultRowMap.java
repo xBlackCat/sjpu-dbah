@@ -8,7 +8,7 @@ import java.lang.annotation.Target;
 /**
  * An object constructor marked with the annotation will be used as default converter from result row to object. Can be overridden by
  * {@linkplain org.xblackcat.sjpu.storage.ann.RowMap @RowMap} annotation.
- * <p/>
+ * <p>
  * 11.12.13 12:39
  *
  * @author xBlackCat

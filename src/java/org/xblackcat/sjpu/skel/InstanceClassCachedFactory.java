@@ -56,7 +56,9 @@ public class InstanceClassCachedFactory<Base> implements IFactory<Base> {
             }
         }
 
-        return instantiate((Class<? extends T>) accessHelperClass, args);
+        @SuppressWarnings("unchecked")
+        final Class<? extends T> helperClass = (Class<? extends T>) accessHelperClass;
+        return instantiate(helperClass, args);
     }
 
     private <T extends Base> T instantiate(Class<? extends T> builtClass, Object[] args) throws GeneratorException {

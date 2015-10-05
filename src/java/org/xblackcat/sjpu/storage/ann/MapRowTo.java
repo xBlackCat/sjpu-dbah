@@ -13,7 +13,7 @@ import java.lang.annotation.Target;
  * <li>class which extends {@linkplain org.xblackcat.sjpu.storage.consumer.IRowSetConsumer IRowSetConsumer} interface to specify default
  * converter of result row to object to be consumed by the IRowSetConsumer implementation</li>
  * </ul>
- * <p/>
+ * <p>
  *
  * @see org.xblackcat.sjpu.storage.ann.ToObjectConverter
  * 07.03.13 12:12

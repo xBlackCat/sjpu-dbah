@@ -9,7 +9,7 @@ import java.lang.annotation.Target;
 
 /**
  * Override default row set consumer for current method.
- * <p/>
+ * <p>
  * 17.02.14 11:21
  *
  * @see org.xblackcat.sjpu.storage.consumer.IRowSetConsumer

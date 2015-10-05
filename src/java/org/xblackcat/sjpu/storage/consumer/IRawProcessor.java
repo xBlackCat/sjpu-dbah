@@ -5,7 +5,7 @@ import java.sql.SQLException;
 
 /**
  * Consume a results row raw data.
- * <p/>
+ * <p>
  * The interface is used in cases when it is necessary to process sql types without converting into objects.
  *
  * @author xBlackCat

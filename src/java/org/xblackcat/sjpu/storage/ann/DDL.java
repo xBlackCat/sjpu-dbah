@@ -7,7 +7,7 @@ import java.lang.annotation.Target;
 
 /**
  * Assign to a method a list of DDL statements. All result values will be ignored.
- * <p/>
+ * <p>
  * 12.02.13 16:17
  *
  * @author xBlackCat
