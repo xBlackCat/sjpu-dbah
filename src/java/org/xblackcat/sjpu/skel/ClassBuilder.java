@@ -16,11 +16,11 @@ import java.util.stream.Collectors;
  */
 public class ClassBuilder<Base> implements IBuilder<Base> {
     private final Map<Class<? extends Annotation>, IMethodBuilder> methodBuilders = new LinkedHashMap<>();
-    private final IDefiner<Base> definer;
+    private final IDefiner definer;
 
     protected final Log log = LogFactory.getLog(getClass());
 
-    public ClassBuilder(IDefiner<Base> definer, IMethodBuilder<?>... builders) {
+    public ClassBuilder(IDefiner definer, IMethodBuilder<?>... builders) {
         this.definer = definer;
 
         for (IMethodBuilder<?> builder : builders) {

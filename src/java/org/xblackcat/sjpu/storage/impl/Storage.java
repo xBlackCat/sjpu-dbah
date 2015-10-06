@@ -6,7 +6,10 @@ import org.xblackcat.sjpu.skel.ClassBuilder;
 import org.xblackcat.sjpu.skel.Definer;
 import org.xblackcat.sjpu.skel.FunctionalClassBuilder;
 import org.xblackcat.sjpu.skel.InstanceClassCachedFactory;
-import org.xblackcat.sjpu.storage.*;
+import org.xblackcat.sjpu.storage.IStorage;
+import org.xblackcat.sjpu.storage.ITx;
+import org.xblackcat.sjpu.storage.StorageException;
+import org.xblackcat.sjpu.storage.StorageUtils;
 import org.xblackcat.sjpu.storage.ann.Sql;
 import org.xblackcat.sjpu.storage.connection.IConnectionFactory;
 import org.xblackcat.sjpu.storage.consumer.IRowSetConsumer;
@@ -55,39 +58,21 @@ public class Storage extends AnAHFactory implements IStorage {
             Map<Class<?>, Class<? extends IRowSetConsumer>> rowSetConsumers,
             TypeMapper typeMapper
     ) {
-        this(
-                connectionFactory,
-                rowSetConsumers,
-                typeMapper,
-                new Definer<>(typeMapper.getParentPool(), AnAH.class, IConnectionFactory.class),
-                new Definer<>(typeMapper.getParentPool(), AFunctionalAH.class, IConnectionFactory.class, String.class),
-                new Definer<>(typeMapper.getParentPool(), ABatchedAH.class, IConnectionFactory.class)
-        );
-    }
-
-    private Storage(
-            IConnectionFactory connectionFactory,
-            Map<Class<?>, Class<? extends IRowSetConsumer>> rowSetConsumers,
-            TypeMapper typeMapper,
-            Definer<IAH> definer,
-            Definer<IFunctionalAH> definerF,
-            Definer<IBatchedAH> definerB
-    ) {
         super(
                 connectionFactory,
                 typeMapper,
                 new ClassBuilder<>(
-                        definer,
+                        new Definer<>(typeMapper.getParentPool(), AnAH.class, IConnectionFactory.class),
                         new SqlAnnotatedBuilder(typeMapper, rowSetConsumers),
                         new DDLAnnotatedBuilder(typeMapper.getParentPool())
                 ),
                 new FunctionalClassBuilder<>(
-                        definerF,
+                        new Definer<>(typeMapper.getParentPool(), AFunctionalAH.class, IConnectionFactory.class, String.class),
                         new FunctionalAHBuilder(typeMapper, rowSetConsumers)
                 ),
                 new InstanceClassCachedFactory<>(
                         new ClassBuilder<>(
-                                definerB,
+                                new Definer<>(typeMapper.getParentPool(), ABatchedAH.class, IConnectionFactory.class),
                                 new BatchedSqlAnnotatedBuilder(typeMapper, rowSetConsumers),
                                 new DDLAnnotatedBuilder(typeMapper.getParentPool()),
                                 new CloseResourcesAnnotatedBuilder(typeMapper.getParentPool(), Sql.class)

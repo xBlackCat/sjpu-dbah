@@ -9,7 +9,7 @@ import java.lang.reflect.Method;
  *
  * @author xBlackCat
  */
-public interface IDefiner<Base> {
+public interface IDefiner {
     CtClass getBaseCtClass() throws NotFoundException;
 
     boolean isAssignable(Class<?> clazz);

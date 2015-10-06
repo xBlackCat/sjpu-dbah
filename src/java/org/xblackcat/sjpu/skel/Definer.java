@@ -9,7 +9,7 @@ import java.lang.reflect.Method;
  *
  * @author xBlackCat
  */
-public class Definer<Base> implements IDefiner<Base> {
+public class Definer<Base> implements IDefiner {
     private final Class<? extends Base> baseClass;
     private final Class<?>[] paramClasses;
     private final ClassPool pool;
