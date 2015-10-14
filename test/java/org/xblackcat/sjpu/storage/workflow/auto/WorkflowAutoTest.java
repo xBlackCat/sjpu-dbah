@@ -65,6 +65,11 @@ public class WorkflowAutoTest {
                 Assert.assertNotNull(element);
                 Assert.assertEquals(n.name(), element.name);
                 Assert.assertEquals(n.ordinal(), element.id);
+
+                final Element checkElement = dataAH.getElement(element);
+                Assert.assertNotNull(checkElement);
+                Assert.assertEquals(n.name(), checkElement.name);
+                Assert.assertEquals(n.ordinal(), checkElement.id);
             }
             {
                 final Element element = dataAH.getElement(n.ordinal(), "list");
@@ -86,7 +91,8 @@ public class WorkflowAutoTest {
         }
 
         Assert.assertNull(dataAH.get(null));
-        Assert.assertNull(dataAH.getElement(null));
+        Assert.assertNull(dataAH.getElement((Integer) null));
+        Assert.assertNull(dataAH.getElement((Element) null));
         Assert.assertNull(dataAH.getIElement(null));
 
 

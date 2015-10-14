@@ -2,10 +2,7 @@ package org.xblackcat.sjpu.storage.workflow.auto;
 
 import org.xblackcat.sjpu.storage.IAH;
 import org.xblackcat.sjpu.storage.StorageException;
-import org.xblackcat.sjpu.storage.ann.MapRowTo;
-import org.xblackcat.sjpu.storage.ann.Sql;
-import org.xblackcat.sjpu.storage.ann.SqlOptArg;
-import org.xblackcat.sjpu.storage.ann.SqlPart;
+import org.xblackcat.sjpu.storage.ann.*;
 import org.xblackcat.sjpu.storage.consumer.IRowConsumer;
 import org.xblackcat.sjpu.storage.workflow.data.Element;
 import org.xblackcat.sjpu.storage.workflow.data.IElement;
@@ -38,6 +35,13 @@ public interface IDataAH extends IAH {
                  "FROM list\n" +
                  "WHERE id = ?")
     Element getElement(Integer id) throws StorageException;
+
+    @Sql("SELECT\n" +
+            "  id, name\n" +
+            "FROM list\n" +
+            "WHERE id = ? and name = ?")
+    @ExpandType(type = Element.class, fields = {"id", "name"})
+    Element getElement(Element id) throws StorageException;
 
     @Sql("SELECT\n" +
                  "  id, name\n" +
