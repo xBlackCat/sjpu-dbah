@@ -1,10 +1,13 @@
 package org.xblackcat.sjpu.storage.workflow.data;
 
+import org.xblackcat.sjpu.storage.ann.ExtractFields;
+
 /**
-* 22.04.2014 18:10
-*
-* @author xBlackCat
-*/
+ * 22.04.2014 18:10
+ *
+ * @author xBlackCat
+ */
+@ExtractFields({"id", "name"})
 public class ElementNumber implements IElement<Numbers> {
     public final int id;
     public final Numbers name;

@@ -61,6 +61,16 @@ public class WorkflowBaseTest {
             Assert.assertEquals(n.name(), dataAH.get(n.ordinal()));
         }
 
+        dataAH.dropElements();
+
+        for (Numbers n : Numbers.values()) {
+            dataAH.put(new Element(n.ordinal(), n.name()));
+        }
+
+        for (Numbers n : Numbers.values()) {
+            Assert.assertEquals(n.name(), dataAH.get(n.ordinal()));
+        }
+
         for (Numbers n : Numbers.values()) {
             {
                 final Element element = dataAH.getElement(n.ordinal());
@@ -177,6 +187,16 @@ public class WorkflowBaseTest {
 
         for (Numbers n : Numbers.values()) {
             dataAH.put(n.ordinal(), n);
+        }
+
+        for (Numbers n : Numbers.values()) {
+            Assert.assertEquals(n, dataAH.get(n.ordinal()));
+        }
+
+        dataAH.dropElements();
+
+        for (Numbers n : Numbers.values()) {
+            dataAH.put(new ElementNumber(n.ordinal(), n));
         }
 
         for (Numbers n : Numbers.values()) {

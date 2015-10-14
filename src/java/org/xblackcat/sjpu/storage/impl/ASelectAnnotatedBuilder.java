@@ -77,7 +77,11 @@ public abstract class ASelectAnnotatedBuilder<A extends Annotation> extends AMap
         return false;
     }
 
-    protected void setParameters(Collection<ConverterInfo.Arg> types, StringBuilder body) {
+    protected void setParameters(
+            ClassPool pool,
+            Collection<ConverterInfo.Arg> types,
+            StringBuilder body
+    ) throws NotFoundException, ClassNotFoundException {
         body.append("int idx = 0;\n");
 
         for (ConverterInfo.Arg arg : types) {
@@ -87,21 +91,53 @@ public abstract class ASelectAnnotatedBuilder<A extends Annotation> extends AMap
             final int idx = arg.idx + 1;
 
             final String argRef;
+            final Class<?> argTypeExpect;
             if (arg.methodName == null) {
                 argRef = "$" + idx;
+                argTypeExpect = type;
             } else {
-                argRef = "($" + idx + " == null ? null : $" + idx + "." + arg.methodName + "())";
+                argRef = "_" + idx + "_" + arg.methodName;
+
+                final boolean isPrimitive = type.isPrimitive();
+                if (isPrimitive) {
+                    argTypeExpect = Class.forName(((CtPrimitiveType) pool.get(type.getName())).getWrapperName());
+                } else {
+                    argTypeExpect = type;
+                }
+
+                final String argClassFQN = BuilderUtils.getName(argTypeExpect);
+                body.append(argClassFQN);
+                body.append(" ");
+                body.append(argRef);
+                body.append(" = ((");
+                body.append(argClassFQN);
+                body.append(") ($");
+                body.append(idx);
+                body.append(" == null ? null : ");
+                if (isPrimitive) {
+                    body.append(argClassFQN);
+                    body.append(".valueOf(");
+                }
+                body.append("$");
+                body.append(idx);
+                body.append(".");
+                body.append(arg.methodName);
+                body.append("()");
+                if (isPrimitive) {
+                    body.append(")");
+                }
+                body.append("));\n");
             }
 
             final Class<?> argType;
             final String value;
             if (typeMap != null) {
-                final String typeMapInstanceRef = typeMapper.getTypeMapInstanceRef(type);
+                final String typeMapInstanceRef = typeMapper.getTypeMapInstanceRef(argTypeExpect);
 
                 argType = typeMap.getDbType();
                 value = "(" + BuilderUtils.getName(argType) + ") " + typeMapInstanceRef + ".forStore(con, " + argRef + ")";
             } else {
-                argType = type;
+                argType = argTypeExpect;
                 value = argRef;
             }
 
@@ -348,7 +384,7 @@ public abstract class ASelectAnnotatedBuilder<A extends Annotation> extends AMap
 
         final Class<?>[] types = m.getParameterTypes();
         final Collection<ConverterInfo.Arg> args = substituteOptionalArgs(info.getArgumentList(), optionalIndexes, types);
-        setParameters(args, body);
+        setParameters(pool, args, body);
 
         final boolean processResultSet;
         switch (type) {

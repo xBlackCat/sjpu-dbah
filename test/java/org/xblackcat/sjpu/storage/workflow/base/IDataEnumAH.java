@@ -29,6 +29,9 @@ public interface IDataEnumAH extends IAH {
     @Sql("INSERT INTO list (id, name) VALUES (?, ?)")
     void put(int id, Numbers element) throws StorageException;
 
+    @Sql("INSERT INTO list (id, name) VALUES (?, ?)")
+    void put(ElementNumber el) throws StorageException;
+
     @Sql("SELECT\n" +
                  "  id, name\n" +
                  "FROM list\n" +
