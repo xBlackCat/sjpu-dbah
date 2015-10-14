@@ -3,6 +3,8 @@ package org.xblackcat.sjpu.storage.converter.builder;
 import javassist.CannotCompileException;
 import javassist.Modifier;
 import javassist.NotFoundException;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.xblackcat.sjpu.skel.BuilderUtils;
@@ -20,6 +22,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
 import java.sql.ResultSet;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 17.12.13 16:45
@@ -103,6 +106,8 @@ public class ConverterInfo {
         final Collection<Arg> args = new ArrayList<>();
         final Map<Integer, SqlArg> parts = new HashMap<>();
 
+        Map<Class<?>, List<Method>> expandingClassesInMethod = collectClassesToExpand(m);
+
         final Type[] parameterClasses = m.getGenericParameterTypes();
         final Annotation[][] anns = m.getParameterAnnotations();
         {
@@ -174,7 +179,18 @@ public class ConverterInfo {
                     } else if (sqlOptArg != null) {
                         throw new GeneratorException("@SqlOptArg should be specified only with @SqlPart annotation in " + m.toString());
                     } else {
-                        args.add(new Arg(rawArgClass, i));
+                        // Detect expanding class
+                        final List<Method> predefinedExpanders = expandingClassesInMethod.get(rawArgClass);
+                        if (predefinedExpanders != null) {
+                            expandClassWithMethods(args, i, predefinedExpanders);
+                        } else {
+                            final ExtractFields extractFields = rawArgClass.getAnnotation(ExtractFields.class);
+                            if (extractFields != null) {
+                                expandClassWithMethods(args, i, parseProperties(rawArgClass, extractFields.value()));
+                            } else {
+                                args.add(new Arg(rawArgClass, i));
+                            }
+                        }
                     }
                 }
                 i++;
@@ -270,6 +286,58 @@ public class ConverterInfo {
             }
         }
         return new ConverterInfo(realReturnClass, converter, consumerParamIdx, rawProcessorParamIndex, args, parts);
+    }
+
+    private static void expandClassWithMethods(Collection<Arg> args, int i, List<Method> methods) {
+        args.addAll(methods.stream().map(getter -> new Arg(getter.getReturnType(), i, getter.getName())).collect(Collectors.toList()));
+    }
+
+    protected static Map<Class<?>, List<Method>> collectClassesToExpand(Method m) {
+        final ExpandType[] expandTypes = m.getAnnotationsByType(ExpandType.class);
+        if (ArrayUtils.isEmpty(expandTypes)) {
+            return Collections.emptyMap();
+        }
+
+        final Map<Class<?>, List<Method>> map = new HashMap<>();
+        for (ExpandType et : expandTypes) {
+            final List<Method> methods = parseProperties(et.type(), et.fields());
+
+            map.put(et.type(), methods);
+        }
+        return map;
+    }
+
+    private static List<Method> parseProperties(Class<?> aClass, String[] fields) {
+        final List<Method> methods = new ArrayList<>(fields.length);
+        for (String property : fields) {
+            Method getter = isGetterExists(aClass, property);
+            if (getter == null) {
+                throw new GeneratorException("Invalid property/method name '" + property + "' is specified for expanding class " +
+                                                     aClass.getName() + ": no getter is found");
+            }
+            methods.add(getter);
+        }
+        return methods;
+    }
+
+    protected static Method isGetterExists(Class<?> aClass, String property) {
+        try {
+            return aClass.getMethod(property);
+        } catch (NoSuchMethodException e) {
+            // Fall through
+        }
+        final String remain = StringUtils.capitalize(property);
+        try {
+            return aClass.getMethod("get" + remain);
+        } catch (NoSuchMethodException e) {
+            // Fall through
+        }
+        try {
+            return aClass.getMethod("is" + remain);
+        } catch (NoSuchMethodException e) {
+            // Fall through
+        }
+        return null;
     }
 
     private static Class<?> getRaw(Type t) {
