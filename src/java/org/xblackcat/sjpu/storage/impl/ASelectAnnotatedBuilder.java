@@ -81,17 +81,28 @@ public abstract class ASelectAnnotatedBuilder<A extends Annotation> extends AMap
         body.append("int idx = 0;\n");
 
         for (ConverterInfo.Arg arg : types) {
-            Class<?> type = arg.clazz;
+            final Class<?> type = arg.clazz;
             final ITypeMap<?, ?> typeMap = typeMapper.hasTypeMap(type);
 
-            final String initString;
             final int idx = arg.idx + 1;
-            if (typeMap != null) {
-                final String value = "(" + BuilderUtils.getName(typeMap.getDbType()) + ") " +
-                        typeMapper.getTypeMapInstanceRef(type) + ".forStore(con, $" + idx + ")";
-                initString = AHBuilderUtils.setParamValue(typeMap.getDbType(), value);
+
+            final String argRef;
+            if (arg.methodName == null) {
+                argRef = "$" + idx;
             } else {
-                initString = AHBuilderUtils.setParamValue(type, "$" + idx);
+                argRef = "($" + idx + " == null ? null : $" + idx + "." + arg.methodName + "())";
+            }
+
+            final Class<?> argType;
+            final String value;
+            if (typeMap != null) {
+                final String typeMapInstanceRef = typeMapper.getTypeMapInstanceRef(type);
+
+                argType = typeMap.getDbType();
+                value = "(" + BuilderUtils.getName(argType) + ") " + typeMapInstanceRef + ".forStore(con, " + argRef + ")";
+            } else {
+                argType = type;
+                value = argRef;
             }
 
             if (arg.optional) {
@@ -100,7 +111,7 @@ public abstract class ASelectAnnotatedBuilder<A extends Annotation> extends AMap
                 body.append(" != null) {\n");
             }
             body.append("idx++;\n");
-            body.append(initString);
+            body.append(AHBuilderUtils.setParamValue(argType, value));
             if (arg.optional) {
                 body.append("}\n");
             }
@@ -182,7 +193,11 @@ public abstract class ASelectAnnotatedBuilder<A extends Annotation> extends AMap
     }
 
     @Override
-    public void buildMethod(CtClass accessHelper, Class<?> targetClass, Method m) throws NotFoundException, ReflectiveOperationException, CannotCompileException {
+    public void buildMethod(
+            CtClass accessHelper,
+            Class<?> targetClass,
+            Method m
+    ) throws NotFoundException, ReflectiveOperationException, CannotCompileException {
         final String methodName = m.getName();
 
         final Class<?> returnType = m.getReturnType();

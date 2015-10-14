@@ -19,10 +19,7 @@ import org.xblackcat.sjpu.storage.typemap.TypeMapper;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
 import java.sql.ResultSet;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * 17.12.13 16:45
@@ -365,37 +362,41 @@ public class ConverterInfo {
         public final Class<?> clazz;
         public final int idx;
         public final boolean optional;
+        public final String methodName;
 
         public Arg(Class<?> clazz, int idx) {
-            this(clazz, idx, false);
+            this(clazz, idx, null, false);
+        }
+
+        public Arg(Class<?> clazz, int idx, String methodName) {
+            this(clazz, idx, methodName, false);
         }
 
         public Arg(Class<?> clazz, int idx, boolean optional) {
+            this(clazz, idx, null, optional);
+        }
+
+        public Arg(Class<?> clazz, int idx, String methodName, boolean optional) {
             this.clazz = clazz;
             this.idx = idx;
             this.optional = optional;
+            this.methodName = methodName;
         }
 
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
-
             Arg arg = (Arg) o;
-
-            if (idx != arg.idx) return false;
-            if (optional != arg.optional) return false;
-            if (!clazz.equals(arg.clazz)) return false;
-
-            return true;
+            return idx == arg.idx &&
+                    optional == arg.optional &&
+                    Objects.equals(clazz, arg.clazz) &&
+                    Objects.equals(methodName, arg.methodName);
         }
 
         @Override
         public int hashCode() {
-            int result = clazz.hashCode();
-            result = 31 * result + idx;
-            result = 31 * result + (optional ? 1 : 0);
-            return result;
+            return Objects.hash(clazz, idx, optional, methodName);
         }
     }
 
@@ -406,6 +407,20 @@ public class ConverterInfo {
         public SqlArg(String sqlPart, int argIdx) {
             this.sqlPart = sqlPart;
             this.argIdx = argIdx;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            SqlArg sqlArg = (SqlArg) o;
+            return argIdx == sqlArg.argIdx &&
+                    Objects.equals(sqlPart, sqlArg.sqlPart);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(sqlPart, argIdx);
         }
 
         @Override
