@@ -114,5 +114,4 @@ class DDLAnnotatedBuilder implements IMethodBuilder<DDL> {
             log.trace("Result method: " + method);
         }
     }
-
 }

@@ -34,7 +34,11 @@ class CloseResourcesAnnotatedBuilder implements IMethodBuilder<CloseResources> {
     }
 
     @Override
-    public void buildMethod(CtClass accessHelper, Class<?> targetClass, Method m) throws NotFoundException, ReflectiveOperationException, CannotCompileException {
+    public void buildMethod(
+            CtClass accessHelper,
+            Class<?> targetClass,
+            Method m
+    ) throws NotFoundException, ReflectiveOperationException, CannotCompileException {
         final String methodName = m.getName();
         final Class<?> returnType = m.getReturnType();
 

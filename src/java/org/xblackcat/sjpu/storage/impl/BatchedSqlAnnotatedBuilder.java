@@ -3,32 +3,31 @@ package org.xblackcat.sjpu.storage.impl;
 import javassist.*;
 import org.xblackcat.sjpu.skel.BuilderUtils;
 import org.xblackcat.sjpu.skel.GeneratorException;
-import org.xblackcat.sjpu.storage.ann.QueryType;
-import org.xblackcat.sjpu.storage.ann.Sql;
 import org.xblackcat.sjpu.storage.ann.SqlPart;
 import org.xblackcat.sjpu.storage.consumer.IRowSetConsumer;
-import org.xblackcat.sjpu.storage.converter.builder.ConverterInfo;
 import org.xblackcat.sjpu.storage.typemap.TypeMapper;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.sql.PreparedStatement;
-import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
 
 /**
  * 11.03.13 13:18
  *
  * @author xBlackCat
  */
-class BatchedSqlAnnotatedBuilder extends ASelectAnnotatedBuilder<Sql> {
+class BatchedSqlAnnotatedBuilder extends SqlAnnotatedBuilder {
     public BatchedSqlAnnotatedBuilder(TypeMapper typeMapper, Map<Class<?>, Class<? extends IRowSetConsumer>> rowSetConsumers) {
-        super(Sql.class, typeMapper, rowSetConsumers);
+        super(typeMapper, rowSetConsumers);
     }
 
     @Override
-    public void buildMethod(CtClass accessHelper, Class<?> targetClass, Method m) throws NotFoundException, ReflectiveOperationException, CannotCompileException {
+    public void buildMethod(
+            CtClass accessHelper,
+            Class<?> targetClass,
+            Method m
+    ) throws NotFoundException, ReflectiveOperationException, CannotCompileException {
         for (Annotation[] aa : m.getParameterAnnotations()) {
             for (Annotation a : aa) {
                 if (a instanceof SqlPart) {
@@ -78,36 +77,4 @@ class BatchedSqlAnnotatedBuilder extends ASelectAnnotatedBuilder<Sql> {
     @Override
     protected void appendCloseStatement(StringBuilder body) {
     }
-
-    @Override
-    protected QueryType getQueryType(Method m) {
-        final String sql = m.getAnnotation(getAnnotationClass()).value();
-
-        final QueryType type;
-        {
-            final Matcher matcher = AHBuilderUtils.FIRST_WORD_SQL.matcher(sql);
-            if (matcher.find()) {
-                final String word = matcher.group(1);
-                if ("select".equalsIgnoreCase(word)) {
-                    type = QueryType.Select;
-                } else if ("insert".equalsIgnoreCase(word)) {
-                    type = QueryType.Insert;
-                } else if ("update".equalsIgnoreCase(word)) {
-                    type = QueryType.Update;
-                } else {
-                    type = QueryType.Other;
-                }
-            } else {
-                type = QueryType.Other;
-            }
-        }
-        return type;
-    }
-
-    @Override
-    protected List<Integer> appendDefineSql(StringBuilder body, ConverterInfo info, Method m) {
-        final String sql = m.getAnnotation(getAnnotationClass()).value();
-        return SqlStringUtils.appendSqlWithParts(body, sql, info.getSqlParts());
-    }
-
 }

@@ -7,6 +7,7 @@ import org.xblackcat.sjpu.storage.consumer.IRowSetConsumer;
 import org.xblackcat.sjpu.storage.typemap.TypeMapper;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
 import java.util.Map;
 
 /**
@@ -43,5 +44,9 @@ public abstract class AMappableMethodBuilder<A extends Annotation> implements IM
     @Override
     public Class<A> getAnnotationClass() {
         return annClass;
+    }
+
+    protected A getAnnotation(Method m) {
+        return m.getAnnotation(getAnnotationClass());
     }
 }

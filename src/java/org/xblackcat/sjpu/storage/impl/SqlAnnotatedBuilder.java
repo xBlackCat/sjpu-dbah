@@ -23,7 +23,7 @@ class SqlAnnotatedBuilder extends ASelectAnnotatedBuilder<Sql> {
 
     @Override
     protected QueryType getQueryType(Method m) {
-        final String sql = m.getAnnotation(getAnnotationClass()).value();
+        final String sql = getAnnotation(m).value();
 
         final QueryType type;
         {
@@ -48,7 +48,7 @@ class SqlAnnotatedBuilder extends ASelectAnnotatedBuilder<Sql> {
 
     @Override
     protected List<Integer> appendDefineSql(StringBuilder body, ConverterInfo info, Method m) {
-        final String sql = m.getAnnotation(getAnnotationClass()).value();
+        final String sql = getAnnotation(m).value();
         return SqlStringUtils.appendSqlWithParts(body, sql, info.getSqlParts());
     }
 

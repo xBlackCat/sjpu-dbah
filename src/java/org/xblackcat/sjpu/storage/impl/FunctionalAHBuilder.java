@@ -25,7 +25,7 @@ class FunctionalAHBuilder extends ASelectAnnotatedBuilder<SqlType> {
     }
 
     protected QueryType getQueryType(Method m) {
-        return m.getAnnotation(getAnnotationClass()).value();
+        return getAnnotation(m).value();
     }
 
     protected List<Integer> appendDefineSql(StringBuilder body, ConverterInfo info, Method m) {
