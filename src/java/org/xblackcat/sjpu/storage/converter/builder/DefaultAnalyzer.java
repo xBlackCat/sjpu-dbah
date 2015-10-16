@@ -32,7 +32,9 @@ class DefaultAnalyzer extends AnAnalyser {
         final String suffix;
         final Constructor<?> targetConstructor;
 
-        if (constructors.length == 1) {
+        if (constructors.length == 0) {
+            throw new GeneratorException("Return object " + clazz + " has no public constructors");
+        } else if (constructors.length == 1) {
             targetConstructor = constructors[0];
             suffix = "";
         } else {
