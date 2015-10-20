@@ -7,7 +7,12 @@ import javassist.NotFoundException;
 import org.apache.commons.lang3.StringUtils;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -129,5 +134,66 @@ public class BuilderUtils {
 
     public static Class<?> getClass(String fqn, ClassPool pool) throws ClassNotFoundException {
         return Class.forName(fqn, true, pool.getClassLoader());
+    }
+
+    /**
+     * Method for resolving classes for all available type variables for the given type
+     *
+     * @param type querying type
+     * @return map with existing type variables as keys with {@linkplain Class} object if the target class is resolved.
+     */
+    public static Map<TypeVariable<?>, Class<?>> resolveTypeVariables(Type type) {
+        final HashMap<TypeVariable<?>, Type> result = new HashMap<>();
+        collectTypeVariables(result, type);
+        final Map<TypeVariable<?>, Class<?>> map = new HashMap<>();
+
+        for (TypeVariable<?> tv : result.keySet()) {
+            TypeVariable<?> key = tv;
+            Type resolved;
+            do {
+                resolved = result.get(key);
+                if (resolved instanceof TypeVariable<?>) {
+                    key = (TypeVariable<?>) resolved;
+                }
+            } while (resolved instanceof TypeVariable<?>);
+            final Class<?> resolvedClass;
+            if (resolved instanceof Class<?>) {
+                resolvedClass = (Class<?>) resolved;
+            } else if (resolved instanceof ParameterizedType) {
+                ParameterizedType pt = (ParameterizedType) resolved;
+                resolvedClass = (Class<?>) pt.getRawType();
+            } else {
+                continue;
+            }
+            map.put(tv, resolvedClass);
+        }
+
+        return map;
+    }
+
+    private static void collectTypeVariables(Map<TypeVariable<?>, Type> result, Type type) {
+        if (type == null) {
+            return;
+        }
+        if (type instanceof Class<?>) {
+            final Class aClass = (Class) type;
+            collectTypeVariables(result, aClass.getGenericSuperclass());
+            for (Type i : aClass.getGenericInterfaces()) {
+                collectTypeVariables(result, i);
+            }
+        } else if (type instanceof ParameterizedType) {
+            ParameterizedType pType = (ParameterizedType) type;
+            final Type[] tArgs = pType.getActualTypeArguments();
+            final Type rawType = pType.getRawType();
+            if (rawType instanceof Class<?>) {
+                final TypeVariable[] tVar = ((Class) rawType).getTypeParameters();
+                if (tArgs.length == tVar.length) {
+                    for (int i = 0; i < tArgs.length; i++) {
+                        result.put(tVar[i], tArgs[i]);
+                    }
+                }
+                collectTypeVariables(result, rawType);
+            }
+        }
     }
 }
