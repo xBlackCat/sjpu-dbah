@@ -152,4 +152,16 @@ public interface IDataEnumAH extends IAH {
 
     @Sql("DELETE FROM list")
     void dropElements() throws StorageException;
+
+    @Sql("SELECT\n" +
+                 "  id, name\n" +
+                 "FROM list\n" +
+                 "WHERE id = ?  ORDER ")
+    ElementNumber getElementInvalid(Integer id) throws StorageException;
+
+    @Sql("SELECT\n" +
+            "  id, name\n" +
+            "FROM list\n" +
+            "WHERE id = ? and name = ? ORDER ")
+    ElementNumber getElementByObjectInvalid(ElementNumber en) throws StorageException;
 }

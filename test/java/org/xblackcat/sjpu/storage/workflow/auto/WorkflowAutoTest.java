@@ -208,6 +208,53 @@ public class WorkflowAutoTest {
             Assert.assertNotNull(iElement);
             Assert.assertEquals(n, iElement.getName());
             Assert.assertEquals(n.ordinal(), iElement.getId());
+
+            try {
+                dataAH.getElementInvalid(n.ordinal());
+                Assert.fail("Expecting a StorageException");
+            } catch (StorageException e) {
+                Assert.assertEquals("Can not execute query SELECT\n" +
+                                            "  id, name\n" +
+                                            "FROM list\n" +
+                                            "WHERE id = /* $1 = (java.lang.Integer)*/ " + n.ordinal() + "  ORDER ", e.getMessage());
+            }
+
+            try {
+                dataAH.getElementByObjectInvalid(element);
+                Assert.fail("Expecting a StorageException");
+            } catch (StorageException e) {
+                Assert.assertEquals(
+                        "Can not execute query SELECT\n" +
+                                "  id, name\n" +
+                                "FROM list\n" +
+                                "WHERE id = /* $1#getId() = (int)*/ " +
+                                element.getId() +
+                                " and name = /* $1#getName() = (org.xblackcat.sjpu.storage.workflow.data.Numbers)*/ " +
+                                element.getName() +
+                                " ORDER ",
+                        e.getMessage()
+                );
+            }
+        }
+
+        try {
+            dataAH.getElementInvalid(null);
+            Assert.fail("Expecting a StorageException");
+        } catch (StorageException e) {
+            Assert.assertEquals("Can not execute query SELECT\n" +
+                                        "  id, name\n" +
+                                        "FROM list\n" +
+                                        "WHERE id = /* $1 = (java.lang.Integer)*/ NULL  ORDER ", e.getMessage());
+        }
+
+        try {
+            dataAH.getElementByObjectInvalid(null);
+            Assert.fail("Expecting a StorageException");
+        } catch (StorageException e) {
+            Assert.assertEquals("Can not execute query SELECT\n" +
+                                        "  id, name\n" +
+                                        "FROM list\n" +
+                                        "WHERE id = /* $1#getId() = (int)*/ NULL and name = /* $1#getName() = (org.xblackcat.sjpu.storage.workflow.data.Numbers)*/ NULL ORDER ", e.getMessage());
         }
 
         Assert.assertNull(dataAH.get(null));

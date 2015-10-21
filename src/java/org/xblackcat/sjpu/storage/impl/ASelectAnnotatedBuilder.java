@@ -3,6 +3,7 @@ package org.xblackcat.sjpu.storage.impl;
 import javassist.*;
 import org.xblackcat.sjpu.skel.BuilderUtils;
 import org.xblackcat.sjpu.skel.GeneratorException;
+import org.xblackcat.sjpu.storage.StorageUtils;
 import org.xblackcat.sjpu.storage.ann.QueryType;
 import org.xblackcat.sjpu.storage.ann.RowSetConsumer;
 import org.xblackcat.sjpu.storage.consumer.IRowSetConsumer;
@@ -409,6 +410,11 @@ public abstract class ASelectAnnotatedBuilder<A extends Annotation> extends AMap
                 break;
         }
 
+        String debugSqlBuilder = AHBuilderUtils.CN_StorageUtils +
+                ".constructDebugSQL(sql, " +
+                StorageUtils.converterArgsToJava(info.getArgumentList()) +
+                ", $args)";
+
         if (processResultSet) {
             body.append("try {\n");
             if (info.getRawProcessorParamIndex() == null) {
@@ -435,21 +441,18 @@ public abstract class ASelectAnnotatedBuilder<A extends Annotation> extends AMap
                             "throw new "
             );
             body.append(AHBuilderUtils.CN_StorageException);
-            body.append("(\"Can not consume result for query \"+");
-            body.append(AHBuilderUtils.CN_StorageUtils);
-            body.append(
-                    ".constructDebugSQL(sql, $args),e);\n" +
-                            "} catch (java.lang.RuntimeException e) {\n" +
-                            "throw new "
-            );
+            body.append("(\"Failed to consume result for query \"+");
+            body.append(debugSqlBuilder);
+            body.append(",e);\n");
+            body.append("} catch (java.lang.RuntimeException e) {\n");
+            body.append("throw new ");
             body.append(AHBuilderUtils.CN_StorageException);
             body.append("(\"Unexpected exception occurs while consuming result for query \"+");
-            body.append(AHBuilderUtils.CN_StorageUtils);
-            body.append(
-                    ".constructDebugSQL(sql, $args),e);\n" +
-                            "} finally {\n" +
-                            "rs.close();\n" +
-                            "}\n"
+            body.append(debugSqlBuilder);
+            body.append(",e);\n");
+            body.append("} finally {\n" +
+                                "rs.close();\n" +
+                                "}\n"
             );
         }
 
@@ -463,11 +466,10 @@ public abstract class ASelectAnnotatedBuilder<A extends Annotation> extends AMap
         );
         body.append(AHBuilderUtils.CN_StorageException);
         body.append("(\"Can not execute query \"+");
-        body.append(AHBuilderUtils.CN_StorageUtils);
-        body.append(
-                ".constructDebugSQL(sql, $args),e);\n" +
-                        "}\n" +
-                        "}"
+        body.append(debugSqlBuilder);
+        body.append(",e);\n");
+        body.append("}\n" +
+                            "}"
         );
 
         addMethod(accessHelper, m, ctRealReturnType, targetReturnType, body.toString(), pool);
