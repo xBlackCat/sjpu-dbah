@@ -36,6 +36,19 @@ public interface IDataEnumAH extends IAH {
     ElementNumber getElement(Integer id) throws StorageException;
 
     @Sql("SELECT\n" +
+            "  id, name\n" +
+            "FROM list\n" +
+            "WHERE id = ? and name = ?")
+    ElementNumber getElementByObject(ElementNumber en) throws StorageException;
+
+    @Sql("SELECT\n" +
+            "  id, name\n" +
+            "FROM list\n" +
+            "WHERE id = ? and name = ?")
+    @ExpandType(type = IElement.class, fields = {"id", "name"})
+    ElementNumber getElementByInterface(IElement<Numbers> en) throws StorageException;
+
+    @Sql("SELECT\n" +
                  "  id, name\n" +
                  "FROM list\n" +
                  "WHERE id = ?")

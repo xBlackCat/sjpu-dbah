@@ -194,6 +194,16 @@ public class WorkflowAutoTest {
             Assert.assertEquals(n, element.name);
             Assert.assertEquals(n.ordinal(), element.id);
 
+            final ElementNumber elementByObj = dataAH.getElementByObject(element);
+            Assert.assertNotNull(elementByObj);
+            Assert.assertEquals(n, elementByObj.name);
+            Assert.assertEquals(n.ordinal(), elementByObj.id);
+
+            final ElementNumber elementByInt = dataAH.getElementByInterface(element);
+            Assert.assertNotNull(elementByInt);
+            Assert.assertEquals(n, elementByInt.name);
+            Assert.assertEquals(n.ordinal(), elementByInt.id);
+
             final IElement<Numbers> iElement = dataAH.getIElement(n.ordinal());
             Assert.assertNotNull(iElement);
             Assert.assertEquals(n, iElement.getName());

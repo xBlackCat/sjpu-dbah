@@ -180,13 +180,14 @@ public class ConverterInfo {
                         throw new GeneratorException("@SqlOptArg should be specified only with @SqlPart annotation in " + m.toString());
                     } else {
                         // Detect expanding class
-                        final List<Method> predefinedExpanders = expandingClassesInMethod.get(rawArgClass);
+                        final List<Method> predefinedExpanders = findExpandingType(expandingClassesInMethod, rawArgClass);
                         if (predefinedExpanders != null) {
-                            expandClassWithMethods(args, i, predefinedExpanders);
+                            expandClassWithMethods(args, i, predefinedExpanders, t);
                         } else {
-                            final ExtractFields extractFields = rawArgClass.getAnnotation(ExtractFields.class);
+                            final ExtractFields extractFields = searchExtractFieldAnn(rawArgClass);
                             if (extractFields != null) {
-                                expandClassWithMethods(args, i, parseProperties(rawArgClass, extractFields.value()));
+                                final List<Method> methodList = parseProperties(rawArgClass, extractFields.value());
+                                expandClassWithMethods(args, i, methodList, t);
                             } else {
                                 args.add(new Arg(rawArgClass, i));
                             }
@@ -288,8 +289,41 @@ public class ConverterInfo {
         return new ConverterInfo(realReturnClass, converter, consumerParamIdx, rawProcessorParamIndex, args, parts);
     }
 
-    private static void expandClassWithMethods(Collection<Arg> args, int i, List<Method> methods) {
-        args.addAll(methods.stream().map(getter -> new Arg(getter.getReturnType(), i, getter.getName())).collect(Collectors.toList()));
+    private static ExtractFields searchExtractFieldAnn(Class<?> rawArgClass) {
+        if (rawArgClass == null) {
+            return null;
+        }
+
+        final ExtractFields extractFields = rawArgClass.getAnnotation(ExtractFields.class);
+        if (extractFields != null) {
+            return extractFields;
+        }
+
+        return searchExtractFieldAnn(rawArgClass.getSuperclass());
+    }
+
+    private static List<Method> findExpandingType(Map<Class<?>, List<Method>> expandingClassesInMethod, Class<?> rawArgClass) {
+        if (!expandingClassesInMethod.isEmpty()) {
+            for (Map.Entry<Class<?>, List<Method>> e : expandingClassesInMethod.entrySet()) {
+                if (e.getKey().isAssignableFrom(rawArgClass)) {
+                    return e.getValue();
+                }
+            }
+        }
+        return null;
+    }
+
+    private static void expandClassWithMethods(Collection<Arg> args, int i, List<Method> methods, Type t) {
+        final Map<TypeVariable<?>, Class<?>> typeVariables = BuilderUtils.resolveTypeVariables(t);
+
+        args.addAll(methods.stream().map(getter -> {
+            final Type type = getter.getGenericReturnType();
+            final Class<?> returnType = BuilderUtils.substituteTypeVariables(typeVariables, type);
+            if (returnType == null) {
+                throw new GeneratorException("Failed to resolve target return class for method " + getter);
+            }
+            return new Arg(returnType, i, getter.getName());
+        }).collect(Collectors.toList()));
     }
 
     protected static Map<Class<?>, List<Method>> collectClassesToExpand(Method m) {
@@ -298,7 +332,7 @@ public class ConverterInfo {
             return Collections.emptyMap();
         }
 
-        final Map<Class<?>, List<Method>> map = new HashMap<>();
+        final Map<Class<?>, List<Method>> map = new LinkedHashMap<>();
         for (ExpandType et : expandTypes) {
             final List<Method> methods = parseProperties(et.type(), et.fields());
 

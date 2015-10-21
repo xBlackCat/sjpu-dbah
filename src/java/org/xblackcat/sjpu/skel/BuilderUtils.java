@@ -136,6 +136,29 @@ public class BuilderUtils {
         return Class.forName(fqn, true, pool.getClassLoader());
     }
 
+    public static Class<?> substituteTypeVariables(Map<TypeVariable<?>, Class<?>> map, Type typeToResolve) {
+        if (typeToResolve instanceof Class<?>) {
+            return (Class<?>) typeToResolve;
+        } else if (typeToResolve instanceof ParameterizedType) {
+            return substituteTypeVariables(map, ((ParameterizedType) typeToResolve).getRawType());
+        } else if (typeToResolve instanceof TypeVariable<?>) {
+            final TypeVariable<?> typeVariable = (TypeVariable<?>) typeToResolve;
+            final Class<?> aClass = map.get(typeVariable);
+            if (aClass != null) {
+                return aClass;
+            }
+
+            final Type[] bounds = typeVariable.getBounds();
+            if (bounds.length > 0) {
+                return substituteTypeVariables(map, bounds[0]);
+            }
+
+            return Object.class;
+        }
+
+        return null;
+    }
+
     /**
      * Method for resolving classes for all available type variables for the given type
      *

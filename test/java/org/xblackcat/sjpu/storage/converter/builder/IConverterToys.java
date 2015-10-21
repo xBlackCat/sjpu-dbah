@@ -24,4 +24,10 @@ public interface IConverterToys {
     @ExpandType(type = NamedItem.class, fields = {"id", "name"})
     @ExpandType(type = AutoNamedItem.class, fields = {"name"})
     int overrideExpandingClass(int a, NamedItem item, AutoNamedItem item2) throws StorageException;
+
+    int testingGenerics(int a, NamedId value) throws StorageException;
+
+    int testingGenerics2(int a, NamedStrangeId value) throws StorageException;
+
+    int testingGenerics3(int a, NamedStrangeId value) throws StorageException;
 }
