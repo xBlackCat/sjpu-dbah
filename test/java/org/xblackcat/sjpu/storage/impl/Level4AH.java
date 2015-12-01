@@ -19,7 +19,7 @@ public abstract class Level4AH extends Level3AH {
     }
 
     @Override
-    protected void updateNothingAgain() throws StorageException {
+    public void updateNothingAgain() throws StorageException {
 
     }
 }

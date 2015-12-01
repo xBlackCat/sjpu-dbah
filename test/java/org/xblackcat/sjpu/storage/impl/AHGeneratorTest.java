@@ -239,7 +239,7 @@ public class AHGeneratorTest {
             Assert.fail("Exception expected");
         } catch (Exception e) {
             Assert.assertEquals(
-                    "Method public abstract org.xblackcat.sjpu.storage.impl.NoDefaultData org.xblackcat.sjpu.storage.impl.ITObjFail3AH.getException() throws org.xblackcat.sjpu.storage.StorageException should be annotated with ONLY one of the following annotations:  [interface org.xblackcat.sjpu.storage.ann.Sql, interface org.xblackcat.sjpu.storage.ann.DDL]",
+                    "Method public abstract org.xblackcat.sjpu.storage.impl.NoDefaultData org.xblackcat.sjpu.storage.impl.ITObjFail3AH.getException() throws org.xblackcat.sjpu.storage.StorageException should meet only one of the following requirements: annotated with org.xblackcat.sjpu.storage.ann.Sql or annotated with org.xblackcat.sjpu.storage.ann.DDL",
                     e.getMessage()
             );
         }

@@ -11,7 +11,7 @@ import java.lang.reflect.Modifier;
  * @author xBlackCat
  */
 public class FunctionalClassBuilder<Base> extends ClassBuilder<Base> {
-    public FunctionalClassBuilder(IDefiner definerF, IMethodBuilder<?>... builders) {
+    public FunctionalClassBuilder(IDefiner definerF, IMethodBuilder... builders) {
         super(definerF, builders);
     }
 

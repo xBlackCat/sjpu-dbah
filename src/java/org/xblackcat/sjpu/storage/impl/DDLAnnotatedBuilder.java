@@ -3,11 +3,8 @@ package org.xblackcat.sjpu.storage.impl;
 import javassist.*;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringEscapeUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.xblackcat.sjpu.skel.BuilderUtils;
 import org.xblackcat.sjpu.skel.GeneratorException;
-import org.xblackcat.sjpu.skel.IMethodBuilder;
 import org.xblackcat.sjpu.storage.ann.DDL;
 
 import java.lang.reflect.Method;
@@ -17,21 +14,20 @@ import java.lang.reflect.Method;
  *
  * @author xBlackCat
  */
-class DDLAnnotatedBuilder implements IMethodBuilder<DDL> {
-    private static final Log log = LogFactory.getLog(DDLAnnotatedBuilder.class);
+class DDLAnnotatedBuilder extends AnAnnotatedMethodBuilder<DDL> {
     private ClassPool pool;
 
     DDLAnnotatedBuilder(ClassPool classPool) {
+        super(DDL.class);
         pool = classPool;
     }
 
     @Override
-    public Class<DDL> getAnnotationClass() {
-        return DDL.class;
-    }
-
-    @Override
-    public void buildMethod(CtClass accessHelper, Class<?> targetClass, Method m) throws NotFoundException, ReflectiveOperationException, CannotCompileException {
+    public void buildMethod(
+            CtClass accessHelper,
+            Class<?> targetClass,
+            Method m
+    ) throws NotFoundException, ReflectiveOperationException, CannotCompileException {
         final String[] ddls = m.getAnnotation(getAnnotationClass()).value();
 
         final String methodName = m.getName();

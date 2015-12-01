@@ -4,7 +4,6 @@ import javassist.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -15,17 +14,15 @@ import java.util.stream.Collectors;
  * @author xBlackCat
  */
 public class ClassBuilder<Base> implements IBuilder<Base> {
-    private final Map<Class<? extends Annotation>, IMethodBuilder> methodBuilders = new LinkedHashMap<>();
+    private final List<IMethodBuilder> methodBuilders;
     private final IDefiner definer;
 
     protected final Log log = LogFactory.getLog(getClass());
 
-    public ClassBuilder(IDefiner definer, IMethodBuilder<?>... builders) {
+    public ClassBuilder(IDefiner definer, IMethodBuilder... builders) {
         this.definer = definer;
 
-        for (IMethodBuilder<?> builder : builders) {
-            methodBuilders.put(builder.getAnnotationClass(), builder);
-        }
+        methodBuilders = Arrays.asList(builders);
     }
 
     public <T extends Base> Class<? extends T> build(Class<T> target) throws GeneratorException {
@@ -106,19 +103,34 @@ public class ClassBuilder<Base> implements IBuilder<Base> {
                 continue;
             }
 
-            try {
-                // Check non-public abstract method for implementation in the root class
-                root.getMethod(m.getName(), m.getParameterTypes());
-            } catch (NoSuchMethodException e) {
-                // Method is not found - build it!
-
-                if (implementedMethods.add(method)) {
-                    implementMethod(accessHelper, target, m);
+            if (!root.equals(target)) {
+                if (checkIsDeclared(root, target, m)) {
+                    continue;
                 }
+            }
+
+            if (implementedMethods.add(method)) {
+                implementMethod(accessHelper, target, m);
             }
         }
 
         implementNonPublicMethods(root, target.getSuperclass(), accessHelper, implementedMethods);
+    }
+
+    private static boolean checkIsDeclared(Class<?> root, Class<?> tillSuperClass, Method m) {
+        try {
+            // Check non-public abstract method for implementation in the root class
+            root.getDeclaredMethod(m.getName(), m.getParameterTypes());
+            return true;
+        } catch (NoSuchMethodException e) {
+            // Method is not found - build it!
+        }
+        final Class<?> superclass = root.getSuperclass();
+        if (superclass == null || superclass.equals(tillSuperClass)) {
+            return false;
+        }
+
+        return checkIsDeclared(superclass, tillSuperClass, m);
     }
 
     private <T extends Base> CtClass defineCtClassByInterface(Class<T> target) throws NotFoundException, CannotCompileException {
@@ -158,23 +170,25 @@ public class ClassBuilder<Base> implements IBuilder<Base> {
             return;
         }
 
-        List<Class<? extends Annotation>> annotations =
-                methodBuilders.keySet().stream().filter(m::isAnnotationPresent).collect(Collectors.toList());
+        List<IMethodBuilder> builders = methodBuilders.stream().filter(b -> b.isAccepted(m)).collect(Collectors.toList());
 
-        if (annotations.isEmpty()) {
+        if (builders.isEmpty()) {
             throw new GeneratorException(
-                    "Method " + m + " should be annotated with one of the following annotations:  " + methodBuilders.keySet()
+                    "Not found builders to process method " + m + ". Method should be " +
+                            methodBuilders.stream().map(IMethodBuilder::requirementDescription).collect(Collectors.joining(" or "))
             );
         }
 
-        if (annotations.size() > 1) {
+        if (builders.size() > 1) {
             throw new GeneratorException(
-                    "Method " + m + " should be annotated with ONLY one of the following annotations:  " + methodBuilders.keySet()
+                    "Method " + m + " should meet only one of the following requirements: " +
+                            methodBuilders.stream().map(IMethodBuilder::requirementDescription).collect(Collectors.joining(" or "))
+
             );
         }
 
         try {
-            methodBuilders.get(annotations.get(0)).buildMethod(accessHelper, targetClass, m);
+            builders.get(0).buildMethod(accessHelper, targetClass, m);
         } catch (NotFoundException | CannotCompileException | ReflectiveOperationException e) {
             throw new GeneratorException("Exception occurs while building method " + m, e);
         } catch (GeneratorException e) {
@@ -197,24 +211,16 @@ public class ClassBuilder<Base> implements IBuilder<Base> {
 
         @Override
         public boolean equals(Object o) {
-            if (this == o) {
-                return true;
-            }
-            if (!(o instanceof ImplementedMethod)) {
-                return false;
-            }
-
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
             ImplementedMethod that = (ImplementedMethod) o;
-
-            return name.equals(that.name) && Arrays.equals(parameters, that.parameters);
-
+            return Objects.equals(name, that.name) &&
+                    Arrays.equals(parameters, that.parameters);
         }
 
         @Override
         public int hashCode() {
-            int result = name.hashCode();
-            result = 31 * result + Arrays.hashCode(parameters);
-            return result;
+            return Objects.hash(name, parameters);
         }
     }
 

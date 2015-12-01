@@ -9,7 +9,7 @@ import org.xblackcat.sjpu.storage.connection.IConnectionFactory;
  *
  * @author xBlackCat
  */
-public abstract class Level1AH extends AnAH {
+public abstract class Level1AH extends AnAH implements ILevel1AH {
     protected Level1AH(IConnectionFactory helper) {
         super(helper);
     }

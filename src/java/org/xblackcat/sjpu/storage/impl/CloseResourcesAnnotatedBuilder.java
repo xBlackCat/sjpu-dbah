@@ -2,11 +2,8 @@ package org.xblackcat.sjpu.storage.impl;
 
 import javassist.*;
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.xblackcat.sjpu.skel.BuilderUtils;
 import org.xblackcat.sjpu.skel.GeneratorException;
-import org.xblackcat.sjpu.skel.IMethodBuilder;
 import org.xblackcat.sjpu.storage.ann.CloseResources;
 
 import java.lang.annotation.Annotation;
@@ -17,20 +14,15 @@ import java.lang.reflect.Method;
  *
  * @author xBlackCat
  */
-class CloseResourcesAnnotatedBuilder implements IMethodBuilder<CloseResources> {
-    private static final Log log = LogFactory.getLog(CloseResourcesAnnotatedBuilder.class);
+class CloseResourcesAnnotatedBuilder extends AnAnnotatedMethodBuilder<CloseResources> {
     private final ClassPool pool;
     private final Class<? extends Annotation>[] checkAnnotationClasses;
 
     @SafeVarargs
     CloseResourcesAnnotatedBuilder(ClassPool classPool, Class<? extends Annotation>... checkAnnotationClasses) {
+        super(CloseResources.class);
         pool = classPool;
         this.checkAnnotationClasses = checkAnnotationClasses;
-    }
-
-    @Override
-    public Class<CloseResources> getAnnotationClass() {
-        return CloseResources.class;
     }
 
     @Override

@@ -15,6 +15,6 @@ public abstract class Level2AH extends Level1AH {
     }
 
     @Sql("UPDATE nothing")
-    protected abstract void updateNothingAgain() throws StorageException;
+    public abstract void updateNothingAgain() throws StorageException;
 
 }
