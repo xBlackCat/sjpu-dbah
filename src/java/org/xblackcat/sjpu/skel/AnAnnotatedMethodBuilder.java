@@ -1,8 +1,7 @@
-package org.xblackcat.sjpu.storage.impl;
+package org.xblackcat.sjpu.skel;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.xblackcat.sjpu.skel.IMethodBuilder;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;

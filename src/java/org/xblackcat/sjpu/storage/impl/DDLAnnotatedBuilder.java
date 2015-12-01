@@ -3,6 +3,7 @@ package org.xblackcat.sjpu.storage.impl;
 import javassist.*;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringEscapeUtils;
+import org.xblackcat.sjpu.skel.AnAnnotatedMethodBuilder;
 import org.xblackcat.sjpu.skel.BuilderUtils;
 import org.xblackcat.sjpu.skel.GeneratorException;
 import org.xblackcat.sjpu.storage.ann.DDL;

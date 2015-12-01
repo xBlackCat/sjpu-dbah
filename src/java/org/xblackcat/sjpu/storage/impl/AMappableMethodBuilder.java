@@ -1,5 +1,6 @@
 package org.xblackcat.sjpu.storage.impl;
 
+import org.xblackcat.sjpu.skel.AnAnnotatedMethodBuilder;
 import org.xblackcat.sjpu.storage.consumer.IRowSetConsumer;
 import org.xblackcat.sjpu.storage.typemap.TypeMapper;
 
