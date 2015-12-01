@@ -1,8 +1,8 @@
 package org.xblackcat.sjpu.storage;
 
 import org.apache.commons.lang3.ArrayUtils;
-import org.xblackcat.sjpu.skel.BuilderUtils;
-import org.xblackcat.sjpu.skel.GeneratorException;
+import org.xblackcat.sjpu.builder.BuilderUtils;
+import org.xblackcat.sjpu.builder.GeneratorException;
 import org.xblackcat.sjpu.storage.connection.IConnectionFactory;
 import org.xblackcat.sjpu.storage.connection.IDBConfig;
 import org.xblackcat.sjpu.storage.connection.SimplePooledConnectionFactory;

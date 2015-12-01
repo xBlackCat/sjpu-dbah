@@ -2,7 +2,7 @@ package org.xblackcat.sjpu.storage.workflow.auto;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.xblackcat.sjpu.skel.GeneratorException;
+import org.xblackcat.sjpu.builder.GeneratorException;
 import org.xblackcat.sjpu.storage.*;
 import org.xblackcat.sjpu.storage.ann.Sql;
 import org.xblackcat.sjpu.storage.consumer.IRowConsumer;
@@ -26,7 +26,7 @@ public class FailTest {
         }
     }
 
-    public static interface ITestAH extends IAH {
+    public interface ITestAH extends IAH {
         @Sql("SELECT 1")
         /*@MapRowTo(String.class) - check missing annotation*/
         void getList(IRowConsumer rowConsumer) throws StorageException;
@@ -43,7 +43,7 @@ public class FailTest {
         }
     }
 
-    public static interface ITestArgAH extends IAH {
+    public interface ITestArgAH extends IAH {
         @Sql("SELECT 1")
         /*@MapRowTo(String.class) - check missing annotation*/
         void getList(IRowConsumer<IElement> rowConsumer) throws StorageException;

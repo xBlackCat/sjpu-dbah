@@ -4,7 +4,7 @@ import javassist.CannotCompileException;
 import javassist.NotFoundException;
 import org.junit.Assert;
 import org.junit.Test;
-import org.xblackcat.sjpu.skel.GeneratorException;
+import org.xblackcat.sjpu.builder.GeneratorException;
 import org.xblackcat.sjpu.storage.typemap.TypeMapTest;
 import org.xblackcat.sjpu.storage.typemap.TypeMapper;
 

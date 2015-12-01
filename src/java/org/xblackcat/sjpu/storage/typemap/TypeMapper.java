@@ -3,8 +3,8 @@ package org.xblackcat.sjpu.storage.typemap;
 import javassist.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.xblackcat.sjpu.skel.BuilderUtils;
-import org.xblackcat.sjpu.skel.GeneratorException;
+import org.xblackcat.sjpu.builder.BuilderUtils;
+import org.xblackcat.sjpu.builder.GeneratorException;
 import org.xblackcat.sjpu.storage.converter.IToObjectConverter;
 import org.xblackcat.sjpu.storage.impl.AHBuilderUtils;
 

@@ -1,4 +1,4 @@
-package org.xblackcat.sjpu.skel;
+package org.xblackcat.sjpu.builder;
 
 import org.junit.Assert;
 import org.junit.Test;

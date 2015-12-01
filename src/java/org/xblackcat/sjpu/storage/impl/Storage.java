@@ -2,10 +2,10 @@ package org.xblackcat.sjpu.storage.impl;
 
 import javassist.ClassClassPath;
 import javassist.ClassPool;
-import org.xblackcat.sjpu.skel.ClassBuilder;
-import org.xblackcat.sjpu.skel.Definer;
-import org.xblackcat.sjpu.skel.FunctionalClassBuilder;
-import org.xblackcat.sjpu.skel.InstanceClassCachedFactory;
+import org.xblackcat.sjpu.builder.ClassBuilder;
+import org.xblackcat.sjpu.builder.Definer;
+import org.xblackcat.sjpu.builder.FunctionalClassBuilder;
+import org.xblackcat.sjpu.builder.InstanceClassCachedFactory;
 import org.xblackcat.sjpu.storage.IStorage;
 import org.xblackcat.sjpu.storage.ITx;
 import org.xblackcat.sjpu.storage.StorageException;

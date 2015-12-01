@@ -1,6 +1,6 @@
 package org.xblackcat.sjpu.storage.converter.builder;
 
-import org.xblackcat.sjpu.skel.GeneratorException;
+import org.xblackcat.sjpu.builder.GeneratorException;
 import org.xblackcat.sjpu.storage.ann.MapRowTo;
 import org.xblackcat.sjpu.storage.ann.RowMap;
 import org.xblackcat.sjpu.storage.ann.ToObjectConverter;

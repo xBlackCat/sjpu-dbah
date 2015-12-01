@@ -1,8 +1,8 @@
 package org.xblackcat.sjpu.storage.impl;
 
 import javassist.*;
-import org.xblackcat.sjpu.skel.BuilderUtils;
-import org.xblackcat.sjpu.skel.GeneratorException;
+import org.xblackcat.sjpu.builder.BuilderUtils;
+import org.xblackcat.sjpu.builder.GeneratorException;
 import org.xblackcat.sjpu.storage.ConsumeException;
 import org.xblackcat.sjpu.storage.StorageException;
 import org.xblackcat.sjpu.storage.StorageUtils;

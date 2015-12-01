@@ -2,8 +2,8 @@ package org.xblackcat.sjpu.storage.impl;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.xblackcat.sjpu.skel.IBuilder;
-import org.xblackcat.sjpu.skel.IFactory;
+import org.xblackcat.sjpu.builder.IBuilder;
+import org.xblackcat.sjpu.builder.IFactory;
 import org.xblackcat.sjpu.storage.*;
 import org.xblackcat.sjpu.storage.connection.IConnectionFactory;
 import org.xblackcat.sjpu.storage.connection.TxSingleConnectionFactory;

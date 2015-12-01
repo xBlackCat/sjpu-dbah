@@ -1,8 +1,8 @@
 package org.xblackcat.sjpu.storage.impl;
 
-import org.xblackcat.sjpu.skel.IBuilder;
-import org.xblackcat.sjpu.skel.IFactory;
-import org.xblackcat.sjpu.skel.InstanceCachedFactory;
+import org.xblackcat.sjpu.builder.IBuilder;
+import org.xblackcat.sjpu.builder.IFactory;
+import org.xblackcat.sjpu.builder.InstanceCachedFactory;
 import org.xblackcat.sjpu.storage.IAH;
 import org.xblackcat.sjpu.storage.IAHFactory;
 import org.xblackcat.sjpu.storage.IBatchedAH;

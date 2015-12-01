@@ -1,7 +1,7 @@
 package org.xblackcat.sjpu.storage.impl;
 
-import org.xblackcat.sjpu.skel.BuilderUtils;
-import org.xblackcat.sjpu.skel.GeneratorException;
+import org.xblackcat.sjpu.builder.BuilderUtils;
+import org.xblackcat.sjpu.builder.GeneratorException;
 import org.xblackcat.sjpu.storage.ann.QueryType;
 import org.xblackcat.sjpu.storage.ann.SqlPart;
 import org.xblackcat.sjpu.storage.ann.SqlType;
