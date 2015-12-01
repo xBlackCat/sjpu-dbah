@@ -1,7 +1,5 @@
 package org.xblackcat.sjpu.builder;
 
-import org.xblackcat.sjpu.storage.IFunctionalAH;
-
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
@@ -33,9 +31,8 @@ public class FunctionalClassBuilder<Base> extends ClassBuilder<Base> {
 
         if (abstractCount != 1) {
             throw new GeneratorException(
-                    "Only single abstract method is allowed for implementation of " +
-                            BuilderUtils.getName(IFunctionalAH.class) + ". " + BuilderUtils.getName(target) + " has " +
-                            abstractCount
+                    "Only single abstract method is allowed for implementation of functional interface/class. "
+                            + BuilderUtils.getName(target) + " has " + abstractCount
             );
         }
 
