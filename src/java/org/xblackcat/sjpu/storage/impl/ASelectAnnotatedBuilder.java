@@ -9,6 +9,8 @@ import org.xblackcat.sjpu.storage.ann.RowSetConsumer;
 import org.xblackcat.sjpu.storage.consumer.IRowSetConsumer;
 import org.xblackcat.sjpu.storage.consumer.SingletonConsumer;
 import org.xblackcat.sjpu.storage.converter.IToObjectConverter;
+import org.xblackcat.sjpu.storage.converter.builder.Arg;
+import org.xblackcat.sjpu.storage.converter.builder.ArgIdx;
 import org.xblackcat.sjpu.storage.converter.builder.ConverterInfo;
 import org.xblackcat.sjpu.storage.typemap.ITypeMap;
 import org.xblackcat.sjpu.storage.typemap.TypeMapper;
@@ -32,22 +34,22 @@ public abstract class ASelectAnnotatedBuilder<A extends Annotation> extends AMap
         super(annClass, typeMapper, rowSetConsumers);
     }
 
-    protected static Collection<ConverterInfo.Arg> substituteOptionalArgs(
-            Collection<ConverterInfo.Arg> argumentList,
-            List<Integer> optionalIndexes,
+    protected static Collection<Arg> substituteOptionalArgs(
+            Collection<Arg> argumentList,
+            List<ArgIdx> optionalIndexes,
             Class<?>... types
     ) {
-        final Collection<ConverterInfo.Arg> args;
+        final Collection<Arg> args;
         if (optionalIndexes == null || optionalIndexes.isEmpty()) {
             args = argumentList;
         } else {
-            final Iterator<ConverterInfo.Arg> staticArgs = argumentList.iterator();
+            final Iterator<Arg> staticArgs = argumentList.iterator();
             args = new ArrayList<>();
-            for (Integer opt : optionalIndexes) {
+            for (ArgIdx opt : optionalIndexes) {
                 if (opt == null) {
                     args.add(staticArgs.next());
                 } else {
-                    args.add(new ConverterInfo.Arg(types[opt], opt, true));
+                    args.add(new Arg(types[opt.idx], opt.idx, opt.optional));
                 }
             }
             while (staticArgs.hasNext()) {
@@ -80,16 +82,17 @@ public abstract class ASelectAnnotatedBuilder<A extends Annotation> extends AMap
 
     protected void setParameters(
             ClassPool pool,
-            Collection<ConverterInfo.Arg> types,
+            Collection<Arg> types,
             StringBuilder body
     ) throws NotFoundException, ClassNotFoundException {
         body.append("int idx = 0;\n");
 
-        for (ConverterInfo.Arg arg : types) {
+        for (Arg arg : types) {
             final Class<?> type = arg.clazz;
             final ITypeMap<?, ?> typeMap = typeMapper.hasTypeMap(type);
 
-            final int idx = arg.idx + 1;
+            final ArgIdx argIdx = arg.argIdx;
+            final int idx = argIdx.idx + 1;
 
             final String argRef;
             final Class<?> argTypeExpect;
@@ -142,14 +145,14 @@ public abstract class ASelectAnnotatedBuilder<A extends Annotation> extends AMap
                 value = argRef;
             }
 
-            if (arg.optional) {
+            if (argIdx.optional) {
                 body.append("if ($");
                 body.append(idx);
                 body.append(" != null) {\n");
             }
             body.append("idx++;\n");
             body.append(AHBuilderUtils.setParamValue(argType, value));
-            if (arg.optional) {
+            if (argIdx.optional) {
                 body.append("}\n");
             }
         }
@@ -254,7 +257,7 @@ public abstract class ASelectAnnotatedBuilder<A extends Annotation> extends AMap
         CtClass ctRealReturnType = pool.get(returnType.getName());
         final StringBuilder body = new StringBuilder("{\n");
 
-        final List<Integer> optionalIndexes = appendDefineSql(body, info, m);
+        final List<ArgIdx> optionalIndexes = appendDefineSql(body, info, m);
 
         final CtClass targetReturnType;
 
@@ -384,7 +387,7 @@ public abstract class ASelectAnnotatedBuilder<A extends Annotation> extends AMap
         body.append("try {\n");
 
         final Class<?>[] types = m.getParameterTypes();
-        final Collection<ConverterInfo.Arg> args = substituteOptionalArgs(info.getArgumentList(), optionalIndexes, types);
+        final Collection<Arg> args = substituteOptionalArgs(info.getArgumentList(), optionalIndexes, types);
         setParameters(pool, args, body);
 
         final boolean processResultSet;
@@ -504,5 +507,5 @@ public abstract class ASelectAnnotatedBuilder<A extends Annotation> extends AMap
 
     protected abstract QueryType getQueryType(Method m);
 
-    protected abstract List<Integer> appendDefineSql(StringBuilder body, ConverterInfo info, Method m);
+    protected abstract List<ArgIdx> appendDefineSql(StringBuilder body, ConverterInfo info, Method m);
 }

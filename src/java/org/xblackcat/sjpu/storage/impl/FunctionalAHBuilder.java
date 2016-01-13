@@ -6,6 +6,7 @@ import org.xblackcat.sjpu.storage.ann.QueryType;
 import org.xblackcat.sjpu.storage.ann.SqlPart;
 import org.xblackcat.sjpu.storage.ann.SqlType;
 import org.xblackcat.sjpu.storage.consumer.IRowSetConsumer;
+import org.xblackcat.sjpu.storage.converter.builder.ArgIdx;
 import org.xblackcat.sjpu.storage.converter.builder.ConverterInfo;
 import org.xblackcat.sjpu.storage.typemap.TypeMapper;
 
@@ -28,7 +29,7 @@ class FunctionalAHBuilder extends ASelectAnnotatedBuilder<SqlType> {
         return getAnnotation(m).value();
     }
 
-    protected List<Integer> appendDefineSql(StringBuilder body, ConverterInfo info, Method m) {
+    protected List<ArgIdx> appendDefineSql(StringBuilder body, ConverterInfo info, Method m) {
         if (!info.getSqlParts().isEmpty()) {
             throw new GeneratorException(BuilderUtils.getName(SqlPart.class) + " annotation is not allowed in functional AH");
         }

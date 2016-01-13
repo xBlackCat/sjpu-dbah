@@ -37,7 +37,7 @@ public class ConverterInfo {
     private final Integer consumeIndex;
     private final Integer rawProcessorParamIndex;
     private final Collection<Arg> argumentList;
-    private final Map<Integer, SqlArg> sqlParts;
+    private final Map<Integer, SqlArgInfo> sqlParts;
 
     ConverterInfo(
             Class<?> realReturnType,
@@ -45,7 +45,7 @@ public class ConverterInfo {
             Integer consumeIndex,
             Integer rawProcessorParamIndex,
             Collection<Arg> argumentList,
-            Map<Integer, SqlArg> parts
+            Map<Integer, SqlArgInfo> parts
     ) {
         this.realReturnType = realReturnType;
         this.converter = converter;
@@ -104,7 +104,7 @@ public class ConverterInfo {
         Class<?> consumerProposalReturnClass = null;
 
         final Collection<Arg> args = new ArrayList<>();
-        final Map<Integer, SqlArg> parts = new HashMap<>();
+        final Map<Integer, SqlArgInfo> parts = new HashMap<>();
 
         Map<Class<?>, List<Method>> expandingClassesInMethod = collectClassesToExpand(m);
 
@@ -141,15 +141,30 @@ public class ConverterInfo {
                 } else {
                     SqlPart sqlPart = null;
                     SqlOptArg sqlOptArg = null;
+                    SqlArg sqlArg = null;
                     for (Annotation a : anns[i]) {
                         if (a instanceof SqlPart) {
                             sqlPart = (SqlPart) a;
                         } else if (a instanceof SqlOptArg) {
                             sqlOptArg = (SqlOptArg) a;
+                        } else if (a instanceof SqlArg) {
+                            sqlArg = (SqlArg) a;
                         }
                     }
 
-                    if (sqlPart != null) {
+                    if (sqlArg != null && sqlPart != null) {
+                        throw new GeneratorException("@SqlArg and @SqlPart cannot be defined simultaneously for the same parameter. " + m);
+                    }
+
+                    if (sqlArg != null) {
+                        final SqlArgInfo oldVal = parts.put(sqlArg.value(), new SqlArgInfo("?", i, false));
+                        if (oldVal != null) {
+                            throw new GeneratorException(
+                                    "Two arguments (" + oldVal + " and " + i + ") are referenced to the same sql part index " +
+                                            sqlArg.value() + " in method " + m
+                            );
+                        }
+                    } else if (sqlPart != null) {
                         final String additional;
                         if (sqlOptArg == null) {
                             if (!String.class.equals(t)) {
@@ -163,13 +178,12 @@ public class ConverterInfo {
                             additional = sqlOptArg.value();
                             if (SqlStringUtils.getArgumentCount(additional) != 1) {
                                 throw new GeneratorException(
-                                        "Optional Sql part should have one and only one argument. Got: " +
-                                                additional + " in " + m.toString()
+                                        "Optional Sql part should have one and only one argument. Got: " + additional + " in " + m
                                 );
                             }
                         }
 
-                        final SqlArg oldVal = parts.put(sqlPart.value(), new SqlArg(additional, i));
+                        final SqlArgInfo oldVal = parts.put(sqlPart.value(), new SqlArgInfo(additional, i, true));
                         if (oldVal != null) {
                             throw new GeneratorException(
                                     "Two arguments (" + oldVal + " and " + i + ") are referenced to the same sql part index " +
@@ -456,78 +470,8 @@ public class ConverterInfo {
         return argumentList;
     }
 
-    public Map<Integer, SqlArg> getSqlParts() {
+    public Map<Integer, SqlArgInfo> getSqlParts() {
         return sqlParts;
     }
 
-    public static final class Arg {
-        public final Class<?> clazz;
-        public final int idx;
-        public final boolean optional;
-        public final String methodName;
-
-        public Arg(Class<?> clazz, int idx) {
-            this(clazz, idx, null, false);
-        }
-
-        public Arg(Class<?> clazz, int idx, String methodName) {
-            this(clazz, idx, methodName, false);
-        }
-
-        public Arg(Class<?> clazz, int idx, boolean optional) {
-            this(clazz, idx, null, optional);
-        }
-
-        public Arg(Class<?> clazz, int idx, String methodName, boolean optional) {
-            this.clazz = clazz;
-            this.idx = idx;
-            this.optional = optional;
-            this.methodName = methodName;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            Arg arg = (Arg) o;
-            return idx == arg.idx &&
-                    optional == arg.optional &&
-                    Objects.equals(clazz, arg.clazz) &&
-                    Objects.equals(methodName, arg.methodName);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(clazz, idx, optional, methodName);
-        }
-    }
-
-    public static final class SqlArg {
-        public final String sqlPart;
-        public final int argIdx;
-
-        public SqlArg(String sqlPart, int argIdx) {
-            this.sqlPart = sqlPart;
-            this.argIdx = argIdx;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            SqlArg sqlArg = (SqlArg) o;
-            return argIdx == sqlArg.argIdx &&
-                    Objects.equals(sqlPart, sqlArg.sqlPart);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(sqlPart, argIdx);
-        }
-
-        @Override
-        public String toString() {
-            return "SqlArg{" + "sqlPart='" + sqlPart + '\'' + ", argIdx=" + argIdx + '}';
-        }
-    }
 }

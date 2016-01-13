@@ -112,6 +112,7 @@ public class WorkflowBaseTest {
 
         {
             final List<Element> list = dataAH.getListElement((Integer) null);
+            Assert.assertEquals(11, list.size());
             for (Element el : list) {
                 Assert.assertNotNull(list);
                 Assert.assertEquals(Numbers.values()[el.id].name(), el.name);
@@ -125,6 +126,33 @@ public class WorkflowBaseTest {
                 Assert.assertNotNull(list);
                 Assert.assertEquals(Numbers.values()[el.id].name(), el.name);
             }
+        }
+
+        {
+            final List<Element> list = dataAH.getListElement2(null);
+            Assert.assertEquals(0, list.size());
+        }
+
+        {
+            final List<Element> list = dataAH.getListElement2(1);
+            Assert.assertEquals(1, list.size());
+            for (Element el : list) {
+                Assert.assertNotNull(list);
+                Assert.assertEquals(Numbers.values()[el.id].name(), el.name);
+            }
+        }
+
+        {
+            final List<Element> list = dataAH.getListElement2(2, null);
+            Assert.assertEquals(1, list.size());
+            Assert.assertEquals(Numbers.values()[2].name(), list.get(0).name);
+        }
+
+        {
+            final List<Element> list = dataAH.getListElement2(2, 1);
+            Assert.assertEquals(2, list.size());
+            Assert.assertEquals(Numbers.values()[1].name(), list.get(0).name);
+            Assert.assertEquals(Numbers.values()[2].name(), list.get(1).name);
         }
 
         {

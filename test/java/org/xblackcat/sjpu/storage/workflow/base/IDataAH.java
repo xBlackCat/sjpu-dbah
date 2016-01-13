@@ -73,6 +73,18 @@ public interface IDataAH extends IAH {
 
     @Sql("SELECT\n" +
                  "  id, name\n" +
+                 "FROM list WHERE id = {0} AND id = {0}")
+    @MapRowTo(Element.class)
+    List<Element> getListElement2(@SqlArg(0) Integer id) throws StorageException;
+
+    @Sql("SELECT\n" +
+                 "  id, name\n" +
+                 "FROM list WHERE id = {0} OR id = ? OR id = {0} ORDER BY id")
+    @MapRowTo(Element.class)
+    List<Element> getListElement2(int id1, @SqlArg(0) Integer id) throws StorageException;
+
+    @Sql("SELECT\n" +
+                 "  id, name\n" +
                  "FROM list")
     @MapRowTo(Element.class)
     List<IElement<String>> getListIElement() throws StorageException;

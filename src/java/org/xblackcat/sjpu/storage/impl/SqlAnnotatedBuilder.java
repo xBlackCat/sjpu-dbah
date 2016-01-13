@@ -3,6 +3,7 @@ package org.xblackcat.sjpu.storage.impl;
 import org.xblackcat.sjpu.storage.ann.QueryType;
 import org.xblackcat.sjpu.storage.ann.Sql;
 import org.xblackcat.sjpu.storage.consumer.IRowSetConsumer;
+import org.xblackcat.sjpu.storage.converter.builder.ArgIdx;
 import org.xblackcat.sjpu.storage.converter.builder.ConverterInfo;
 import org.xblackcat.sjpu.storage.typemap.TypeMapper;
 
@@ -47,7 +48,7 @@ class SqlAnnotatedBuilder extends ASelectAnnotatedBuilder<Sql> {
     }
 
     @Override
-    protected List<Integer> appendDefineSql(StringBuilder body, ConverterInfo info, Method m) {
+    protected List<ArgIdx> appendDefineSql(StringBuilder body, ConverterInfo info, Method m) {
         final String sql = getAnnotation(m).value();
         return SqlStringUtils.appendSqlWithParts(body, sql, info.getSqlParts());
     }

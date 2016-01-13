@@ -1,7 +1,8 @@
 package org.xblackcat.sjpu.storage.impl;
 
 import org.apache.commons.lang3.StringEscapeUtils;
-import org.xblackcat.sjpu.storage.converter.builder.ConverterInfo;
+import org.xblackcat.sjpu.storage.converter.builder.ArgIdx;
+import org.xblackcat.sjpu.storage.converter.builder.SqlArgInfo;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -18,7 +19,7 @@ import java.util.regex.Pattern;
 public class SqlStringUtils {
     private final static Pattern SQL_PART_IDX = Pattern.compile("\\{(\\d+)\\}");
 
-    static List<Integer> appendSqlWithParts(StringBuilder body, String sql, Map<Integer, ConverterInfo.SqlArg> sqlParts) {
+    static List<ArgIdx> appendSqlWithParts(StringBuilder body, String sql, Map<Integer, SqlArgInfo> sqlParts) {
         if (sqlParts.isEmpty()) {
             body.append("java.lang.String sql = \"");
             body.append(StringEscapeUtils.escapeJava(sql));
@@ -26,8 +27,8 @@ public class SqlStringUtils {
             return Collections.emptyList();
         } else {
             boolean hasOptionalParts = false;
-            for (ConverterInfo.SqlArg arg : sqlParts.values()) {
-                if (arg.sqlPart != null) {
+            for (SqlArgInfo arg : sqlParts.values()) {
+                if (arg.sqlPart != null && arg.argIdx.optional) {
                     hasOptionalParts = true;
                     break;
                 }
@@ -36,14 +37,13 @@ public class SqlStringUtils {
             if (hasOptionalParts) {
                 return buildStringBuilder(body, sql, sqlParts);
             } else {
-                buildConcatenation(body, sql, sqlParts);
-                return Collections.emptyList();
+                return buildConcatenation(body, sql, sqlParts);
             }
         }
     }
 
-    private static List<Integer> buildStringBuilder(StringBuilder body, String sql, Map<Integer, ConverterInfo.SqlArg> sqlParts) {
-        List<Integer> optionalIndexes = new ArrayList<>();
+    private static List<ArgIdx> buildStringBuilder(StringBuilder body, String sql, Map<Integer, SqlArgInfo> sqlParts) {
+        List<ArgIdx> optionalIndexes = new ArrayList<>();
 
         body.append("java.lang.StringBuilder sqlBuilder = new java.lang.StringBuilder();\n");
 
@@ -51,7 +51,7 @@ public class SqlStringUtils {
         int startPos = 0;
         while (m.find()) {
             final Integer idx = Integer.valueOf(m.group(1));
-            ConverterInfo.SqlArg argRef = sqlParts.get(idx);
+            SqlArgInfo argRef = sqlParts.get(idx);
 
             if (argRef != null) {
                 body.append("sqlBuilder.append(\"");
@@ -64,16 +64,21 @@ public class SqlStringUtils {
                 body.append("\");\n");
                 if (argRef.sqlPart == null) {
                     body.append("sqlBuilder.append($");
-                    body.append(argRef.argIdx + 1);
+                    body.append(argRef.argIdx.idx + 1);
                     body.append(");\n");
                 } else {
                     optionalIndexes.add(argRef.argIdx);
-                    body.append("if ($");
-                    body.append(argRef.argIdx + 1);
-
-                    body.append(" != null) {\nsqlBuilder.append(\"");
+                    if (argRef.argIdx.optional) {
+                        body.append("if ($");
+                        body.append(argRef.argIdx.idx + 1);
+                        body.append(" != null) {\n");
+                    }
+                    body.append("sqlBuilder.append(\"");
                     body.append(StringEscapeUtils.escapeJava(argRef.sqlPart));
-                    body.append("\");\n}\n");
+                    body.append("\");\n");
+                    if (argRef.argIdx.optional) {
+                        body.append("}\n");
+                    }
                 }
 
                 startPos = m.end();
@@ -86,20 +91,31 @@ public class SqlStringUtils {
         return optionalIndexes;
     }
 
-    protected static void buildConcatenation(StringBuilder body, String sql, Map<Integer, ConverterInfo.SqlArg> sqlParts) {
+    protected static List<ArgIdx> buildConcatenation(StringBuilder body, String sql, Map<Integer, SqlArgInfo> sqlParts) {
+        List<ArgIdx> optionalIndexes = new ArrayList<>();
+
         Matcher m = SQL_PART_IDX.matcher(sql);
         int startPos = 0;
         body.append("java.lang.String sql = ");
 
         while (m.find()) {
             final Integer idx = Integer.valueOf(m.group(1));
-            ConverterInfo.SqlArg argRef = sqlParts.get(idx);
+            SqlArgInfo argRef = sqlParts.get(idx);
 
             if (argRef != null) {
-                body.append("\"");
+                body.append('"');
                 body.append(StringEscapeUtils.escapeJava(sql.substring(startPos, m.start())));
-                body.append("\" + $");
-                body.append(argRef.argIdx + 1);
+                body.append("\" + ");
+                if (argRef.sqlPart == null) {
+                    body.append("$");
+                    body.append(argRef.argIdx.idx + 1);
+                } else {
+                    optionalIndexes.add(argRef.argIdx);
+
+                    body.append('"');
+                    body.append(StringEscapeUtils.escapeJava(argRef.sqlPart));
+                    body.append('"');
+                }
                 body.append(" + ");
 
                 startPos = m.end();
@@ -109,6 +125,8 @@ public class SqlStringUtils {
         body.append("\"");
         body.append(StringEscapeUtils.escapeJava(sql.substring(startPos)));
         body.append("\";\n");
+
+        return optionalIndexes;
     }
 
     /**

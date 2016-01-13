@@ -10,7 +10,7 @@ import org.xblackcat.sjpu.storage.consumer.IRowSetConsumer;
 import org.xblackcat.sjpu.storage.consumer.ToEnumSetConsumer;
 import org.xblackcat.sjpu.storage.consumer.ToListConsumer;
 import org.xblackcat.sjpu.storage.consumer.ToSetConsumer;
-import org.xblackcat.sjpu.storage.converter.builder.ConverterInfo;
+import org.xblackcat.sjpu.storage.converter.builder.Arg;
 
 import java.lang.reflect.Method;
 import java.util.*;
@@ -23,7 +23,7 @@ import java.util.regex.Matcher;
  */
 public class StorageUtils {
     public static final Map<Class<?>, Class<? extends IRowSetConsumer>> DEFAULT_ROWSET_CONSUMERS;
-    public static final String CONVERTER_ARG_CLASS = BuilderUtils.getName(ConverterInfo.Arg.class);
+    public static final String CONVERTER_ARG_CLASS = BuilderUtils.getName(Arg.class);
 
     static {
         Map<Class<?>, Class<? extends IRowSetConsumer>> map = new HashMap<>();
@@ -61,13 +61,13 @@ public class StorageUtils {
         return query;
     }
 
-    public static String converterArgsToJava(Collection<ConverterInfo.Arg> args) {
+    public static String converterArgsToJava(Collection<Arg> args) {
         StringBuilder javaCode = new StringBuilder("new ");
         javaCode.append(CONVERTER_ARG_CLASS);
         if (args != null && args.size() > 0) {
             javaCode.append("[]{");
             boolean first = true;
-            for (ConverterInfo.Arg a : args) {
+            for (Arg a : args) {
                 if (first) {
                     first = false;
                 } else {
@@ -78,7 +78,7 @@ public class StorageUtils {
                 javaCode.append("(");
                 javaCode.append(BuilderUtils.getName(a.clazz));
                 javaCode.append(".class, ");
-                javaCode.append(a.idx);
+                javaCode.append(a.argIdx.idx);
                 javaCode.append(", ");
                 if (a.methodName != null) {
                     javaCode.append('"');
@@ -88,7 +88,7 @@ public class StorageUtils {
                     javaCode.append("null");
                 }
                 javaCode.append(", ");
-                javaCode.append(Boolean.toString(a.optional));
+                javaCode.append(Boolean.toString(a.argIdx.optional));
                 javaCode.append(')');
             }
             javaCode.append('}');
@@ -100,7 +100,7 @@ public class StorageUtils {
     }
 
     @SuppressWarnings("UnusedDeclaration")
-    public static String constructDebugSQL(String sql, ConverterInfo.Arg[] args, Object... parameters) {
+    public static String constructDebugSQL(String sql, Arg[] args, Object... parameters) {
         if (ArrayUtils.isEmpty(parameters)) {
             return sql;
         }
@@ -136,11 +136,11 @@ public class StorageUtils {
             }
 
             if (expand) {
-                ConverterInfo.Arg a = args[idx++];
-                Object param = parameters[a.idx];
+                Arg a = args[idx++];
+                Object param = parameters[a.argIdx.idx];
 
                 query.append("/* $");
-                query.append(a.idx + 1);
+                query.append(a.argIdx.idx + 1);
                 if (a.methodName != null) {
                     query.append('#');
                     query.append(a.methodName);
