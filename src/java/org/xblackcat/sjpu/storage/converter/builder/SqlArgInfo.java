@@ -1,5 +1,6 @@
 package org.xblackcat.sjpu.storage.converter.builder;
 
+import java.util.Arrays;
 import java.util.Objects;
 
 /**
@@ -10,15 +11,18 @@ import java.util.Objects;
 public final class SqlArgInfo {
     public final String sqlPart;
     public final ArgIdx argIdx;
+    public final ArgInfo[] expandingType;
 
-    public SqlArgInfo(String sqlPart, int argIdx, boolean optional) {
+    public SqlArgInfo(String sqlPart, int argIdx, boolean optional, ArgInfo... expandingType) {
+        this.expandingType = expandingType;
         this.argIdx = new ArgIdx(argIdx, optional);
         this.sqlPart = sqlPart;
     }
 
     @Override
     public String toString() {
-        return "SqlArgInfo " + argIdx + " [" + sqlPart + "]";
+        return "SqlArgInfo " + argIdx + " [" + sqlPart + "]" +
+                (expandingType != null && expandingType.length > 0 ? " expanded as " + Arrays.asList(expandingType) : "");
     }
 
     @Override
@@ -27,11 +31,12 @@ public final class SqlArgInfo {
         if (o == null || getClass() != o.getClass()) return false;
         SqlArgInfo that = (SqlArgInfo) o;
         return Objects.equals(sqlPart, that.sqlPart) &&
-                Objects.equals(argIdx, that.argIdx);
+                Objects.equals(argIdx, that.argIdx) &&
+                Arrays.equals(expandingType, that.expandingType);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(sqlPart, argIdx);
+        return Objects.hash(sqlPart, argIdx, expandingType);
     }
 }

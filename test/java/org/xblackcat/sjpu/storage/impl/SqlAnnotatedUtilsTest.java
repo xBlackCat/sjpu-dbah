@@ -3,7 +3,6 @@ package org.xblackcat.sjpu.storage.impl;
 import org.junit.Assert;
 import org.junit.Test;
 import org.xblackcat.sjpu.storage.converter.builder.Arg;
-import org.xblackcat.sjpu.storage.converter.builder.ArgIdx;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -23,7 +22,7 @@ public class SqlAnnotatedUtilsTest {
                     new Arg(short.class, 2),
                     new Arg(byte.class, 3)
             );
-            List<ArgIdx> opts = Arrays.asList(new ArgIdx(1, true), null, null, new ArgIdx(1, true));
+            List<Arg> opts = Arrays.asList(new Arg(null, 1, true), null, null, new Arg(null, 1, true));
             final Collection<Arg> actual = SqlAnnotatedBuilder.substituteOptionalArgs(
                     args,
                     opts,
@@ -53,14 +52,14 @@ public class SqlAnnotatedUtilsTest {
                     new Arg(short.class, 2),
                     new Arg(byte.class, 4)
             );
-            List<ArgIdx> opts = Arrays.asList(
-                    new ArgIdx(1, true),
+            List<Arg> opts = Arrays.asList(
+                    new Arg(null, 1, true),
                     null,
-                    new ArgIdx(3, false),
-                    new ArgIdx(3, false),
+                    new Arg(null, 3, false),
+                    new Arg(null, 3, false),
                     null,
-                    new ArgIdx(1, true),
-                    new ArgIdx(3, false)
+                    new Arg(null, 1, true),
+                    new Arg(null, 3, false)
             );
             final Collection<Arg> actual = SqlAnnotatedBuilder.substituteOptionalArgs(
                     args,

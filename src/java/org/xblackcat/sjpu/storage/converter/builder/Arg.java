@@ -8,9 +8,8 @@ import java.util.Objects;
  * @author xBlackCat
  */
 public final class Arg {
-    public final Class<?> clazz;
-    public final String methodName;
-    public final ArgIdx argIdx;
+    public final ArgInfo info;
+    public final ArgIdx idx;
 
     public Arg(Class<?> clazz, int idx) {
         this(clazz, idx, null, false);
@@ -25,9 +24,8 @@ public final class Arg {
     }
 
     public Arg(Class<?> clazz, int idx, String methodName, boolean optional) {
-        argIdx = new ArgIdx(idx, optional);
-        this.clazz = clazz;
-        this.methodName = methodName;
+        this.idx = new ArgIdx(idx, optional);
+        info = new ArgInfo(clazz, methodName);
     }
 
     @Override
@@ -35,13 +33,17 @@ public final class Arg {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Arg arg = (Arg) o;
-        return Objects.equals(clazz, arg.clazz) &&
-                Objects.equals(methodName, arg.methodName) &&
-                Objects.equals(argIdx, arg.argIdx);
+        return Objects.equals(info, arg.info) &&
+                Objects.equals(idx, arg.idx);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(clazz, methodName, argIdx);
+        return Objects.hash(info, idx);
+    }
+
+    @Override
+    public String toString() {
+        return idx + " <" + info + ">";
     }
 }

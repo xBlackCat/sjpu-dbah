@@ -1,5 +1,6 @@
 package org.xblackcat.sjpu.storage.workflow.auto;
 
+import org.apache.commons.lang3.Range;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -115,6 +116,43 @@ public class WorkflowAutoTest {
         {
             final List<Element> list = dataAH.getListElement(1);
             Assert.assertEquals(1, list.size());
+            for (Element el : list) {
+                Assert.assertNotNull(list);
+                Assert.assertEquals(Numbers.values()[el.id].name(), el.name);
+            }
+        }
+
+        {
+            final List<Element> list = dataAH.getListElement((Range<Integer>) null);
+            Assert.assertEquals(11, list.size());
+            for (Element el : list) {
+                Assert.assertNotNull(list);
+                Assert.assertEquals(Numbers.values()[el.id].name(), el.name);
+            }
+        }
+
+        {
+            Range<Integer> range = Range.between(4, 6);
+            final List<Element> list = dataAH.getListElement(range);
+            Assert.assertEquals(3, list.size());
+            for (Element el : list) {
+                Assert.assertNotNull(list);
+                Assert.assertEquals(Numbers.values()[el.id].name(), el.name);
+            }
+        }
+
+        {
+            final List<Element> list = dataAH.getListElement((IntRange) null);
+            Assert.assertEquals(11, list.size());
+            for (Element el : list) {
+                Assert.assertNotNull(list);
+                Assert.assertEquals(Numbers.values()[el.id].name(), el.name);
+            }
+        }
+
+        {
+            final List<Element> list = dataAH.getListElement(new IntRange(4, 6));
+            Assert.assertEquals(3, list.size());
             for (Element el : list) {
                 Assert.assertNotNull(list);
                 Assert.assertEquals(Numbers.values()[el.id].name(), el.name);
@@ -251,10 +289,13 @@ public class WorkflowAutoTest {
             dataAH.getElementByObjectInvalid(null);
             Assert.fail("Expecting a StorageException");
         } catch (StorageException e) {
-            Assert.assertEquals("Can not execute query SELECT\n" +
-                                        "  id, name\n" +
-                                        "FROM list\n" +
-                                        "WHERE id = /* $1#getId() = (int)*/ NULL and name = /* $1#getName() = (org.xblackcat.sjpu.storage.workflow.data.Numbers)*/ NULL ORDER ", e.getMessage());
+            Assert.assertEquals(
+                    "Can not execute query SELECT\n" +
+                            "  id, name\n" +
+                            "FROM list\n" +
+                            "WHERE id = /* $1#getId() = (int)*/ NULL and name = /* $1#getName() = (org.xblackcat.sjpu.storage.workflow.data.Numbers)*/ NULL ORDER ",
+                    e.getMessage()
+            );
         }
 
         Assert.assertNull(dataAH.get(null));

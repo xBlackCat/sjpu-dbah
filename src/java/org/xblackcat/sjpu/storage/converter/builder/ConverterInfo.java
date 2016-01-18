@@ -165,25 +165,42 @@ public class ConverterInfo {
                             );
                         }
                     } else if (sqlPart != null) {
+                        final boolean optional;
                         final String additional;
+                        final ArgInfo[] expanded;
+
                         if (sqlOptArg == null) {
                             if (!String.class.equals(t)) {
                                 throw new GeneratorException("Only String argument types could be used as plain sql parts. " + m);
                             }
                             additional = null;
+                            optional = true;
+                            expanded = ArgInfo.NO_ARG_INFOS;
                         } else {
-                            if (rawArgClass.isPrimitive()) {
-                                throw new GeneratorException("Primitive argument types can't be used as optional sql parts. " + m);
-                            }
+                            optional = !rawArgClass.isPrimitive();
+//                            if (primitive) {
+//                                throw new GeneratorException("Primitive argument types can't be used as optional sql parts. " + m);
+//                            }
                             additional = sqlOptArg.value();
-                            if (SqlStringUtils.getArgumentCount(additional) != 1) {
+                            final int argumentCountInAdditional = SqlStringUtils.getArgumentCount(additional);
+                            final Collection<Arg> expandedArgs = detectTypeExpanding(expandingClassesInMethod, i, t, rawArgClass, optional);
+
+                            if (expandedArgs.size() == 0) {
+                                if (SqlStringUtils.getArgumentCount(additional) != 1) {
+                                    throw new GeneratorException(
+                                            "Optional Sql part should have one and only one argument. Got: " + additional + " in " + m
+                                    );
+                                }
+                            } else if (argumentCountInAdditional != expandedArgs.size()) {
                                 throw new GeneratorException(
-                                        "Optional Sql part should have one and only one argument. Got: " + additional + " in " + m
+                                        "Optional Sql part have " + additional + " arguments to substitute and argument expanded into " +
+                                                expandedArgs.size() + " arguments. " + m
                                 );
                             }
+                            expanded = expandedArgs.stream().map(a -> a.info).toArray(ArgInfo[]::new);
                         }
 
-                        final SqlArgInfo oldVal = parts.put(sqlPart.value(), new SqlArgInfo(additional, i, true));
+                        final SqlArgInfo oldVal = parts.put(sqlPart.value(), new SqlArgInfo(additional, i, optional, expanded));
                         if (oldVal != null) {
                             throw new GeneratorException(
                                     "Two arguments (" + oldVal + " and " + i + ") are referenced to the same sql part index " +
@@ -193,18 +210,11 @@ public class ConverterInfo {
                     } else if (sqlOptArg != null) {
                         throw new GeneratorException("@SqlOptArg should be specified only with @SqlPart annotation in " + m.toString());
                     } else {
-                        // Detect expanding class
-                        final List<Method> predefinedExpanders = findExpandingType(expandingClassesInMethod, rawArgClass);
-                        if (predefinedExpanders != null) {
-                            expandClassWithMethods(args, i, predefinedExpanders, t);
+                        final Collection<Arg> expandedArgs = detectTypeExpanding(expandingClassesInMethod, i, t, rawArgClass, false);
+                        if (expandedArgs.size() > 0) {
+                            args.addAll(expandedArgs);
                         } else {
-                            final ExtractFields extractFields = searchExtractFieldAnn(rawArgClass);
-                            if (extractFields != null) {
-                                final List<Method> methodList = parseProperties(rawArgClass, extractFields.value());
-                                expandClassWithMethods(args, i, methodList, t);
-                            } else {
-                                args.add(new Arg(rawArgClass, i));
-                            }
+                            args.add(new Arg(rawArgClass, i));
                         }
                     }
                 }
@@ -303,6 +313,28 @@ public class ConverterInfo {
         return new ConverterInfo(realReturnClass, converter, consumerParamIdx, rawProcessorParamIndex, args, parts);
     }
 
+    protected static Collection<Arg> detectTypeExpanding(
+            Map<Class<?>, List<Method>> expandingClassesInMethod,
+            int argIdx,
+            Type type,
+            Class<?> rawArgClass,
+            boolean optional
+    ) {
+        // Detect expanding class
+        final List<Method> predefinedExpanders = findExpandingType(expandingClassesInMethod, rawArgClass);
+        if (predefinedExpanders != null) {
+            return expandClassWithMethods(argIdx, predefinedExpanders, type, optional);
+        } else {
+            final ExtractFields extractFields = searchExtractFieldAnn(rawArgClass);
+            if (extractFields != null) {
+                final List<Method> methodList = parseProperties(rawArgClass, extractFields.value());
+                return expandClassWithMethods(argIdx, methodList, type, optional);
+            } else {
+                return Collections.emptyList();
+            }
+        }
+    }
+
     private static ExtractFields searchExtractFieldAnn(Class<?> rawArgClass) {
         if (rawArgClass == null) {
             return null;
@@ -327,17 +359,22 @@ public class ConverterInfo {
         return null;
     }
 
-    private static void expandClassWithMethods(Collection<Arg> args, int i, List<Method> methods, Type t) {
+    private static Collection<Arg> expandClassWithMethods(
+            int i,
+            List<Method> methods,
+            Type t,
+            boolean optional
+    ) {
         final Map<TypeVariable<?>, Class<?>> typeVariables = BuilderUtils.resolveTypeVariables(t);
 
-        args.addAll(methods.stream().map(getter -> {
+        return methods.stream().map(getter -> {
             final Type type = getter.getGenericReturnType();
             final Class<?> returnType = BuilderUtils.substituteTypeVariables(typeVariables, type);
             if (returnType == null) {
                 throw new GeneratorException("Failed to resolve target return class for method " + getter);
             }
-            return new Arg(returnType, i, getter.getName());
-        }).collect(Collectors.toList()));
+            return new Arg(returnType, i, getter.getName(), optional);
+        }).collect(Collectors.toList());
     }
 
     protected static Map<Class<?>, List<Method>> collectClassesToExpand(Method m) {

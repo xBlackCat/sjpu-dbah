@@ -1,7 +1,9 @@
 package org.xblackcat.sjpu.storage.impl;
 
 import org.apache.commons.lang3.StringEscapeUtils;
+import org.xblackcat.sjpu.storage.converter.builder.Arg;
 import org.xblackcat.sjpu.storage.converter.builder.ArgIdx;
+import org.xblackcat.sjpu.storage.converter.builder.ArgInfo;
 import org.xblackcat.sjpu.storage.converter.builder.SqlArgInfo;
 
 import java.util.ArrayList;
@@ -19,7 +21,7 @@ import java.util.regex.Pattern;
 public class SqlStringUtils {
     private final static Pattern SQL_PART_IDX = Pattern.compile("\\{(\\d+)\\}");
 
-    static List<ArgIdx> appendSqlWithParts(StringBuilder body, String sql, Map<Integer, SqlArgInfo> sqlParts) {
+    static List<Arg> appendSqlWithParts(StringBuilder body, String sql, Map<Integer, SqlArgInfo> sqlParts) {
         if (sqlParts.isEmpty()) {
             body.append("java.lang.String sql = \"");
             body.append(StringEscapeUtils.escapeJava(sql));
@@ -42,8 +44,8 @@ public class SqlStringUtils {
         }
     }
 
-    private static List<ArgIdx> buildStringBuilder(StringBuilder body, String sql, Map<Integer, SqlArgInfo> sqlParts) {
-        List<ArgIdx> optionalIndexes = new ArrayList<>();
+    private static List<Arg> buildStringBuilder(StringBuilder body, String sql, Map<Integer, SqlArgInfo> sqlParts) {
+        List<Arg> optionalIndexes = new ArrayList<>();
 
         body.append("java.lang.StringBuilder sqlBuilder = new java.lang.StringBuilder();\n");
 
@@ -54,6 +56,8 @@ public class SqlStringUtils {
             SqlArgInfo argRef = sqlParts.get(idx);
 
             if (argRef != null) {
+                final ArgIdx argIdx = argRef.argIdx;
+
                 body.append("sqlBuilder.append(\"");
                 final String sqlPart = sql.substring(startPos, m.start());
                 int argsAmount = getArgumentCount(sqlPart);
@@ -64,19 +68,25 @@ public class SqlStringUtils {
                 body.append("\");\n");
                 if (argRef.sqlPart == null) {
                     body.append("sqlBuilder.append($");
-                    body.append(argRef.argIdx.idx + 1);
+                    body.append(argIdx.idx + 1);
                     body.append(");\n");
                 } else {
-                    optionalIndexes.add(argRef.argIdx);
-                    if (argRef.argIdx.optional) {
+                    if (argRef.expandingType == null || argRef.expandingType.length == 0) {
+                        optionalIndexes.add(new Arg(null, argIdx.idx, argIdx.optional));
+                    } else {
+                        for (ArgInfo ai : argRef.expandingType) {
+                            optionalIndexes.add(new Arg(ai.clazz, argIdx.idx, ai.methodName, argIdx.optional));
+                        }
+                    }
+                    if (argIdx.optional) {
                         body.append("if ($");
-                        body.append(argRef.argIdx.idx + 1);
+                        body.append(argIdx.idx + 1);
                         body.append(" != null) {\n");
                     }
                     body.append("sqlBuilder.append(\"");
                     body.append(StringEscapeUtils.escapeJava(argRef.sqlPart));
                     body.append("\");\n");
-                    if (argRef.argIdx.optional) {
+                    if (argIdx.optional) {
                         body.append("}\n");
                     }
                 }
@@ -91,8 +101,8 @@ public class SqlStringUtils {
         return optionalIndexes;
     }
 
-    protected static List<ArgIdx> buildConcatenation(StringBuilder body, String sql, Map<Integer, SqlArgInfo> sqlParts) {
-        List<ArgIdx> optionalIndexes = new ArrayList<>();
+    protected static List<Arg> buildConcatenation(StringBuilder body, String sql, Map<Integer, SqlArgInfo> sqlParts) {
+        List<Arg> optionalIndexes = new ArrayList<>();
 
         Matcher m = SQL_PART_IDX.matcher(sql);
         int startPos = 0;
@@ -103,14 +113,15 @@ public class SqlStringUtils {
             SqlArgInfo argRef = sqlParts.get(idx);
 
             if (argRef != null) {
+                final ArgIdx argIdx = argRef.argIdx;
                 body.append('"');
                 body.append(StringEscapeUtils.escapeJava(sql.substring(startPos, m.start())));
                 body.append("\" + ");
                 if (argRef.sqlPart == null) {
                     body.append("$");
-                    body.append(argRef.argIdx.idx + 1);
+                    body.append(argIdx.idx + 1);
                 } else {
-                    optionalIndexes.add(argRef.argIdx);
+                    optionalIndexes.add(new Arg(null, argIdx.idx, argIdx.optional));
 
                     body.append('"');
                     body.append(StringEscapeUtils.escapeJava(argRef.sqlPart));

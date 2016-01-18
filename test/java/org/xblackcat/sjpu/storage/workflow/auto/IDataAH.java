@@ -1,11 +1,13 @@
 package org.xblackcat.sjpu.storage.workflow.auto;
 
+import org.apache.commons.lang3.Range;
 import org.xblackcat.sjpu.storage.IAH;
 import org.xblackcat.sjpu.storage.StorageException;
 import org.xblackcat.sjpu.storage.ann.*;
 import org.xblackcat.sjpu.storage.consumer.IRowConsumer;
 import org.xblackcat.sjpu.storage.workflow.data.Element;
 import org.xblackcat.sjpu.storage.workflow.data.IElement;
+import org.xblackcat.sjpu.storage.workflow.data.IntRange;
 
 import java.util.List;
 
@@ -71,6 +73,18 @@ public interface IDataAH extends IAH {
                  "  id, name\n" +
                  "FROM list {0}")
     List<Element> getListElement(@SqlPart @SqlOptArg("WHERE id = ?") Integer id) throws StorageException;
+
+    @Sql("SELECT\n" +
+                 "  id, name\n" +
+                 "FROM list {0}")
+    @ExpandType(type = Range.class, fields = {"minimum", "maximum"})
+    List<Element> getListElement(@SqlPart @SqlOptArg("WHERE id BETWEEN ? AND ?") Range<Integer> range) throws StorageException;
+
+
+    @Sql("SELECT\n" +
+                 "  id, name\n" +
+                 "FROM list {0}")
+    List<Element> getListElement(@SqlPart @SqlOptArg("WHERE id BETWEEN ? AND ?") IntRange range) throws StorageException;
 
     @Sql("SELECT\n" +
                  "  id, name\n" +

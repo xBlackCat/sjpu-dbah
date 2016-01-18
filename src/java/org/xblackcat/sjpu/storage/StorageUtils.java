@@ -11,6 +11,7 @@ import org.xblackcat.sjpu.storage.consumer.ToEnumSetConsumer;
 import org.xblackcat.sjpu.storage.consumer.ToListConsumer;
 import org.xblackcat.sjpu.storage.consumer.ToSetConsumer;
 import org.xblackcat.sjpu.storage.converter.builder.Arg;
+import org.xblackcat.sjpu.storage.converter.builder.ArgInfo;
 
 import java.lang.reflect.Method;
 import java.util.*;
@@ -76,19 +77,19 @@ public class StorageUtils {
                 javaCode.append("new ");
                 javaCode.append(CONVERTER_ARG_CLASS);
                 javaCode.append("(");
-                javaCode.append(BuilderUtils.getName(a.clazz));
+                javaCode.append(BuilderUtils.getName(a.info.clazz));
                 javaCode.append(".class, ");
-                javaCode.append(a.argIdx.idx);
+                javaCode.append(a.idx.idx);
                 javaCode.append(", ");
-                if (a.methodName != null) {
+                if (a.info.methodName != null) {
                     javaCode.append('"');
-                    javaCode.append(a.methodName);
+                    javaCode.append(a.info.methodName);
                     javaCode.append('"');
                 } else {
                     javaCode.append("null");
                 }
                 javaCode.append(", ");
-                javaCode.append(Boolean.toString(a.argIdx.optional));
+                javaCode.append(Boolean.toString(a.idx.optional));
                 javaCode.append(')');
             }
             javaCode.append('}');
@@ -137,27 +138,28 @@ public class StorageUtils {
 
             if (expand) {
                 Arg a = args[idx++];
-                Object param = parameters[a.argIdx.idx];
+                Object param = parameters[a.idx.idx];
 
                 query.append("/* $");
-                query.append(a.argIdx.idx + 1);
-                if (a.methodName != null) {
+                query.append(a.idx.idx + 1);
+                final ArgInfo argInfo = a.info;
+                if (argInfo.methodName != null) {
                     query.append('#');
-                    query.append(a.methodName);
+                    query.append(argInfo.methodName);
                     query.append("()");
                 }
                 query.append(" = (");
-                query.append(BuilderUtils.getName(a.clazz));
+                query.append(BuilderUtils.getName(argInfo.clazz));
                 query.append(")*/ ");
 
                 // Array bound check is not necessary because of check during method generation
                 if (param == null) {
                     query.append("NULL");
-                } else if (a.methodName == null) {
+                } else if (argInfo.methodName == null) {
                     query.append(renderObject(param));
                 } else {
                     try {
-                        final Method method = param.getClass().getMethod(a.methodName);
+                        final Method method = param.getClass().getMethod(argInfo.methodName);
                         final Object result = method.invoke(param);
                         query.append(renderObject(result));
                     } catch (ReflectiveOperationException e) {
