@@ -121,7 +121,13 @@ public class SqlStringUtils {
                     body.append("$");
                     body.append(argIdx.idx + 1);
                 } else {
-                    optionalIndexes.add(new Arg(null, argIdx.idx, argIdx.optional));
+                    if (argRef.expandingType == null || argRef.expandingType.length == 0) {
+                        optionalIndexes.add(new Arg(null, argIdx.idx, argIdx.optional));
+                    } else {
+                        for (ArgInfo ai : argRef.expandingType) {
+                            optionalIndexes.add(new Arg(ai.clazz, argIdx.idx, ai.methodName, argIdx.optional));
+                        }
+                    }
 
                     body.append('"');
                     body.append(StringEscapeUtils.escapeJava(argRef.sqlPart));

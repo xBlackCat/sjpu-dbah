@@ -157,7 +157,21 @@ public class ConverterInfo {
                     }
 
                     if (sqlArg != null) {
-                        final SqlArgInfo oldVal = parts.put(sqlArg.value(), new SqlArgInfo("?", i, false));
+                        final Collection<Arg> expandedArgs = detectTypeExpanding(expandingClassesInMethod, i, t, rawArgClass, false);
+                        if (expandedArgs.size() > 1) {
+                            throw new GeneratorException(
+                                    "Optional SqlArg should be mapped to a single element. Expanded to " + expandedArgs.size() +
+                                            " args in " + m
+                            );
+                        }
+
+                        final ArgInfo[] expandingType;
+                        if (expandedArgs.isEmpty()) {
+                            expandingType = null;
+                        } else {
+                            expandingType = new ArgInfo[]{expandedArgs.iterator().next().info};
+                        }
+                        final SqlArgInfo oldVal = parts.put(sqlArg.value(), new SqlArgInfo("?", i, false, expandingType));
                         if (oldVal != null) {
                             throw new GeneratorException(
                                     "Two arguments (" + oldVal + " and " + i + ") are referenced to the same sql part index " +
@@ -178,9 +192,7 @@ public class ConverterInfo {
                             expanded = ArgInfo.NO_ARG_INFOS;
                         } else {
                             optional = !rawArgClass.isPrimitive();
-//                            if (primitive) {
-//                                throw new GeneratorException("Primitive argument types can't be used as optional sql parts. " + m);
-//                            }
+
                             additional = sqlOptArg.value();
                             final int argumentCountInAdditional = SqlStringUtils.getArgumentCount(additional);
                             final Collection<Arg> expandedArgs = detectTypeExpanding(expandingClassesInMethod, i, t, rawArgClass, optional);
