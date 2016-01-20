@@ -13,7 +13,7 @@ import java.lang.annotation.Target;
  * Example:
  * <pre><code>
  *     interface ITestAH extends IAH {
- *         {@linkplain Sql @SQL}("INSERT INTO `duplicate`(`id`, `name`, `name_copy`) VALUES (?, {1}, {1})")
+ *         {@linkplain Sql @Sql}("INSERT INTO `duplicate`(`id`, `name`, `name_copy`) VALUES (?, {1}, {1})")
  *         void addName(int id, @SqlArg(1) String name) throws {@linkplain org.xblackcat.sjpu.storage.StorageException StorageException};
  *     }
  * </code></pre>

@@ -6,19 +6,19 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Mark with the annotation a method parameter to substitute in runtime a part of SQL. Value of the annotation represent an indexed
- * argument in SQL query. Indexed argument represented with '<code>{&lt;index&gt;}</code>' construction. Argument should be String type.
+ * Mark with the annotation a method parameter to substitute value of the annotation as sql part if passed value to the annotated
+ * parameter is not null. If the annotated parameter type is primitive - it is treated as always non-null parameter.
  * <p>
  * Example:
  * <pre><code>
  *     interface ITestAH extends IAH {
- *         {@linkplain Sql @SQL}("INSERT INTO `{1}`(`name`) VALUES (?)")
- *         void addName(@SqlPart(1) String tableName, String name) throws {@linkplain org.xblackcat.sjpu.storage.StorageException StorageException};
+ *         {@linkplain Sql @Sql}("SELECT id FROM `table` t WHERE t.name IS NOT NULL {0}")
+ *         List&lt;Integer&gt; getTableIds({@linkplain SqlPart @SqlPart} @SqlOptArg("AND t.group = ?") String tableGroup) throws {@linkplain org.xblackcat.sjpu.storage.StorageException StorageException};
  *     }
  * </code></pre>
- *
- * SqlPart string will replace all references in SQL in runtime.
- * 17.02.14 11:21
+ * In case, when passed NULL to <code>tableGroup</code> parameter the following SQL will be invoked:
+ * <pre><code>SELECT id FROM `table` t WHERE t.name IS NOT NULL</code></pre>
+ * If a non-null value is passed to parameter the following SQL will be invoked: <pre><code>SELECT id FROM `table` t WHERE t.name IS NOT NULL AND t.group = ?</code></pre>
  *
  * @author xBlackCat
  */

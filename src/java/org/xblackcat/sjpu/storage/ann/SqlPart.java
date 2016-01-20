@@ -12,7 +12,7 @@ import java.lang.annotation.Target;
  * Example:
  * <pre><code>
  *     interface ITestAH extends IAH {
- *         {@linkplain org.xblackcat.sjpu.storage.ann.Sql @SQL}("INSERT INTO `{1}`(`name`) VALUES (?)")
+ *         {@linkplain Sql @Sql}("INSERT INTO `{1}`(`name`) VALUES (?)")
  *         void addName(@SqlPart(1) String tableName, String name) throws {@linkplain org.xblackcat.sjpu.storage.StorageException StorageException};
  *     }
  * </code></pre>
