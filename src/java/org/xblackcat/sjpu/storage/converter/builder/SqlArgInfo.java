@@ -10,10 +10,22 @@ import java.util.Objects;
  */
 public final class SqlArgInfo {
     public final String sqlPart;
+    public final ArgInfo varArgInfo;
     public final ArgIdx argIdx;
     public final ArgInfo[] expandingType;
 
     public SqlArgInfo(String sqlPart, int argIdx, boolean optional, ArgInfo... expandingType) {
+        this(sqlPart, null, argIdx, optional, expandingType);
+    }
+
+    public SqlArgInfo(
+            String sqlPart,
+            ArgInfo varArgInfo,
+            int argIdx,
+            boolean optional,
+            ArgInfo... expandingType
+    ) {
+        this.varArgInfo = varArgInfo;
         this.expandingType = expandingType;
         this.argIdx = new ArgIdx(argIdx, optional);
         this.sqlPart = sqlPart;
@@ -22,7 +34,8 @@ public final class SqlArgInfo {
     @Override
     public String toString() {
         return "SqlArgInfo " + argIdx + " [" + sqlPart + "]" +
-                (expandingType != null && expandingType.length > 0 ? " expanded as " + Arrays.asList(expandingType) : "");
+                (varArgInfo == null ? "" : " var arg element type " + varArgInfo.clazz + " with glue '" + varArgInfo.methodName + "'") +
+                (expandingType == null || expandingType.length == 0 ? "" : " expanded as " + Arrays.asList(expandingType));
     }
 
     @Override
@@ -31,12 +44,13 @@ public final class SqlArgInfo {
         if (o == null || getClass() != o.getClass()) return false;
         SqlArgInfo that = (SqlArgInfo) o;
         return Objects.equals(sqlPart, that.sqlPart) &&
+                Objects.equals(varArgInfo, that.varArgInfo) &&
                 Objects.equals(argIdx, that.argIdx) &&
                 Arrays.equals(expandingType, that.expandingType);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(sqlPart, argIdx, expandingType);
+        return Objects.hash(sqlPart, varArgInfo, argIdx, expandingType);
     }
 }

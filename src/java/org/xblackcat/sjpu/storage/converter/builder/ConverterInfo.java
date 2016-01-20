@@ -88,7 +88,7 @@ public class ConverterInfo {
         if (m.getGenericReturnType() instanceof ParameterizedType) {
             final ParameterizedType returnType = (ParameterizedType) m.getGenericReturnType();
             if (!(returnType.getRawType() instanceof Class)) {
-                throw new GeneratorException("Raw type is not a class " + returnType + " in method " + m.toString());
+                throw new GeneratorException("Raw type is not a class " + returnType + " in method " + m);
             }
             rawClass = (Class) returnType.getRawType();
             proposalReturnClass = detectTypeArgClass(returnType);
@@ -117,23 +117,17 @@ public class ConverterInfo {
                 final Class<?> rawArgClass = getRaw(t);
                 if (IRawProcessor.class.isAssignableFrom(rawArgClass)) {
                     if (rawProcessorParamIndex != null) {
-                        throw new GeneratorException("Only one raw processor could be specified for method. " + m.toString());
+                        throw new GeneratorException("Only one raw processor could be specified for method. " + m);
                     } else if (consumerParamIdx != null) {
-                        throw new GeneratorException(
-                                "Consumer and raw process can't be specified simultaneously for method. " +
-                                        m.toString()
-                        );
+                        throw new GeneratorException("Consumer and raw process can't be specified simultaneously for method. " + m);
                     }
 
                     rawProcessorParamIndex = i;
                 } else if (IRowConsumer.class.isAssignableFrom(rawArgClass)) {
                     if (consumerParamIdx != null) {
-                        throw new GeneratorException("Only one consumer could be specified for method. " + m.toString());
+                        throw new GeneratorException("Only one consumer could be specified for method. " + m);
                     } else if (rawProcessorParamIndex != null) {
-                        throw new GeneratorException(
-                                "Consumer and raw process can't be specified simultaneously for method. " +
-                                        m.toString()
-                        );
+                        throw new GeneratorException("Consumer and raw process can't be specified simultaneously for method. " + m);
                     }
 
                     consumerProposalReturnClass = detectTypeArgClass(t);
@@ -142,11 +136,14 @@ public class ConverterInfo {
                     SqlPart sqlPart = null;
                     SqlOptArg sqlOptArg = null;
                     SqlArg sqlArg = null;
+                    SqlVarArg sqlVarArg = null;
                     for (Annotation a : anns[i]) {
                         if (a instanceof SqlPart) {
                             sqlPart = (SqlPart) a;
                         } else if (a instanceof SqlOptArg) {
                             sqlOptArg = (SqlOptArg) a;
+                        } else if (a instanceof SqlVarArg) {
+                            sqlVarArg = (SqlVarArg) a;
                         } else if (a instanceof SqlArg) {
                             sqlArg = (SqlArg) a;
                         }
@@ -154,6 +151,11 @@ public class ConverterInfo {
 
                     if (sqlArg != null && sqlPart != null) {
                         throw new GeneratorException("@SqlArg and @SqlPart cannot be defined simultaneously for the same parameter. " + m);
+                    }
+                    if (sqlOptArg != null && sqlVarArg != null) {
+                        throw new GeneratorException(
+                                "@SqlOptArg and @SqlVarArg cannot be defined simultaneously for the same parameter " + m
+                        );
                     }
 
                     if (sqlArg != null) {
@@ -181,38 +183,55 @@ public class ConverterInfo {
                     } else if (sqlPart != null) {
                         final boolean optional;
                         final String additional;
+                        final ArgInfo varArgElement;
                         final ArgInfo[] expanded;
 
-                        if (sqlOptArg == null) {
+                        if (sqlOptArg != null) {
+                            varArgElement = null;
+                            optional = !rawArgClass.isPrimitive();
+                            additional = sqlOptArg.value();
+
+                            final Collection<Arg> expandedArgs = detectTypeExpanding(expandingClassesInMethod, i, t, rawArgClass, optional);
+
+                            expanded = tryExpandType(m, additional, expandedArgs);
+                        } else if (sqlVarArg != null) {
+                            optional = false;
+                            additional = sqlVarArg.value();
+                            final Collection<Arg> expandedArgs = detectTypeExpanding(expandingClassesInMethod, i, t, rawArgClass, optional);
+
+                            expanded = tryExpandType(m, additional, expandedArgs);
+                            final Class<?> varArgElementClass;
+                            if (rawArgClass.isArray()) {
+                                varArgElementClass = rawArgClass.getComponentType();
+                            } else if (!Iterable.class.isAssignableFrom(rawArgClass)) {
+                                throw new GeneratorException(
+                                        "Expected array or iterable object as parameter type. Got " + t + " in method " + m
+                                );
+                            } else if (t instanceof ParameterizedType) {
+                                varArgElementClass = detectTypeArgClass((ParameterizedType) t);
+                                if (varArgElementClass == null) {
+                                    throw new GeneratorException(
+                                            "Failed to detect element class for parameter type" + t + " in method " + m
+                                    );
+                                }
+                            } else {
+                                throw new GeneratorException("Failed to detect element class for parameter type" + t + " in method " + m);
+                            }
+                            varArgElement = new ArgInfo(varArgElementClass, sqlVarArg.concatBy());
+                        } else {
                             if (!String.class.equals(t)) {
                                 throw new GeneratorException("Only String argument types could be used as plain sql parts. " + m);
                             }
-                            additional = null;
+                            varArgElement = null;
                             optional = true;
+                            additional = null;
                             expanded = ArgInfo.NO_ARG_INFOS;
-                        } else {
-                            optional = !rawArgClass.isPrimitive();
-
-                            additional = sqlOptArg.value();
-                            final int argumentCountInAdditional = SqlStringUtils.getArgumentCount(additional);
-                            final Collection<Arg> expandedArgs = detectTypeExpanding(expandingClassesInMethod, i, t, rawArgClass, optional);
-
-                            if (expandedArgs.size() == 0) {
-                                if (SqlStringUtils.getArgumentCount(additional) != 1) {
-                                    throw new GeneratorException(
-                                            "Optional Sql part should have one and only one argument. Got: " + additional + " in " + m
-                                    );
-                                }
-                            } else if (argumentCountInAdditional != expandedArgs.size()) {
-                                throw new GeneratorException(
-                                        "Optional Sql part have " + additional + " arguments to substitute and argument expanded into " +
-                                                expandedArgs.size() + " arguments. " + m
-                                );
-                            }
-                            expanded = expandedArgs.stream().map(a -> a.info).toArray(ArgInfo[]::new);
                         }
 
-                        final SqlArgInfo oldVal = parts.put(sqlPart.value(), new SqlArgInfo(additional, i, optional, expanded));
+                        final SqlArgInfo oldVal = parts.put(
+                                sqlPart.value(),
+                                new SqlArgInfo(additional, varArgElement, i, optional, expanded)
+                        );
                         if (oldVal != null) {
                             throw new GeneratorException(
                                     "Two arguments (" + oldVal + " and " + i + ") are referenced to the same sql part index " +
@@ -220,7 +239,9 @@ public class ConverterInfo {
                             );
                         }
                     } else if (sqlOptArg != null) {
-                        throw new GeneratorException("@SqlOptArg should be specified only with @SqlPart annotation in " + m.toString());
+                        throw new GeneratorException("@SqlOptArg should be specified only with @SqlPart annotation in " + m);
+                    } else if (sqlVarArg != null) {
+                        throw new GeneratorException("@SqlVarArg should be specified only with @SqlPart annotation in " + m);
                     } else {
                         final Collection<Arg> expandedArgs = detectTypeExpanding(expandingClassesInMethod, i, t, rawArgClass, false);
                         if (expandedArgs.size() > 0) {
@@ -323,6 +344,27 @@ public class ConverterInfo {
             }
         }
         return new ConverterInfo(realReturnClass, converter, consumerParamIdx, rawProcessorParamIndex, args, parts);
+    }
+
+    private static ArgInfo[] tryExpandType(Method m, String additional, Collection<Arg> expandedArgs) {
+        ArgInfo[] expanded;
+        final int argumentCountInAdditional = SqlStringUtils.getArgumentCount(additional);
+        if (expandedArgs.size() == 0) {
+            if (SqlStringUtils.getArgumentCount(additional) != 1) {
+                throw new GeneratorException(
+                        "Optional Sql part should have one and only one argument. Got: " + additional + " in " + m
+                );
+            }
+            expanded = ArgInfo.NO_ARG_INFOS;
+        } else if (argumentCountInAdditional != expandedArgs.size()) {
+            throw new GeneratorException(
+                    "Optional Sql part have " + additional + " arguments to substitute and argument expanded into " +
+                            expandedArgs.size() + " arguments. " + m
+            );
+        } else {
+            expanded = expandedArgs.stream().map(a -> a.info).toArray(ArgInfo[]::new);
+        }
+        return expanded;
     }
 
     protected static Collection<Arg> detectTypeExpanding(
