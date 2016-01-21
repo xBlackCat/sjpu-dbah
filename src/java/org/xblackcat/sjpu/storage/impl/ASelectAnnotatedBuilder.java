@@ -19,7 +19,8 @@ import org.xblackcat.sjpu.storage.typemap.TypeMapper;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.Collection;
+import java.util.Map;
 
 /**
  * 24.04.2015 18:03
@@ -33,38 +34,6 @@ public abstract class ASelectAnnotatedBuilder<A extends Annotation> extends AMap
             Map<Class<?>, Class<? extends IRowSetConsumer>> rowSetConsumers
     ) {
         super(annClass, typeMapper, rowSetConsumers);
-    }
-
-    protected static Collection<Arg> substituteOptionalArgs(
-            Collection<Arg> argumentList,
-            List<Arg> optionalArgs,
-            Class<?>... types
-    ) {
-        final Collection<Arg> args;
-        if (optionalArgs == null || optionalArgs.isEmpty()) {
-            args = argumentList;
-        } else {
-            final Iterator<Arg> staticArgs = argumentList.iterator();
-            args = new ArrayList<>();
-            for (Arg opt : optionalArgs) {
-                if (opt == null) {
-                    args.add(staticArgs.next());
-                } else {
-                    ArgIdx optIdx = opt.idx;
-                    final Class<?> type;
-                    if (opt.info.clazz == null) {
-                        type = types[optIdx.idx];
-                    } else {
-                        type = opt.info.clazz;
-                    }
-                    args.add(new Arg(type, optIdx.idx, opt.info.methodName, optIdx.optional));
-                }
-            }
-            while (staticArgs.hasNext()) {
-                args.add(staticArgs.next());
-            }
-        }
-        return args;
     }
 
     protected boolean hasClassParameter(Class<? extends IRowSetConsumer> consumer) throws GeneratorException {
@@ -96,75 +65,115 @@ public abstract class ASelectAnnotatedBuilder<A extends Annotation> extends AMap
         body.append("int idx = 0;\n");
 
         for (Arg arg : types) {
-            final ArgInfo argInfo = arg.info;
-            final Class<?> type = argInfo.clazz;
+            final Class<?> type = arg.typeRawClass;
             final ITypeMap<?, ?> typeMap = typeMapper.hasTypeMap(type);
 
             final ArgIdx argIdx = arg.idx;
             final int idx = argIdx.idx + 1;
 
-            final String argRef;
-            final Class<?> argTypeExpect;
-            if (argInfo.methodName == null) {
-                argRef = "$" + idx;
-                argTypeExpect = type;
-            } else {
-                argRef = "_" + idx + "_" + argInfo.methodName;
-
-                final boolean isPrimitive = type.isPrimitive();
-                if (isPrimitive) {
-                    argTypeExpect = Class.forName(((CtPrimitiveType) pool.get(type.getName())).getWrapperName());
-                } else {
-                    argTypeExpect = type;
-                }
-
-                final String argClassFQN = BuilderUtils.getName(argTypeExpect);
-                body.append(argClassFQN);
-                body.append(" ");
-                body.append(argRef);
-                body.append(" = ((");
-                body.append(argClassFQN);
-                body.append(") ($");
-                body.append(idx);
-                body.append(" == null ? null : ");
-                if (isPrimitive) {
-                    body.append(argClassFQN);
-                    body.append(".valueOf(");
-                }
-                body.append("$");
-                body.append(idx);
-                body.append(".");
-                body.append(argInfo.methodName);
-                body.append("()");
-                if (isPrimitive) {
-                    body.append(")");
-                }
-                body.append("));\n");
-            }
-
-            final Class<?> argType;
-            final String value;
-            if (typeMap != null) {
-                final String typeMapInstanceRef = typeMapper.getTypeMapInstanceRef(argTypeExpect);
-
-                argType = typeMap.getDbType();
-                value = "(" + BuilderUtils.getName(argType) + ") " + typeMapInstanceRef + ".forStore(con, " + argRef + ")";
-            } else {
-                argType = argTypeExpect;
-                value = argRef;
-            }
-
+            final ArgInfo varArgInfo = arg.varArgInfo;
             if (argIdx.optional) {
                 body.append("if ($");
                 body.append(idx);
-                body.append(" != null) {\n");
+                body.append(" != null) ");
             }
-            body.append("idx++;\n");
-            body.append(AHBuilderUtils.setParamValue(argType, value));
-            if (argIdx.optional) {
+            body.append("{\n");
+
+            final boolean noExpanding = arg.expandedArgs == null || arg.expandedArgs.length == 0;
+            final boolean isVarArg = varArgInfo != null;
+            final boolean isArray = isVarArg && type.isArray();
+
+            final String valueRef;
+
+            if (isVarArg) {
+                final String elementClassName = BuilderUtils.getName(varArgInfo.clazz);
+                if (isArray) {
+                    body.append("for (int _i = 0; _i < $");
+                    body.append(idx);
+                    body.append("; _i++ ) {\n");
+                    body.append(elementClassName);
+                    body.append(" _el = $");
+                    body.append(idx);
+                    body.append("[_i];\n");
+                } else {
+                    body.append("java.util.Iterator _it = $");
+                    body.append(idx);
+                    body.append(".iterator();\nwhile (_it.hasNext()) {\n");
+                    body.append(elementClassName);
+                    body.append(" _el = (");
+                    body.append(elementClassName);
+                    body.append(") _it.next();\n");
+                }
+                valueRef = "_el";
+            } else {
+                valueRef = "$" + idx;
+            }
+
+            if (noExpanding) {
+                appendSetArg(body, typeMap, valueRef, type);
+            } else {
+                for (ArgInfo argInfo : arg.expandedArgs) {
+                    final String subArgRef = "_" + idx + "_" + argInfo.methodName;
+                    final Class<?> argTypeExpect;
+
+                    final Class<?> clazz = argInfo.clazz;
+                    final boolean isPrimitive = clazz.isPrimitive();
+                    if (isPrimitive) {
+                        argTypeExpect = Class.forName(((CtPrimitiveType) pool.get(clazz.getName())).getWrapperName());
+                    } else {
+                        argTypeExpect = clazz;
+                    }
+
+                    final String argClassFQN = BuilderUtils.getName(argTypeExpect);
+                    body.append(argClassFQN);
+                    body.append(" ");
+                    body.append(subArgRef);
+                    body.append(" = ((");
+                    body.append(argClassFQN);
+                    body.append(") (");
+                    body.append(valueRef);
+                    body.append(" == null ? null : ");
+                    if (isPrimitive) {
+                        body.append(argClassFQN);
+                        body.append(".valueOf(");
+                    }
+                    body.append("$");
+                    body.append(idx);
+                    body.append(".");
+                    body.append(argInfo.methodName);
+                    body.append("()");
+                    if (isPrimitive) {
+                        body.append(")");
+                    }
+                    body.append("));\n");
+                    final ITypeMap<?, ?> subTypeMap = typeMapper.hasTypeMap(argTypeExpect);
+
+                    appendSetArg(body, subTypeMap, subArgRef, argTypeExpect);
+                }
+            }
+            if (isVarArg) {
                 body.append("}\n");
             }
+            body.append("}\n");
+
         }
+    }
+
+    private void appendSetArg(StringBuilder body, ITypeMap<?, ?> typeMap, String argRef, Class<?> argTypeExpect) {
+        final Class<?> argType;
+        final String value;
+        if (typeMap != null) {
+            final String typeMapInstanceRef = typeMapper.getTypeMapInstanceRef(argTypeExpect);
+
+            argType = typeMap.getDbType();
+            value = "(" + BuilderUtils.getName(argType) + ") " + typeMapInstanceRef + ".forStore(con, " + argRef + ")";
+        } else {
+            argType = argTypeExpect;
+            value = argRef;
+        }
+
+        body.append("idx++;\n");
+        body.append(AHBuilderUtils.setParamValue(argType, value));
     }
 
     protected void addMethod(
@@ -266,7 +275,7 @@ public abstract class ASelectAnnotatedBuilder<A extends Annotation> extends AMap
         CtClass ctRealReturnType = pool.get(returnType.getName());
         final StringBuilder body = new StringBuilder("{\n");
 
-        final List<Arg> optionalArgs = appendDefineSql(body, info, m);
+        final Collection<Arg> args = appendDefineSql(body, info, m);
 
         final CtClass targetReturnType;
 
@@ -395,8 +404,6 @@ public abstract class ASelectAnnotatedBuilder<A extends Annotation> extends AMap
         appendPrepareStatement(body, m, returnKeys);
         body.append("try {\n");
 
-        final Class<?>[] types = m.getParameterTypes();
-        final Collection<Arg> args = substituteOptionalArgs(info.getArgumentList(), optionalArgs, types);
         setParameters(pool, args, body);
 
         final boolean processResultSet;
@@ -424,7 +431,7 @@ public abstract class ASelectAnnotatedBuilder<A extends Annotation> extends AMap
 
         String debugSqlBuilder = AHBuilderUtils.CN_StorageUtils +
                 ".constructDebugSQL(sql, " +
-                StorageUtils.converterArgsToJava(info.getArgumentList()) +
+                StorageUtils.converterArgsToJava(args) +
                 ", $args)";
 
         if (processResultSet) {
@@ -516,5 +523,5 @@ public abstract class ASelectAnnotatedBuilder<A extends Annotation> extends AMap
 
     protected abstract QueryType getQueryType(Method m);
 
-    protected abstract List<Arg> appendDefineSql(StringBuilder body, ConverterInfo info, Method m);
+    protected abstract Collection<Arg> appendDefineSql(StringBuilder body, ConverterInfo info, Method m);
 }

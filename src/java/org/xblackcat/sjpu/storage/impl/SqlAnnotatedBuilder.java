@@ -8,7 +8,7 @@ import org.xblackcat.sjpu.storage.converter.builder.ConverterInfo;
 import org.xblackcat.sjpu.storage.typemap.TypeMapper;
 
 import java.lang.reflect.Method;
-import java.util.List;
+import java.util.Collection;
 import java.util.Map;
 import java.util.regex.Matcher;
 
@@ -48,9 +48,9 @@ class SqlAnnotatedBuilder extends ASelectAnnotatedBuilder<Sql> {
     }
 
     @Override
-    protected List<Arg> appendDefineSql(StringBuilder body, ConverterInfo info, Method m) {
+    protected Collection<Arg> appendDefineSql(StringBuilder body, ConverterInfo info, Method m) {
         final String sql = getAnnotation(m).value();
-        return SqlStringUtils.appendSqlWithParts(body, sql, info.getSqlParts());
+        return SqlStringUtils.appendSqlWithParts(body, sql, info.getStaticArgs() ,info.getSqlParts());
     }
 
 }

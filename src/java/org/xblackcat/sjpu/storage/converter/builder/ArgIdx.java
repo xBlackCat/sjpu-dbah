@@ -11,6 +11,10 @@ public class ArgIdx {
     public final int idx;
     public final boolean optional;
 
+    public ArgIdx(int idx) {
+        this(idx, false);
+    }
+
     public ArgIdx(int idx, boolean optional) {
         this.idx = idx;
         this.optional = optional;

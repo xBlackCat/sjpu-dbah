@@ -11,8 +11,7 @@ import org.xblackcat.sjpu.storage.converter.builder.ConverterInfo;
 import org.xblackcat.sjpu.storage.typemap.TypeMapper;
 
 import java.lang.reflect.Method;
-import java.util.Collections;
-import java.util.List;
+import java.util.Collection;
 import java.util.Map;
 
 /**
@@ -29,12 +28,12 @@ class FunctionalAHBuilder extends ASelectAnnotatedBuilder<SqlType> {
         return getAnnotation(m).value();
     }
 
-    protected List<Arg> appendDefineSql(StringBuilder body, ConverterInfo info, Method m) {
+    protected Collection<Arg> appendDefineSql(StringBuilder body, ConverterInfo info, Method m) {
         if (!info.getSqlParts().isEmpty()) {
             throw new GeneratorException(BuilderUtils.getName(SqlPart.class) + " annotation is not allowed in functional AH");
         }
 
         body.append("java.lang.String sql = getSql();\n");
-        return Collections.emptyList();
+        return info.getStaticArgs();
     }
 }

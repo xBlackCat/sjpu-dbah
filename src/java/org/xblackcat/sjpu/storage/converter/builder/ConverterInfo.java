@@ -22,7 +22,6 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
 import java.sql.ResultSet;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * 17.12.13 16:45
@@ -36,22 +35,22 @@ public class ConverterInfo {
     private final Class<? extends IToObjectConverter<?>> converter;
     private final Integer consumeIndex;
     private final Integer rawProcessorParamIndex;
-    private final Collection<Arg> argumentList;
-    private final Map<Integer, SqlArgInfo> sqlParts;
+    private final Collection<Arg> staticArgs;
+    private final Map<Integer, Arg> sqlParts;
 
     ConverterInfo(
             Class<?> realReturnType,
             Class<? extends IToObjectConverter<?>> converter,
             Integer consumeIndex,
             Integer rawProcessorParamIndex,
-            Collection<Arg> argumentList,
-            Map<Integer, SqlArgInfo> parts
+            Collection<Arg> staticArgs,
+            Map<Integer, Arg> parts
     ) {
         this.realReturnType = realReturnType;
         this.converter = converter;
         this.consumeIndex = consumeIndex;
         this.rawProcessorParamIndex = rawProcessorParamIndex;
-        this.argumentList = argumentList;
+        this.staticArgs = staticArgs;
         sqlParts = parts;
     }
 
@@ -61,21 +60,6 @@ public class ConverterInfo {
             Method m
     ) throws ReflectiveOperationException, NotFoundException, CannotCompileException {
         return simpleAnalyse(typeMapper, rowSetConsumers, m);
-    }
-
-    private static Class<?> detectTypeArgClass(Type type) {
-        if (!(type instanceof ParameterizedType)) {
-            return null;
-        }
-        final Type[] typeArguments = ((ParameterizedType) type).getActualTypeArguments();
-        if (typeArguments.length != 1) {
-            return null;
-        }
-        final Type argument = typeArguments[0];
-        if (!(argument instanceof Class)) {
-            return null;
-        }
-        return (Class<?>) argument;
     }
 
     protected static ConverterInfo simpleAnalyse(
@@ -91,7 +75,7 @@ public class ConverterInfo {
                 throw new GeneratorException("Raw type is not a class " + returnType + " in method " + m);
             }
             rawClass = (Class) returnType.getRawType();
-            proposalReturnClass = detectTypeArgClass(returnType);
+            proposalReturnClass = BuilderUtils.detectTypeArgClass(returnType);
         } else {
             rawClass = m.getReturnType();
             proposalReturnClass = null;
@@ -104,7 +88,7 @@ public class ConverterInfo {
         Class<?> consumerProposalReturnClass = null;
 
         final Collection<Arg> args = new ArrayList<>();
-        final Map<Integer, SqlArgInfo> parts = new HashMap<>();
+        final Map<Integer, Arg> parts = new HashMap<>();
 
         Map<Class<?>, List<Method>> expandingClassesInMethod = collectClassesToExpand(m);
 
@@ -130,7 +114,7 @@ public class ConverterInfo {
                         throw new GeneratorException("Consumer and raw process can't be specified simultaneously for method. " + m);
                     }
 
-                    consumerProposalReturnClass = detectTypeArgClass(t);
+                    consumerProposalReturnClass = BuilderUtils.detectTypeArgClass(t);
                     consumerParamIdx = i;
                 } else {
                     SqlPart sqlPart = null;
@@ -159,21 +143,17 @@ public class ConverterInfo {
                     }
 
                     if (sqlArg != null) {
-                        final Collection<Arg> expandedArgs = detectTypeExpanding(expandingClassesInMethod, i, t, rawArgClass, false);
-                        if (expandedArgs.size() > 1) {
+                        final ArgInfo[] expandedArgs = detectTypeExpanding(expandingClassesInMethod, t, rawArgClass);
+                        if (expandedArgs.length > 1) {
                             throw new GeneratorException(
-                                    "Optional SqlArg should be mapped to a single element. Expanded to " + expandedArgs.size() +
+                                    "Optional SqlArg should be mapped to a single element. Expanded to " + expandedArgs.length +
                                             " args in " + m
                             );
                         }
 
-                        final ArgInfo[] expandingType;
-                        if (expandedArgs.isEmpty()) {
-                            expandingType = null;
-                        } else {
-                            expandingType = new ArgInfo[]{expandedArgs.iterator().next().info};
-                        }
-                        final SqlArgInfo oldVal = parts.put(sqlArg.value(), new SqlArgInfo("?", i, false, expandingType));
+                        final ArgInfo[] expandingType = expandedArgs.length == 0 ? null : expandedArgs;
+
+                        final Arg oldVal = parts.put(sqlArg.value(), new Arg(rawArgClass, "?", new ArgIdx(i), expandingType));
                         if (oldVal != null) {
                             throw new GeneratorException(
                                     "Two arguments (" + oldVal + " and " + i + ") are referenced to the same sql part index " +
@@ -191,15 +171,12 @@ public class ConverterInfo {
                             optional = !rawArgClass.isPrimitive();
                             additional = sqlOptArg.value();
 
-                            final Collection<Arg> expandedArgs = detectTypeExpanding(expandingClassesInMethod, i, t, rawArgClass, optional);
-
-                            expanded = tryExpandType(m, additional, expandedArgs);
+                            expanded = expandType(m, expandingClassesInMethod, t, rawArgClass, additional);
                         } else if (sqlVarArg != null) {
                             optional = false;
                             additional = sqlVarArg.value();
-                            final Collection<Arg> expandedArgs = detectTypeExpanding(expandingClassesInMethod, i, t, rawArgClass, optional);
+                            expanded = expandType(m, expandingClassesInMethod, t, rawArgClass, additional);
 
-                            expanded = tryExpandType(m, additional, expandedArgs);
                             final Class<?> varArgElementClass;
                             if (rawArgClass.isArray()) {
                                 varArgElementClass = rawArgClass.getComponentType();
@@ -208,7 +185,7 @@ public class ConverterInfo {
                                         "Expected array or iterable object as parameter type. Got " + t + " in method " + m
                                 );
                             } else if (t instanceof ParameterizedType) {
-                                varArgElementClass = detectTypeArgClass((ParameterizedType) t);
+                                varArgElementClass = BuilderUtils.detectTypeArgClass((ParameterizedType) t);
                                 if (varArgElementClass == null) {
                                     throw new GeneratorException(
                                             "Failed to detect element class for parameter type" + t + " in method " + m
@@ -223,14 +200,14 @@ public class ConverterInfo {
                                 throw new GeneratorException("Only String argument types could be used as plain sql parts. " + m);
                             }
                             varArgElement = null;
-                            optional = true;
+                            optional = false;
                             additional = null;
                             expanded = ArgInfo.NO_ARG_INFOS;
                         }
 
-                        final SqlArgInfo oldVal = parts.put(
+                        final Arg oldVal = parts.put(
                                 sqlPart.value(),
-                                new SqlArgInfo(additional, varArgElement, i, optional, expanded)
+                                new Arg(rawArgClass, additional, varArgElement, new ArgIdx(i, optional), expanded)
                         );
                         if (oldVal != null) {
                             throw new GeneratorException(
@@ -243,12 +220,9 @@ public class ConverterInfo {
                     } else if (sqlVarArg != null) {
                         throw new GeneratorException("@SqlVarArg should be specified only with @SqlPart annotation in " + m);
                     } else {
-                        final Collection<Arg> expandedArgs = detectTypeExpanding(expandingClassesInMethod, i, t, rawArgClass, false);
-                        if (expandedArgs.size() > 0) {
-                            args.addAll(expandedArgs);
-                        } else {
-                            args.add(new Arg(rawArgClass, i));
-                        }
+                        final ArgInfo[] expandedArgs = detectTypeExpanding(expandingClassesInMethod, t, rawArgClass);
+
+                        args.add(new Arg(rawArgClass, i, expandedArgs));
                     }
                 }
                 i++;
@@ -346,45 +320,51 @@ public class ConverterInfo {
         return new ConverterInfo(realReturnClass, converter, consumerParamIdx, rawProcessorParamIndex, args, parts);
     }
 
-    private static ArgInfo[] tryExpandType(Method m, String additional, Collection<Arg> expandedArgs) {
+    private static ArgInfo[] expandType(
+            Method m,
+            Map<Class<?>, List<Method>> expandingClassesInMethod,
+            Type t,
+            Class<?> rawArgClass,
+            String additional
+    ) {
         ArgInfo[] expanded;
+        expanded = detectTypeExpanding(expandingClassesInMethod, t, rawArgClass);
+        checkExpandedArgs(m, additional, expanded);
+        return expanded;
+    }
+
+    private static void checkExpandedArgs(Method m, String additional, ArgInfo[] expandedArgs) {
         final int argumentCountInAdditional = SqlStringUtils.getArgumentCount(additional);
-        if (expandedArgs.size() == 0) {
+        if (expandedArgs.length == 0) {
             if (SqlStringUtils.getArgumentCount(additional) != 1) {
                 throw new GeneratorException(
                         "Optional Sql part should have one and only one argument. Got: " + additional + " in " + m
                 );
             }
-            expanded = ArgInfo.NO_ARG_INFOS;
-        } else if (argumentCountInAdditional != expandedArgs.size()) {
+        } else if (argumentCountInAdditional != expandedArgs.length) {
             throw new GeneratorException(
                     "Optional Sql part have " + additional + " arguments to substitute and argument expanded into " +
-                            expandedArgs.size() + " arguments. " + m
+                            expandedArgs.length + " arguments. " + m
             );
-        } else {
-            expanded = expandedArgs.stream().map(a -> a.info).toArray(ArgInfo[]::new);
         }
-        return expanded;
     }
 
-    protected static Collection<Arg> detectTypeExpanding(
+    protected static ArgInfo[] detectTypeExpanding(
             Map<Class<?>, List<Method>> expandingClassesInMethod,
-            int argIdx,
             Type type,
-            Class<?> rawArgClass,
-            boolean optional
+            Class<?> rawArgClass
     ) {
         // Detect expanding class
         final List<Method> predefinedExpanders = findExpandingType(expandingClassesInMethod, rawArgClass);
         if (predefinedExpanders != null) {
-            return expandClassWithMethods(argIdx, predefinedExpanders, type, optional);
+            return expandClassWithMethods(predefinedExpanders, type);
         } else {
             final ExtractFields extractFields = searchExtractFieldAnn(rawArgClass);
             if (extractFields != null) {
                 final List<Method> methodList = parseProperties(rawArgClass, extractFields.value());
-                return expandClassWithMethods(argIdx, methodList, type, optional);
+                return expandClassWithMethods(methodList, type);
             } else {
-                return Collections.emptyList();
+                return ArgInfo.NO_ARG_INFOS;
             }
         }
     }
@@ -413,22 +393,19 @@ public class ConverterInfo {
         return null;
     }
 
-    private static Collection<Arg> expandClassWithMethods(
-            int i,
-            List<Method> methods,
-            Type t,
-            boolean optional
-    ) {
+    private static ArgInfo[] expandClassWithMethods(List<Method> methods, Type t) {
         final Map<TypeVariable<?>, Class<?>> typeVariables = BuilderUtils.resolveTypeVariables(t);
 
-        return methods.stream().map(getter -> {
-            final Type type = getter.getGenericReturnType();
-            final Class<?> returnType = BuilderUtils.substituteTypeVariables(typeVariables, type);
-            if (returnType == null) {
-                throw new GeneratorException("Failed to resolve target return class for method " + getter);
-            }
-            return new Arg(returnType, i, getter.getName(), optional);
-        }).collect(Collectors.toList());
+        return methods.stream()
+                .map(getter -> {
+                    final Type type = getter.getGenericReturnType();
+                    final Class<?> returnType = BuilderUtils.substituteTypeVariables(typeVariables, type);
+                    if (returnType == null) {
+                        throw new GeneratorException("Failed to resolve target return class for method " + getter);
+                    }
+                    return new ArgInfo(returnType, getter.getName());
+                })
+                .toArray(ArgInfo[]::new);
     }
 
     protected static Map<Class<?>, List<Method>> collectClassesToExpand(Method m) {
@@ -557,11 +534,11 @@ public class ConverterInfo {
         return rawProcessorParamIndex;
     }
 
-    public Collection<Arg> getArgumentList() {
-        return argumentList;
+    public Collection<Arg> getStaticArgs() {
+        return staticArgs;
     }
 
-    public Map<Integer, SqlArgInfo> getSqlParts() {
+    public Map<Integer, Arg> getSqlParts() {
         return sqlParts;
     }
 

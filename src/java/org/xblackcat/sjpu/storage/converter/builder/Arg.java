@@ -1,5 +1,6 @@
 package org.xblackcat.sjpu.storage.converter.builder;
 
+import java.util.Arrays;
 import java.util.Objects;
 
 /**
@@ -8,42 +9,60 @@ import java.util.Objects;
  * @author xBlackCat
  */
 public final class Arg {
-    public final ArgInfo info;
+    public final Class<?> typeRawClass;
+    public final String sqlPart;
+    public final ArgInfo varArgInfo;
     public final ArgIdx idx;
+    public final ArgInfo[] expandedArgs;
 
-    public Arg(Class<?> clazz, int idx) {
-        this(clazz, idx, null, false);
+    public Arg(Class<?> typeRawClass, int argIdx, ArgInfo... expandingType) {
+        this(typeRawClass, null, null, new ArgIdx(argIdx), expandingType);
     }
 
-    public Arg(Class<?> clazz, int idx, String methodName) {
-        this(clazz, idx, methodName, false);
+    public Arg(Class<?> typeRawClass, String sqlPart, ArgIdx argIdx, ArgInfo... expandingType) {
+        this(typeRawClass, sqlPart, null, argIdx, expandingType);
     }
 
-    public Arg(Class<?> clazz, int idx, boolean optional) {
-        this(clazz, idx, null, optional);
+    public Arg(
+            Class<?> typeRawClass,
+            String sqlPart,
+            ArgInfo varArgInfo,
+            ArgIdx argIdx,
+            ArgInfo... expandedArgs
+    ) {
+        this.typeRawClass = typeRawClass;
+        this.sqlPart = sqlPart;
+        this.varArgInfo = varArgInfo;
+        idx = argIdx;
+        this.expandedArgs = expandedArgs;
     }
 
-    public Arg(Class<?> clazz, int idx, String methodName, boolean optional) {
-        this.idx = new ArgIdx(idx, optional);
-        info = new ArgInfo(clazz, methodName);
+    @Override
+    public String toString() {
+        return "Arg " + idx + " <" + typeRawClass + "> " +
+                (sqlPart == null ? "" : "[" + sqlPart + "] ") +
+                (varArgInfo == null ? "" : " var arg element type " + varArgInfo.clazz + " with glue '" + varArgInfo.methodName + "'") +
+                (expandedArgs == null || expandedArgs.length == 0 ? "" : " expanded as " + Arrays.asList(expandedArgs));
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        Arg arg = (Arg) o;
-        return Objects.equals(info, arg.info) &&
-                Objects.equals(idx, arg.idx);
+        Arg that = (Arg) o;
+        return Objects.equals(typeRawClass, that.typeRawClass) &&
+                Objects.equals(sqlPart, that.sqlPart) &&
+                Objects.equals(idx, that.idx) &&
+                Objects.equals(varArgInfo, that.varArgInfo) &&
+                Arrays.equals(expandedArgs, that.expandedArgs);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(info, idx);
+        return Objects.hash(typeRawClass, sqlPart, idx, varArgInfo, expandedArgs);
     }
 
-    @Override
-    public String toString() {
-        return idx + " <" + info + ">";
+    public boolean isDynamic() {
+        return sqlPart != null && idx.optional || varArgInfo != null;
     }
 }
