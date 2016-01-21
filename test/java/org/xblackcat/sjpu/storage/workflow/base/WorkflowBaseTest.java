@@ -15,10 +15,9 @@ import org.xblackcat.sjpu.storage.workflow.data.*;
 import java.net.URI;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * 19.12.13 12:33
@@ -56,6 +55,22 @@ public class WorkflowBaseTest {
         for (Numbers n : Numbers.values()) {
             dataAH.put(n.ordinal(), n.name());
         }
+
+        for (Numbers n : Numbers.values()) {
+            Assert.assertEquals(n.name(), dataAH.get(n.ordinal()));
+        }
+
+        dataAH.dropElements();
+
+        dataAH.putAll(Stream.of(Numbers.values()).map(n -> new Element(n.ordinal(), n.name())).toArray(Element[]::new));
+
+        for (Numbers n : Numbers.values()) {
+            Assert.assertEquals(n.name(), dataAH.get(n.ordinal()));
+        }
+
+        dataAH.dropElements();
+
+        dataAH.putAll(Stream.of(Numbers.values()).map(n -> new Element(n.ordinal(), n.name())).collect(Collectors.toList()));
 
         for (Numbers n : Numbers.values()) {
             Assert.assertEquals(n.name(), dataAH.get(n.ordinal()));
@@ -174,6 +189,42 @@ public class WorkflowBaseTest {
         {
             final List<IElement<String>> list = dataAH.getListIElement(1);
             Assert.assertEquals(1, list.size());
+            for (IElement<String> el : list) {
+                Assert.assertNotNull(list);
+                Assert.assertEquals(Numbers.values()[el.getId()].name(), el.getName());
+            }
+        }
+
+        {
+            final List<IElement<String>> list = dataAH.getListIElementVarArg(1, 3, 5);
+            Assert.assertEquals(3, list.size());
+            for (IElement<String> el : list) {
+                Assert.assertNotNull(list);
+                Assert.assertEquals(Numbers.values()[el.getId()].name(), el.getName());
+            }
+        }
+
+        {
+            final List<IElement<String>> list = dataAH.getListIElementVarArg(Numbers.Eight.name(), Numbers.Zero.name());
+            Assert.assertEquals(2, list.size());
+            for (IElement<String> el : list) {
+                Assert.assertNotNull(list);
+                Assert.assertEquals(Numbers.values()[el.getId()].name(), el.getName());
+            }
+        }
+
+        {
+            final List<IElement<String>> list = dataAH.getListIElementArray(new int[]{1, 3, 5});
+            Assert.assertEquals(3, list.size());
+            for (IElement<String> el : list) {
+                Assert.assertNotNull(list);
+                Assert.assertEquals(Numbers.values()[el.getId()].name(), el.getName());
+            }
+        }
+
+        {
+            final List<IElement<String>> list = dataAH.getListIElementList(Arrays.asList(1, 3, 5));
+            Assert.assertEquals(3, list.size());
             for (IElement<String> el : list) {
                 Assert.assertNotNull(list);
                 Assert.assertEquals(Numbers.values()[el.getId()].name(), el.getName());
@@ -324,6 +375,23 @@ public class WorkflowBaseTest {
                 Assert.assertEquals(e.getKey() + " element", e.getKey().ordinal(), e.getValue().intValue());
             }
         }
+        {
+            final List<IElement<Numbers>> list = dataAH.getListIElementVarArg(Numbers.Eight.name(), Numbers.Zero.name());
+            Assert.assertEquals(2, list.size());
+            for (IElement<Numbers> el : list) {
+                Assert.assertNotNull(list);
+                Assert.assertEquals(Numbers.values()[el.getId()], el.getName());
+            }
+        }
+        {
+            final List<IElement<Numbers>> list = dataAH.getListIElementVarArg(Numbers.Eight, Numbers.Zero, Numbers.Nine);
+            Assert.assertEquals(3, list.size());
+            for (IElement<Numbers> el : list) {
+                Assert.assertNotNull(list);
+                Assert.assertEquals(Numbers.values()[el.getId()], el.getName());
+            }
+        }
+
     }
 
     @Test

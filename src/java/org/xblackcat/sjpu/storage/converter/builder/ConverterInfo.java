@@ -175,7 +175,6 @@ public class ConverterInfo {
                         } else if (sqlVarArg != null) {
                             optional = false;
                             additional = sqlVarArg.value();
-                            expanded = expandType(m, expandingClassesInMethod, t, rawArgClass, additional);
 
                             final Class<?> varArgElementClass;
                             if (rawArgClass.isArray()) {
@@ -194,6 +193,7 @@ public class ConverterInfo {
                             } else {
                                 throw new GeneratorException("Failed to detect element class for parameter type" + t + " in method " + m);
                             }
+                            expanded = expandType(m, expandingClassesInMethod, varArgElementClass, varArgElementClass, additional);
                             varArgElement = new ArgInfo(varArgElementClass, sqlVarArg.concatBy());
                         } else {
                             if (!String.class.equals(t)) {
@@ -462,7 +462,7 @@ public class ConverterInfo {
         } else if (t instanceof ParameterizedType) {
             return getRaw(((ParameterizedType) t).getRawType());
         } else if (t instanceof GenericArrayType) {
-            return Array.newInstance(getRaw(((GenericArrayType) t).getGenericComponentType())).getClass();
+            return Array.newInstance(getRaw(((GenericArrayType) t).getGenericComponentType()), 0).getClass();
         }
         throw new GeneratorException("Unexpected type " + t);
     }

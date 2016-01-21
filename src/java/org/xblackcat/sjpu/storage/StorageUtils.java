@@ -171,16 +171,16 @@ public class StorageUtils {
             final int idx = a.idx.idx;
             Object param = parameters[idx];
             if (a.varArgInfo != null) {
+                if (param == null) {
+                    throw new NullPointerException("NULL value can't be passed to VarArg parameter");
+                }
                 final Iterable<?> elements;
                 if (a.typeRawClass.isArray()) {
-                    elements = Arrays.asList((Object[]) param);
+                    elements = Arrays.asList(toObjectArray(param));
                 } else if (Iterable.class.isAssignableFrom(a.typeRawClass)) {
                     elements = (Iterable<?>) param;
                 } else {
                     throw new IllegalArgumentException("Unexpected type for @SqlVarArg annotated parameter");
-                }
-                if (param == null) {
-                    throw new NullPointerException("NULL value can't be passed to VarArg parameter");
                 }
 
                 final Iterator<?> it = elements.iterator();
@@ -218,6 +218,30 @@ public class StorageUtils {
             }
         }
         return debugArgs;
+    }
+
+    private static Object[] toObjectArray(Object param) {
+        if (param instanceof Object[]) {
+            return (Object[]) param;
+        } else if (param instanceof long[]) {
+            return ArrayUtils.toObject((long[]) param);
+        } else if (param instanceof int[]) {
+            return ArrayUtils.toObject((int[]) param);
+        } else if (param instanceof short[]) {
+            return ArrayUtils.toObject((short[]) param);
+        } else if (param instanceof byte[]) {
+            return ArrayUtils.toObject((byte[]) param);
+        } else if (param instanceof boolean[]) {
+            return ArrayUtils.toObject((boolean[]) param);
+        } else if (param instanceof char[]) {
+            return ArrayUtils.toObject((char[]) param);
+        } else if (param instanceof double[]) {
+            return ArrayUtils.toObject((double[]) param);
+        } else if (param instanceof float[]) {
+            return ArrayUtils.toObject((float[]) param);
+        } else {
+            throw new IllegalArgumentException("Unexpected parameter: " + param);
+        }
     }
 
     private static Object getValue(Object param, String methodName) {

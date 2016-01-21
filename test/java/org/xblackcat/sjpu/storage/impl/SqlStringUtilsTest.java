@@ -133,13 +133,13 @@ public class SqlStringUtilsTest {
                     "boolean firstElement = true;\n" +
                     "java.util.Iterator _it = $1.iterator();\n" +
                     "while (_it.hasNext()) {\n" +
-                    "java.lang.Integer _el = (java.lang.Integer) _it.next();\n" +
-                    "sqlBuilder.append(\"?\");\n" +
+                    "_it.next();\n" +
                     "if (firstElement) {\n" +
                     "firstElement = false;\n" +
                     "} else {\n" +
                     "sqlBuilder.append(\",\");\n" +
                     "}\n" +
+                    "sqlBuilder.append(\"?\");\n" +
                     "}\n" +
                     "if (firstElement) {\n" +
                     "throw new java.lang.IllegalArgumentException(\"Empty collection for vararg argument #0\");\n" +
@@ -156,6 +156,50 @@ public class SqlStringUtilsTest {
 
             Assert.assertEquals(expected, bldr.toString());
             Assert.assertEquals(Arrays.asList(sqlVarArg0, sqlArg2, staticArg1, staticArg3, sqlArg2), argIdxes);
+        }
+        {
+            final Arg sqlVarArg0 = new Arg(
+                    List.class,
+                    "(?,?,?)",
+                    new ArgInfo(URL.class, ","),
+                    new ArgIdx(0),
+                    new ArgInfo(int.class, "getPort"),
+                    new ArgInfo(String.class, "getHost"),
+                    new ArgInfo(String.class, "getQuery")
+            );
+
+            Map<Integer, Arg> map = new HashMap<>();
+            map.put(0, sqlVarArg0); // Emulation of @SqlPart+@SqlVarArg
+            String sql = "INSERT INTO table (col1, col2, col3) VALUES {0}";
+
+            StringBuilder bldr = new StringBuilder();
+            final Collection<Arg> argIdxes = SqlStringUtils.appendSqlWithParts(bldr, sql, Collections.emptyList(), map);
+
+            final String expected = "java.lang.StringBuilder sqlBuilder = new java.lang.StringBuilder();\n" +
+                    "sqlBuilder.append(\"INSERT INTO table (col1, col2, col3) VALUES \");\n" +
+                    "if ($1 != null) {\n" +
+                    "boolean firstElement = true;\n" +
+                    "java.util.Iterator _it = $1.iterator();\n" +
+                    "while (_it.hasNext()) {\n" +
+                    "_it.next();\n" +
+                    "if (firstElement) {\n" +
+                    "firstElement = false;\n" +
+                    "} else {\n" +
+                    "sqlBuilder.append(\",\");\n" +
+                    "}\n" +
+                    "sqlBuilder.append(\"(?,?,?)\");\n" +
+                    "}\n" +
+                    "if (firstElement) {\n" +
+                    "throw new java.lang.IllegalArgumentException(\"Empty collection for vararg argument #0\");\n" +
+                    "}\n" +
+                    "} else {\n" +
+                    "throw new java.lang.IllegalArgumentException(\"Null collection for vararg argument #0\");\n" +
+                    "}\n" +
+                    "sqlBuilder.append(\"\");\n" +
+                    "java.lang.String sql = sqlBuilder.toString();\n";
+
+            Assert.assertEquals(expected, bldr.toString());
+            Assert.assertEquals(Collections.singletonList(sqlVarArg0), argIdxes);
         }
     }
 

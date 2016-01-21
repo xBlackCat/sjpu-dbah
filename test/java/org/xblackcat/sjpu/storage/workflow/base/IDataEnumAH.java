@@ -82,6 +82,22 @@ public interface IDataEnumAH extends IAH {
     List<IElement<Numbers>> getListIElement() throws StorageException;
 
     @Sql("SELECT\n" +
+            "  id, name\n" +
+            "FROM list \n" +
+            "WHERE\n" +
+            "  name IN ({0})")
+    @MapRowTo(ElementNumber.class)
+    List<IElement<Numbers>> getListIElementVarArg(@SqlPart @SqlVarArg String... names) throws StorageException;
+
+    @Sql("SELECT\n" +
+            "  id, name\n" +
+            "FROM list \n" +
+            "WHERE\n" +
+            "  name IN ({0})")
+    @MapRowTo(ElementNumber.class)
+    List<IElement<Numbers>> getListIElementVarArg(@SqlPart @SqlVarArg Numbers... names) throws StorageException;
+
+    @Sql("SELECT\n" +
                  "  id, name\n" +
                  "FROM list\n")
     @MapRowTo(ElementNumber.class)

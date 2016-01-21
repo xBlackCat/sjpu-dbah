@@ -66,7 +66,6 @@ public abstract class ASelectAnnotatedBuilder<A extends Annotation> extends AMap
 
         for (Arg arg : types) {
             final Class<?> type = arg.typeRawClass;
-            final ITypeMap<?, ?> typeMap = typeMapper.hasTypeMap(type);
 
             final ArgIdx argIdx = arg.idx;
             final int idx = argIdx.idx + 1;
@@ -90,7 +89,7 @@ public abstract class ASelectAnnotatedBuilder<A extends Annotation> extends AMap
                 if (isArray) {
                     body.append("for (int _i = 0; _i < $");
                     body.append(idx);
-                    body.append("; _i++ ) {\n");
+                    body.append(".length; _i++ ) {\n");
                     body.append(elementClassName);
                     body.append(" _el = $");
                     body.append(idx);
@@ -110,7 +109,13 @@ public abstract class ASelectAnnotatedBuilder<A extends Annotation> extends AMap
             }
 
             if (noExpanding) {
-                appendSetArg(body, typeMap, valueRef, type);
+                if (isVarArg) {
+                    final ITypeMap<?, ?> typeMap = typeMapper.hasTypeMap(varArgInfo.clazz);
+                    appendSetArg(body, typeMap, valueRef, varArgInfo.clazz);
+                } else {
+                    final ITypeMap<?, ?> typeMap = typeMapper.hasTypeMap(type);
+                    appendSetArg(body, typeMap, valueRef, type);
+                }
             } else {
                 for (ArgInfo argInfo : arg.expandedArgs) {
                     final String subArgRef = "_" + idx + "_" + argInfo.methodName;
@@ -137,8 +142,7 @@ public abstract class ASelectAnnotatedBuilder<A extends Annotation> extends AMap
                         body.append(argClassFQN);
                         body.append(".valueOf(");
                     }
-                    body.append("$");
-                    body.append(idx);
+                    body.append(valueRef);
                     body.append(".");
                     body.append(argInfo.methodName);
                     body.append("()");

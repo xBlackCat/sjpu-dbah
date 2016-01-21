@@ -1,7 +1,6 @@
 package org.xblackcat.sjpu.storage.impl;
 
 import org.apache.commons.lang3.StringEscapeUtils;
-import org.xblackcat.sjpu.builder.BuilderUtils;
 import org.xblackcat.sjpu.builder.GeneratorException;
 import org.xblackcat.sjpu.storage.converter.builder.Arg;
 import org.xblackcat.sjpu.storage.converter.builder.ArgIdx;
@@ -51,8 +50,7 @@ public class SqlStringUtils {
         Matcher m = SQL_PART_IDX.matcher(sql);
         int startPos = 0;
         while (m.find()) {
-            final Integer idx = Integer.valueOf(m.group(1));
-            Arg arg = sqlParts.get(idx);
+            Arg arg = sqlParts.get(Integer.valueOf(m.group(1)));
 
             if (arg != null) {
                 final ArgIdx argIdx = arg.idx;
@@ -68,9 +66,10 @@ public class SqlStringUtils {
                 body.append("sqlBuilder.append(\"");
                 body.append(StringEscapeUtils.escapeJava(sqlPart));
                 body.append("\");\n");
+                final int idx = argIdx.idx + 1;
                 if (arg.sqlPart == null) {
                     body.append("sqlBuilder.append($");
-                    body.append(argIdx.idx + 1);
+                    body.append(idx);
                     body.append(");\n");
                 } else {
                     final ArgInfo varArgInfo = arg.varArgInfo;
@@ -81,30 +80,30 @@ public class SqlStringUtils {
                     fullArgsList.add(arg);
                     if (inBlock) {
                         body.append("if ($");
-                        body.append(argIdx.idx + 1);
+                        body.append(idx);
                         body.append(" != null) {\n");
                     }
                     if (isVarArg) {
-                        final String elementClassName = BuilderUtils.getName(varArgInfo.clazz);
-
                         body.append("boolean firstElement = true;\n");
                         if (isArray) {
                             body.append("for (int _i = 0; _i < $");
                             body.append(idx);
-                            body.append("; _i++ ) {\n");
-                            body.append(elementClassName);
-                            body.append(" _el = $");
-                            body.append(idx);
-                            body.append("[_i];\n");
+                            body.append(".length; _i++ ) {\n");
                         } else {
                             body.append("java.util.Iterator _it = $");
                             body.append(idx);
-                            body.append(".iterator();\nwhile (_it.hasNext()) {\n");
-                            body.append(elementClassName);
-                            body.append(" _el = (");
-                            body.append(elementClassName);
-                            body.append(") _it.next();\n");
+                            body.append(".iterator();\n" +
+                                                "while (_it.hasNext()) {\n" +
+                                                "_it.next();\n");
                         }
+                        body.append("if (firstElement) {\n" +
+                                            "firstElement = false;\n" +
+                                            "} else {\n" +
+                                            "sqlBuilder.append(\"");
+                        body.append(StringEscapeUtils.escapeJava(varArgInfo.methodName));
+
+                        body.append("\");\n");
+                        body.append("}\n");
                     }
 
                     body.append("sqlBuilder.append(\"");
@@ -112,15 +111,7 @@ public class SqlStringUtils {
                     body.append("\");\n");
 
                     if (isVarArg) {
-                        body.append("if (firstElement) {\n" +
-                                            "firstElement = false;\n" +
-                                            "} else {\n" +
-                                            "sqlBuilder.append(\"");
-                        body.append(StringEscapeUtils.escapeJava(varArgInfo.methodName));
-
-                        body.append("\");\n" +
-                                            "}\n" +
-                                            "}\n");
+                        body.append("}\n");
                         body.append("if (firstElement) {\nthrow new java.lang.IllegalArgumentException(\"Empty ");
                         body.append(isArray ? "array" : "collection");
                         body.append(" for vararg argument #");
