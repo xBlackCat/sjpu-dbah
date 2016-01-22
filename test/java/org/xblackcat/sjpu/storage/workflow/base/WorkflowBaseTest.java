@@ -274,6 +274,22 @@ public class WorkflowBaseTest {
 
         dataAH.dropElements();
 
+        dataAH.putAll(Stream.of(Numbers.values()).map(n -> new ElementNumber(n.ordinal(), n)).toArray(ElementNumber[]::new));
+
+        for (Numbers n : Numbers.values()) {
+            Assert.assertEquals(n, dataAH.get(n.ordinal()));
+        }
+
+        dataAH.dropElements();
+
+        dataAH.putAll(Stream.of(Numbers.values()).map(n -> new ElementNumber(n.ordinal(), n)).collect(Collectors.toList()));
+
+        for (Numbers n : Numbers.values()) {
+            Assert.assertEquals(n, dataAH.get(n.ordinal()));
+        }
+
+        dataAH.dropElements();
+
         for (Numbers n : Numbers.values()) {
             dataAH.put(new ElementNumber(n.ordinal(), n));
         }

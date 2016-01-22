@@ -4,10 +4,7 @@ import org.xblackcat.sjpu.storage.IAH;
 import org.xblackcat.sjpu.storage.StorageException;
 import org.xblackcat.sjpu.storage.ann.*;
 import org.xblackcat.sjpu.storage.consumer.IRowConsumer;
-import org.xblackcat.sjpu.storage.workflow.data.ElementNumber;
-import org.xblackcat.sjpu.storage.workflow.data.EnumMapConsumer;
-import org.xblackcat.sjpu.storage.workflow.data.IElement;
-import org.xblackcat.sjpu.storage.workflow.data.Numbers;
+import org.xblackcat.sjpu.storage.workflow.data.*;
 
 import java.util.EnumSet;
 import java.util.List;
@@ -31,6 +28,14 @@ public interface IDataEnumAH extends IAH {
 
     @Sql("INSERT INTO list (id, name) VALUES (?, ?)")
     void put(ElementNumber el) throws StorageException;
+
+    @Sql("INSERT INTO list (id, name) VALUES {0}")
+    @ExpandType(type = Element.class, fields = {"id", "name"})
+    void putAll(@SqlPart @SqlVarArg("(?, ?)") List<ElementNumber> elementList) throws StorageException;
+
+    @Sql("INSERT INTO list (id, name) VALUES {0}==")
+    @ExpandType(type = Element.class, fields = {"id", "name"})
+    void putAll(@SqlPart @SqlVarArg("(?, ?)") ElementNumber... elementList) throws StorageException;
 
     @Sql("SELECT\n" +
                  "  id, name\n" +
