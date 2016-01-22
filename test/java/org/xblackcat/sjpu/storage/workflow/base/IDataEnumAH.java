@@ -33,7 +33,7 @@ public interface IDataEnumAH extends IAH {
     @ExpandType(type = Element.class, fields = {"id", "name"})
     void putAll(@SqlPart @SqlVarArg("(?, ?)") List<ElementNumber> elementList) throws StorageException;
 
-    @Sql("INSERT INTO list (id, name) VALUES {0}==")
+    @Sql("INSERT INTO list (id, name) VALUES {0}")
     @ExpandType(type = Element.class, fields = {"id", "name"})
     void putAll(@SqlPart @SqlVarArg("(?, ?)") ElementNumber... elementList) throws StorageException;
 
