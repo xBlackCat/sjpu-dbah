@@ -42,6 +42,7 @@ public class SqlStringUtils {
     }
 
     private static List<Arg> buildStringBuilder(StringBuilder body, String sql, Collection<Arg> staticArgs, Map<Integer, Arg> sqlParts) {
+        ArgumentCounter counter = new ArgumentCounter();
         final Iterator<Arg> staticArgIt = staticArgs.iterator();
         List<Arg> fullArgsList = new ArrayList<>();
 
@@ -56,13 +57,7 @@ public class SqlStringUtils {
                 final ArgIdx argIdx = arg.idx;
 
                 final String sqlPart = sql.substring(startPos, m.start());
-                int argsAmount = getArgumentCount(sqlPart);
-                while (argsAmount-- > 0) {
-                    if (!staticArgIt.hasNext()) {
-                        throw new GeneratorException("Too few static arguments to substitute query parameters");
-                    }
-                    fullArgsList.add(staticArgIt.next());
-                }
+                checkSqlPart(counter, staticArgIt, fullArgsList, sqlPart);
                 body.append("sqlBuilder.append(\"");
                 body.append(StringEscapeUtils.escapeJava(sqlPart));
                 body.append("\");\n");
@@ -139,13 +134,7 @@ public class SqlStringUtils {
         body.append(StringEscapeUtils.escapeJava(sqlPart));
         body.append("\");\njava.lang.String sql = sqlBuilder.toString();\n");
 
-        int argsAmount = getArgumentCount(sqlPart);
-        while (argsAmount-- > 0) {
-            if (!staticArgIt.hasNext()) {
-                throw new GeneratorException("Too few static arguments to substitute query parameters");
-            }
-            fullArgsList.add(staticArgIt.next());
-        }
+        checkSqlPart(counter, staticArgIt, fullArgsList, sqlPart);
         if (staticArgIt.hasNext()) {
             throw new GeneratorException("Found extra arguments to substitute query parameters");
         }
@@ -154,6 +143,7 @@ public class SqlStringUtils {
     }
 
     protected static List<Arg> buildConcatenation(StringBuilder body, String sql, Collection<Arg> staticArgs, Map<Integer, Arg> sqlParts) {
+        ArgumentCounter counter = new ArgumentCounter();
         final Iterator<Arg> staticArgIt = staticArgs.iterator();
         List<Arg> fullArgsList = new ArrayList<>();
 
@@ -168,13 +158,7 @@ public class SqlStringUtils {
             if (arg != null) {
                 final ArgIdx argIdx = arg.idx;
                 final String sqlPart = sql.substring(startPos, m.start());
-                int argsAmount = getArgumentCount(sqlPart);
-                while (argsAmount-- > 0) {
-                    if (!staticArgIt.hasNext()) {
-                        throw new GeneratorException("Too few static arguments to substitute query parameters");
-                    }
-                    fullArgsList.add(staticArgIt.next());
-                }
+                checkSqlPart(counter, staticArgIt, fullArgsList, sqlPart);
                 body.append('"');
                 body.append(StringEscapeUtils.escapeJava(sqlPart));
                 body.append("\" + ");
@@ -199,13 +183,7 @@ public class SqlStringUtils {
         body.append(StringEscapeUtils.escapeJava(sqlPart));
         body.append("\";\n");
 
-        int argsAmount = getArgumentCount(sqlPart);
-        while (argsAmount-- > 0) {
-            if (!staticArgIt.hasNext()) {
-                throw new GeneratorException("Too few static arguments to substitute query parameters");
-            }
-            fullArgsList.add(staticArgIt.next());
-        }
+        checkSqlPart(counter, staticArgIt, fullArgsList, sqlPart);
         if (staticArgIt.hasNext()) {
             throw new GeneratorException("Found extra arguments to substitute query parameters");
         }
@@ -213,35 +191,22 @@ public class SqlStringUtils {
         return fullArgsList;
     }
 
-    /**
-     * Scans prepared statement (or it part) and returns amount of argument placeholders
-     *
-     * @param sqlPart sql part to examine
-     * @return amount of found argument placeholders
-     */
-    public static int getArgumentCount(String sqlPart) {
-        int amount = 0;
-
-        char quote = ' '; // Stores a open quote character. Space means a quote are closed or not yet open.
-        boolean wasEscape = false;
-
-        for (char c : sqlPart.toCharArray()) {
-            if (quote == ' ') {
-                if (c == '?') {
-                    amount++;
-                } else if (c == '`' || c == '"' || c == '\'') {
-                    quote = c;
-                    wasEscape = false;
-                }
-            } else if (wasEscape) {
-                wasEscape = false;
-            } else if (c == quote) {
-                quote = ' ';
-            } else if (c == '\\') {
-                wasEscape = true;
+    private static void checkSqlPart(ArgumentCounter counter, Iterator<Arg> staticArgIt, List<Arg> fullArgsList, String sqlPart) {
+        int argsAmount = counter.argsInPart(sqlPart);
+        while (argsAmount > 0) {
+            if (!staticArgIt.hasNext()) {
+                throw new GeneratorException("Too few static arguments to substitute query parameters");
+            }
+            final Arg a = staticArgIt.next();
+            fullArgsList.add(a);
+            if (a.expandedArgs != null && a.expandedArgs.length > 0) {
+                argsAmount -= a.expandedArgs.length;
+            } else {
+                argsAmount--;
             }
         }
-
-        return amount;
+        if (argsAmount < 0) {
+            throw new GeneratorException("Found extra arguments to substitute query parameters");
+        }
     }
 }

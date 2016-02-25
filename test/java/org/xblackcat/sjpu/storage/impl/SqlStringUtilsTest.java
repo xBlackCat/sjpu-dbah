@@ -205,9 +205,23 @@ public class SqlStringUtilsTest {
 
     @Test
     public void testGetArgumentCount() throws Exception {
-        Assert.assertEquals(1, SqlStringUtils.getArgumentCount("SELECT * FROM {2} a WHERE a.id = ?"));
-        Assert.assertEquals(1, SqlStringUtils.getArgumentCount("SELECT *, 'table ?' FROM {2} a WHERE a.id = ?"));
-        Assert.assertEquals(2, SqlStringUtils.getArgumentCount("SELECT * FROM {2} a WHERE a.id = ? AND a = ? AND `quoted 'str\\`ing' `"));
-        Assert.assertEquals(1, SqlStringUtils.getArgumentCount("SELECT * FROM table a WHERE a.id = ?"));
+        Assert.assertEquals(1, ArgumentCounter.getArgumentCount("SELECT * FROM {2} a WHERE a.id = ?"));
+        Assert.assertEquals(1, ArgumentCounter.getArgumentCount("SELECT *, 'table ?' FROM {2} a WHERE a.id = ?"));
+        Assert.assertEquals(2, ArgumentCounter.getArgumentCount("SELECT * FROM {2} a WHERE a.id = ? AND a = ? AND `quoted 'str\\`ing' `"));
+        Assert.assertEquals(1, ArgumentCounter.getArgumentCount("SELECT * FROM table a WHERE a.id = ?"));
+    }
+
+    @Test
+    public void sqlWithParts() throws Exception {
+        ArgumentCounter c = new ArgumentCounter();
+
+        Assert.assertEquals(1, c.argsInPart("SELECT 1 FROM text WHERE id = ? AND `"));
+        Assert.assertTrue(c.isQuoteOpen());
+        Assert.assertEquals(1, c.argsInPart("` OR name = ? AND `"));
+        Assert.assertTrue(c.isQuoteOpen());
+        Assert.assertEquals(1, c.argsInPart("?` OR name = ? AND "));
+        Assert.assertFalse(c.isQuoteOpen());
+        Assert.assertEquals(1, c.argsInPart(" name = ? AND "));
+        Assert.assertEquals(4, c.getTotalAmount());
     }
 }

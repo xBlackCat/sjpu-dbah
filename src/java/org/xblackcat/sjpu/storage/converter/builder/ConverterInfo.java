@@ -15,7 +15,7 @@ import org.xblackcat.sjpu.storage.consumer.IRowConsumer;
 import org.xblackcat.sjpu.storage.consumer.IRowSetConsumer;
 import org.xblackcat.sjpu.storage.converter.IToObjectConverter;
 import org.xblackcat.sjpu.storage.impl.AHBuilderUtils;
-import org.xblackcat.sjpu.storage.impl.SqlStringUtils;
+import org.xblackcat.sjpu.storage.impl.ArgumentCounter;
 import org.xblackcat.sjpu.storage.typemap.TypeMapper;
 
 import java.lang.annotation.Annotation;
@@ -334,9 +334,9 @@ public class ConverterInfo {
     }
 
     private static void checkExpandedArgs(Method m, String additional, ArgInfo[] expandedArgs) {
-        final int argumentCountInAdditional = SqlStringUtils.getArgumentCount(additional);
+        final int argumentCountInAdditional = ArgumentCounter.getArgumentCount(additional);
         if (expandedArgs.length == 0) {
-            if (SqlStringUtils.getArgumentCount(additional) != 1) {
+            if (argumentCountInAdditional != 1) {
                 throw new GeneratorException(
                         "Optional Sql part should have one and only one argument. Got: " + additional + " in " + m
                 );

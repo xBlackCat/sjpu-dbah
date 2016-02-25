@@ -341,6 +341,12 @@ public class WorkflowBaseTest {
         }
 
         {
+            final ElementNumber element = dataAH.getDynamicElement("list", Numbers.One);
+            Assert.assertNotNull(element);
+            Assert.assertEquals(Numbers.One, element.getName());
+        }
+
+        {
             final Set<ElementNumber> list = dataAH.getSetElement();
             Assert.assertNotNull(list);
             for (ElementNumber el : list) {
