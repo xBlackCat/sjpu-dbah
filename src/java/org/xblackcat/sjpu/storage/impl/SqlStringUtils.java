@@ -71,6 +71,8 @@ public class SqlStringUtils {
                     final boolean isVarArg = varArgInfo != null;
                     final boolean isArray = isVarArg && arg.typeRawClass.isArray();
 
+                    checkOptionalPart(counter, arg);
+
                     boolean inBlock = argIdx.optional || isVarArg;
                     fullArgsList.add(arg);
                     if (inBlock) {
@@ -166,6 +168,8 @@ public class SqlStringUtils {
                     body.append("$");
                     body.append(argIdx.idx + 1);
                 } else {
+                    checkOptionalPart(counter, arg);
+
                     fullArgsList.add(arg);
 
                     body.append('"');
@@ -189,6 +193,19 @@ public class SqlStringUtils {
         }
 
         return fullArgsList;
+    }
+
+    private static void checkOptionalPart(ArgumentCounter counter, Arg arg) {
+        int argsAmount = counter.argsInPart(arg.sqlPart);
+        if (argsAmount == 0) {
+            throw new GeneratorException("Optional SQL part is in quoted sql part and will not be set properly");
+        } else if (argsAmount == 1) {
+            if (arg.expandedArgs != null && arg.expandedArgs.length != 0) {
+                throw new GeneratorException("Optional SQL part is in quoted sql part and will not be set properly");
+            }
+        } else if (arg.expandedArgs == null || argsAmount != arg.expandedArgs.length) {
+            throw new GeneratorException("Optional SQL part is in quoted sql part and will not be set properly");
+        }
     }
 
     private static void checkSqlPart(ArgumentCounter counter, Iterator<Arg> staticArgIt, List<Arg> fullArgsList, String sqlPart) {

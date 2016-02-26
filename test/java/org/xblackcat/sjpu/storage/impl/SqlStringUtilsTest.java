@@ -201,6 +201,23 @@ public class SqlStringUtilsTest {
             Assert.assertEquals(expected, bldr.toString());
             Assert.assertEquals(Collections.singletonList(sqlVarArg0), argIdxes);
         }
+
+        // Failed conditions
+        {
+            Collection<Arg> staticArgs = Collections.singleton(staticArg1);
+            StringBuilder bldr = new StringBuilder();
+            Map<Integer, Arg> map = Collections.singletonMap(2, sqlPartOptArg0);
+            String sql = "SELECT * FROM `{2}` a WHERE a.{1} = ?";
+
+            try {
+                final Collection<Arg> argIdxes = SqlStringUtils.appendSqlWithParts(bldr, sql, staticArgs, map);
+                Assert.fail("An exception is expected");
+            } catch (Exception e) {
+                Assert.assertEquals("Optional SQL part is in quoted sql part and will not be set properly", e.getMessage());
+            }
+
+        }
+
     }
 
     @Test
