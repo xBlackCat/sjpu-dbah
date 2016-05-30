@@ -6,6 +6,7 @@ import org.xblackcat.sjpu.builder.GeneratorException;
 import org.xblackcat.sjpu.storage.StorageUtils;
 import org.xblackcat.sjpu.storage.ann.QueryType;
 import org.xblackcat.sjpu.storage.ann.RowSetConsumer;
+import org.xblackcat.sjpu.storage.ann.SqlReturnsData;
 import org.xblackcat.sjpu.storage.consumer.IRowSetConsumer;
 import org.xblackcat.sjpu.storage.consumer.SingletonConsumer;
 import org.xblackcat.sjpu.storage.converter.IToObjectConverter;
@@ -283,15 +284,16 @@ public abstract class ASelectAnnotatedBuilder<A extends Annotation> extends AMap
 
         final CtClass targetReturnType;
 
+        final boolean forceReturnData = m.isAnnotationPresent(SqlReturnsData.class);
         final boolean noResult = returnType.equals(void.class);
-        final boolean returnRowsAmount = returnType.equals(int.class);
+        final boolean returnRowsAmount = returnType.equals(int.class) && !forceReturnData;
         final boolean generateWrapper;
         switch (type) {
             case Select:
                 generateWrapper = returnType.isPrimitive() && !noResult;
                 break;
             case Insert:
-                // For INSERT statements return type int means affected rows
+                // For INSERT statements return type int means affected rows if no SqlReturnsData annotation is present
                 generateWrapper = returnType.isPrimitive() && !noResult && !returnRowsAmount;
                 break;
             default:
@@ -318,7 +320,7 @@ public abstract class ASelectAnnotatedBuilder<A extends Annotation> extends AMap
             }
 
             returnString = "";
-            returnKeys = type != QueryType.Select;
+            returnKeys = forceReturnData || type != QueryType.Select;
         } else if (type == QueryType.Select || type == QueryType.Insert) {
             if (info.getConsumeIndex() == null) {
                 if (noResult) {
@@ -357,11 +359,11 @@ public abstract class ASelectAnnotatedBuilder<A extends Annotation> extends AMap
                     }
 
                     returnString = "return (" + BuilderUtils.getName(targetReturnType) + ") consumer.getRowsHolder();\n";
-                    returnKeys = type != QueryType.Select;
+                    returnKeys = forceReturnData || type != QueryType.Select;
                 }
             } else {
                 if (!noResult) {
-                    if (type == QueryType.Select) {
+                    if (forceReturnData || type == QueryType.Select) {
                         throw new GeneratorException("Consumer can't be used with non-void return type: " + m.toString());
                     }
                     if (int.class.equals(returnType)) {

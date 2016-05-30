@@ -25,7 +25,11 @@ class FunctionalAHBuilder extends ASelectAnnotatedBuilder<SqlType> {
     }
 
     protected QueryType getQueryType(Method m) {
-        return getAnnotation(m).value();
+        final SqlType type = getAnnotation(m);
+        if (type == null){
+            throw new GeneratorException("Functional interfaces should be annotated with @SqlType annotation");
+        }
+        return type.value();
     }
 
     protected Collection<Arg> appendDefineSql(StringBuilder body, ConverterInfo info, Method m) {

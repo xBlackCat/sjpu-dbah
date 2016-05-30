@@ -12,6 +12,10 @@ import java.lang.annotation.Target;
  * with argument type {@linkplain org.xblackcat.sjpu.storage.consumer.IRawProcessor IRawProcessor} or
  * {@linkplain org.xblackcat.sjpu.storage.consumer.IRowConsumer IRowConsumer} are processed in special way)
  * <p>
+ * For methods with INSERT statements and return type int amount of affected rows is returned. To override default behaviour and return
+ * PK value of the queries add the annotation {@linkplain SqlReturnsData @SqlReturnsData}
+ *
+ * @author xBlackCat
  * @see org.xblackcat.sjpu.storage.ann.SqlPart
  * @see org.xblackcat.sjpu.storage.ann.SqlArg
  * @see org.xblackcat.sjpu.storage.ann.SqlOptArg
@@ -19,8 +23,6 @@ import java.lang.annotation.Target;
  * @see org.xblackcat.sjpu.storage.consumer.IRowConsumer
  * @see org.xblackcat.sjpu.storage.consumer.IRawProcessor
  * @see org.xblackcat.sjpu.storage.ann.ToObjectConverter
- *
- * @author xBlackCat
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD})
