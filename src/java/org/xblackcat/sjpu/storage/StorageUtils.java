@@ -1,6 +1,7 @@
 package org.xblackcat.sjpu.storage;
 
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.xblackcat.sjpu.builder.BuilderUtils;
 import org.xblackcat.sjpu.builder.GeneratorException;
 import org.xblackcat.sjpu.storage.connection.IConnectionFactory;
@@ -15,6 +16,7 @@ import org.xblackcat.sjpu.storage.converter.builder.ArgIdx;
 import org.xblackcat.sjpu.storage.converter.builder.ArgInfo;
 
 import java.lang.reflect.Method;
+import java.time.temporal.TemporalAccessor;
 import java.util.*;
 
 /**
@@ -259,11 +261,36 @@ public class StorageUtils {
     protected static String renderObject(Object obj) {
         if (obj == null) {
             return "NULL";
+        } else if (obj instanceof byte[]) {
+            return toHex("0x", (byte[]) obj, null);
         } else if (obj instanceof String) {
+            return "'" + StringUtils.replaceEach(obj.toString(), new String[]{"'", "\\"}, new String[]{"\\'", "\\\\"}) + "'";
+        } else if (obj instanceof TemporalAccessor) {
             return "'" + obj.toString() + "'";
         } else {
             return obj.toString();
         }
+    }
+
+    private static String toHex(String prefix, byte[] bytes, String suffix) {
+        if (bytes == null) {
+            return null;
+        }
+        final StringBuilder toAppendTo = new StringBuilder((bytes.length << 1) + 4);
+        final char[] SYMBOLS = "0123456789abcdef".toCharArray();
+        if (prefix != null) {
+            toAppendTo.append(prefix);
+        }
+
+        for (byte b : bytes) {
+            toAppendTo.append(SYMBOLS[(b >> 4) & 0x0f]);
+            toAppendTo.append(SYMBOLS[b & 0xf]);
+        }
+
+        if (suffix != null) {
+            toAppendTo.append(suffix);
+        }
+        return toAppendTo.toString();
     }
 
     static class DebugArg {

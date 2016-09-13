@@ -358,7 +358,7 @@ public abstract class ASelectAnnotatedBuilder<A extends Annotation> extends AMap
                         body.append("();\n");
                     }
 
-                    returnString = "return (" + BuilderUtils.getName(targetReturnType) + ") consumer.getRowsHolder();\n";
+                    returnString = "return ($r) consumer.getRowsHolder();\n";
                     returnKeys = forceReturnData || type != QueryType.Select;
                 }
             } else {
