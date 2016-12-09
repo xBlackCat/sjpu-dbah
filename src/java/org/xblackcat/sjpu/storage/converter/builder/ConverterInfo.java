@@ -184,7 +184,7 @@ public class ConverterInfo {
                                         "Expected array or iterable object as parameter type. Got " + t + " in method " + m
                                 );
                             } else if (t instanceof ParameterizedType) {
-                                varArgElementClass = BuilderUtils.detectTypeArgClass((ParameterizedType) t);
+                                varArgElementClass = BuilderUtils.detectTypeArgClass(t);
                                 if (varArgElementClass == null) {
                                     throw new GeneratorException(
                                             "Failed to detect element class for parameter type" + t + " in method " + m
@@ -469,7 +469,7 @@ public class ConverterInfo {
 
     protected static Class<IToObjectConverter<?>> buildConverter(
             TypeMapper typeMapper,
-            Class<?> realReturnType,
+            Class<?> type,
             RowMap constructorSignature
     ) throws NotFoundException, CannotCompileException {
         final AnAnalyser analyser;
@@ -479,43 +479,16 @@ public class ConverterInfo {
             analyser = new SignatureFinder(typeMapper, constructorSignature.value());
         }
 
-        final Info info = analyser.analyze(realReturnType);
+        final Info info = analyser.analyze(type);
 
-        final ConverterMethodBuilder builder = new ConverterMethodBuilder(typeMapper, info.reference);
-        final String bodyCode = builder.buildBody();
-
-        final String converterClassName = BuilderUtils.asIdentifier(realReturnType) + "Converter" + info.suffix;
-        try {
-
-            if (log.isTraceEnabled()) {
-                log.trace("Check if the converter already exists for class " + realReturnType.getName());
-            }
-
-            final String converterFQN = IToObjectConverter.class.getName() + "$" + converterClassName;
-            final Class<?> aClass = BuilderUtils.getClass(converterFQN, typeMapper.getParentPool());
-
-            if (IToObjectConverter.class.isAssignableFrom(aClass)) {
-                if (log.isTraceEnabled()) {
-                    log.trace("Converter class already exists: " + converterFQN);
-                }
-
-                @SuppressWarnings("unchecked")
-                final Class<IToObjectConverter<?>> converterClass = (Class<IToObjectConverter<?>>) aClass;
-                return converterClass;
-            } else {
-                throw new GeneratorException(
-                        converterFQN + " class is already exists and it is not implements " + IToObjectConverter.class
-                );
-            }
-        } catch (ClassNotFoundException ignore) {
-            // Just build a new class
-        }
-
-        if (log.isTraceEnabled()) {
-            log.trace("Build converter class for class " + realReturnType.getName());
-        }
-
-        return typeMapper.initializeToObjectConverter(IToObjectConverter.class, converterClassName, realReturnType, bodyCode);
+        final String converterCN = BuilderUtils.asIdentifier(type) + "Converter" + info.suffix;
+        final Class<IToObjectConverter> targetClass = IToObjectConverter.class;
+        return typeMapper.getOrInitTypeMap(
+                type,
+                () -> new ConverterMethodBuilder(typeMapper, info.reference).buildBody(),
+                converterCN,
+                targetClass
+        );
     }
 
     public Class<?> getRealReturnType() {

@@ -16,6 +16,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 
 /**
  * 17.12.13 14:51
@@ -134,37 +135,11 @@ public class TypeMapper {
         }
 
         final String converterCN = getTypeMapConverterRef(type);
-        final String realClassName = typeMap.getRealType().getName();
-        try {
+        final Class<? extends TypeMapper> targetClass = getClass();
+        return getOrInitTypeMap(type, () -> buildMapperCode(type, typeMap), converterCN, targetClass);
+    }
 
-            if (log.isTraceEnabled()) {
-                log.trace("Check if the converter already exists for mapper " + realClassName);
-            }
-
-            final String converterFQN = getClass().getName() + "$" + converterCN;
-            final ClassPool pool = parentPool;
-            final Class<?> aClass = BuilderUtils.getClass(converterFQN, pool);
-
-            if (IToObjectConverter.class.isAssignableFrom(aClass)) {
-                if (log.isTraceEnabled()) {
-                    log.trace("Converter class already exists: " + converterFQN);
-                }
-                @SuppressWarnings("unchecked")
-                final Class<IToObjectConverter<?>> aClazz = (Class<IToObjectConverter<?>>) aClass;
-                return aClazz;
-            } else {
-                throw new GeneratorException(
-                        converterFQN + " class is already exists and it is not implements " + IToObjectConverter.class.getName()
-                );
-            }
-        } catch (ClassNotFoundException ignore) {
-            // Just build a new class
-        }
-
-        if (log.isTraceEnabled()) {
-            log.trace("Build type map converter class for type " + realClassName);
-        }
-
+    private String buildMapperCode(Class<?> type, ITypeMap<?, ?> typeMap) {
         StringBuilder body = new StringBuilder("{\n");
         StringBuilder bodyTail = new StringBuilder("return ");
 
@@ -174,8 +149,7 @@ public class TypeMapper {
 
         body.append(bodyTail);
         body.append(";\n}");
-
-        return initializeToObjectConverter(getClass(), converterCN, type, body.toString());
+        return body.toString();
     }
 
     public boolean appendDeclaration(Class<?> type, int idx, StringBuilder bodyHead, StringBuilder bodyTail) {
@@ -210,49 +184,6 @@ public class TypeMapper {
         return true;
     }
 
-    public Class<IToObjectConverter<?>> initializeToObjectConverter(
-            Class<?> containerClass,
-            String converterCN,
-            Class<?> returnType,
-            String bodyCode
-    ) throws NotFoundException, CannotCompileException {
-        final CtClass baseCtClass = parentPool.get(containerClass.getName());
-        final CtClass toObjectConverter = baseCtClass.makeNestedClass(converterCN, true);
-
-        toObjectConverter.addInterface(parentPool.get(IToObjectConverter.class.getName()));
-
-        if (log.isTraceEnabled()) {
-            log.trace(
-                    "Generated convert method " +
-                            returnType.getName() +
-                            " convert(ResultSet $1) throws SQLException " +
-                            bodyCode
-            );
-        }
-
-
-        final CtMethod method = CtNewMethod.make(
-                Modifier.PUBLIC | Modifier.FINAL,
-                parentPool.get(Object.class.getName()),
-                "convert",
-                BuilderUtils.toCtClasses(parentPool, ResultSet.class),
-                BuilderUtils.toCtClasses(parentPool, SQLException.class),
-                bodyCode,
-                toObjectConverter
-        );
-
-        toObjectConverter.addMethod(method);
-
-        if (log.isTraceEnabled()) {
-            log.trace("Initialize subclass with object converter instance");
-        }
-
-        @SuppressWarnings("unchecked")
-        final Class<IToObjectConverter<?>> converterClass = (Class<IToObjectConverter<?>>) toObjectConverter.toClass();
-        toObjectConverter.defrost();
-        return converterClass;
-    }
-
     private String getTypeMapConverterRef(Class<?> type) {
         return "ToObjectTypeMapConverter_" + mapperId + "_" + BuilderUtils.asIdentifier(type);
     }
@@ -277,7 +208,7 @@ public class TypeMapper {
         return false;
     }
 
-    public ITypeMap<?, ?> hasTypeMap(Class<?> objClass) {
+    public synchronized ITypeMap<?, ?> hasTypeMap(Class<?> objClass) {
         if (initializedMappers.containsKey(objClass)) {
             // Already checked classes are here with 'null' as type mappers
             return initializedMappers.get(objClass);
@@ -336,5 +267,73 @@ public class TypeMapper {
 
     public ClassPool getParentPool() {
         return parentPool;
+    }
+
+    public synchronized Class<IToObjectConverter<?>> getOrInitTypeMap(
+            Class<?> type,
+            Supplier<String> bodyCodeSupplier,
+            String converterCN,
+            Class<?> targetClass
+    ) throws NotFoundException, CannotCompileException {
+        try {
+
+            if (log.isTraceEnabled()) {
+                log.trace("Check if the converter already exists for class " + type.getName());
+            }
+
+            final String converterFQN = targetClass.getName() + "$" + converterCN;
+            final Class<?> aClass = BuilderUtils.getClass(converterFQN, parentPool);
+
+            if (IToObjectConverter.class.isAssignableFrom(aClass)) {
+                if (log.isTraceEnabled()) {
+                    log.trace("Converter class already exists: " + converterFQN);
+                }
+                @SuppressWarnings("unchecked")
+                final Class<IToObjectConverter<?>> aClazz = (Class<IToObjectConverter<?>>) aClass;
+                return aClazz;
+            } else {
+                throw new GeneratorException(
+                        converterFQN + " class is already exists and it is not implements " + IToObjectConverter.class.getName()
+                );
+            }
+        } catch (ClassNotFoundException ignore) {
+            // Just build a new class
+        }
+
+        if (log.isTraceEnabled()) {
+            log.trace("Build type map converter class for type " + type.getName());
+        }
+
+        String bodyCode = bodyCodeSupplier.get();
+        final CtClass baseCtClass = parentPool.get(targetClass.getName());
+        final CtClass toObjectConverter = baseCtClass.makeNestedClass(converterCN, true);
+
+        toObjectConverter.addInterface(parentPool.get(IToObjectConverter.class.getName()));
+
+        if (log.isTraceEnabled()) {
+            log.trace("Generated convert method " + type.getName() + " convert(ResultSet $1) throws SQLException " + bodyCode);
+        }
+
+
+        final CtMethod method = CtNewMethod.make(
+                Modifier.PUBLIC | Modifier.FINAL,
+                parentPool.get(Object.class.getName()),
+                "convert",
+                BuilderUtils.toCtClasses(parentPool, ResultSet.class),
+                BuilderUtils.toCtClasses(parentPool, SQLException.class),
+                bodyCode,
+                toObjectConverter
+        );
+
+        toObjectConverter.addMethod(method);
+
+        if (log.isTraceEnabled()) {
+            log.trace("Initialize subclass with object converter instance");
+        }
+
+        @SuppressWarnings("unchecked")
+        final Class<IToObjectConverter<?>> converterClass = (Class<IToObjectConverter<?>>) toObjectConverter.toClass();
+        toObjectConverter.defrost();
+        return converterClass;
     }
 }
