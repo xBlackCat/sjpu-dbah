@@ -1,6 +1,6 @@
 package org.xblackcat.sjpu.storage.impl;
 
-import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.commons.text.StringEscapeUtils;
 import org.xblackcat.sjpu.builder.GeneratorException;
 import org.xblackcat.sjpu.storage.converter.builder.Arg;
 import org.xblackcat.sjpu.storage.converter.builder.ArgIdx;
@@ -16,7 +16,7 @@ import java.util.regex.Pattern;
  * @author xBlackCat
  */
 public class SqlStringUtils {
-    private final static Pattern SQL_PART_IDX = Pattern.compile("\\{(\\d+)\\}");
+    private final static Pattern SQL_PART_IDX = Pattern.compile("\\{(\\d+)}");
 
     static Collection<Arg> appendSqlWithParts(StringBuilder body, String sql, Collection<Arg> staticArgs, Map<Integer, Arg> sqlParts) {
         if (sqlParts.isEmpty()) {

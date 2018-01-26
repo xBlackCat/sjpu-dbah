@@ -2,7 +2,7 @@ package org.xblackcat.sjpu.storage.impl;
 
 import javassist.*;
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.commons.text.StringEscapeUtils;
 import org.xblackcat.sjpu.builder.AnAnnotatedMethodBuilder;
 import org.xblackcat.sjpu.builder.BuilderUtils;
 import org.xblackcat.sjpu.builder.GeneratorException;
@@ -28,7 +28,7 @@ class DDLAnnotatedBuilder extends AnAnnotatedMethodBuilder<DDL> {
             CtClass accessHelper,
             Class<?> targetClass,
             Method m
-    ) throws NotFoundException, ReflectiveOperationException, CannotCompileException {
+    ) throws NotFoundException, CannotCompileException {
         final String[] ddls = m.getAnnotation(getAnnotationClass()).value();
 
         final String methodName = m.getName();
