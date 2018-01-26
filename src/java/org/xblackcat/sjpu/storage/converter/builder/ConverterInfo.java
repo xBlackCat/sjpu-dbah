@@ -4,7 +4,6 @@ import javassist.CannotCompileException;
 import javassist.Modifier;
 import javassist.NotFoundException;
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.xblackcat.sjpu.builder.BuilderUtils;
@@ -426,7 +425,7 @@ public class ConverterInfo {
     private static List<Method> parseProperties(Class<?> aClass, String[] fields) {
         final List<Method> methods = new ArrayList<>(fields.length);
         for (String property : fields) {
-            Method getter = isGetterExists(aClass, property);
+            Method getter = BuilderUtils.findGetter(aClass, property);
             if (getter == null) {
                 throw new GeneratorException("Invalid property/method name '" + property + "' is specified for expanding class " +
                                                      aClass.getName() + ": no getter is found");
@@ -434,26 +433,6 @@ public class ConverterInfo {
             methods.add(getter);
         }
         return methods;
-    }
-
-    protected static Method isGetterExists(Class<?> aClass, String property) {
-        try {
-            return aClass.getMethod(property);
-        } catch (NoSuchMethodException e) {
-            // Fall through
-        }
-        final String remain = StringUtils.capitalize(property);
-        try {
-            return aClass.getMethod("get" + remain);
-        } catch (NoSuchMethodException e) {
-            // Fall through
-        }
-        try {
-            return aClass.getMethod("is" + remain);
-        } catch (NoSuchMethodException e) {
-            // Fall through
-        }
-        return null;
     }
 
     private static Class<?> getRaw(Type t) {
