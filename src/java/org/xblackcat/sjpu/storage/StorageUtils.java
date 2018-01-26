@@ -1,7 +1,12 @@
 package org.xblackcat.sjpu.storage;
 
+import org.apache.commons.dbcp2.ConnectionFactory;
+import org.apache.commons.dbcp2.DriverManagerConnectionFactory;
+import org.apache.commons.dbcp2.PoolableConnection;
+import org.apache.commons.dbcp2.PoolableConnectionFactory;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.xblackcat.sjpu.builder.BuilderUtils;
 import org.xblackcat.sjpu.builder.GeneratorException;
 import org.xblackcat.sjpu.storage.connection.IConnectionFactory;
@@ -291,6 +296,31 @@ public class StorageUtils {
             toAppendTo.append(suffix);
         }
         return toAppendTo.toString();
+    }
+
+    public static GenericObjectPool<PoolableConnection> createDefaultPool(IDBConfig settings) {
+        ConnectionFactory connectionFactory = new DriverManagerConnectionFactory(
+                settings.getUrl(),
+                settings.getUser(),
+                settings.getPassword()
+        );
+
+        final int poolSize = settings.getPoolSize();
+
+        final PoolableConnectionFactory poolableConnectionFactory = new PoolableConnectionFactory(connectionFactory, null);
+        poolableConnectionFactory.setValidationQuery("SELECT 1+1");
+
+        final GenericObjectPool<PoolableConnection> connectionPool = new GenericObjectPool<>(poolableConnectionFactory);
+
+        connectionPool.setMaxIdle(poolSize);
+        connectionPool.setMinIdle(poolSize);
+        connectionPool.setMaxTotal(poolSize);
+        connectionPool.setTestOnBorrow(true);
+        connectionPool.setTestWhileIdle(true);
+        connectionPool.setTimeBetweenEvictionRunsMillis(5000);
+        connectionPool.setBlockWhenExhausted(true);
+        poolableConnectionFactory.setPool(connectionPool);
+        return connectionPool;
     }
 
     static class DebugArg {

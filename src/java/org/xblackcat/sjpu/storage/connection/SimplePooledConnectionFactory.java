@@ -3,6 +3,7 @@ package org.xblackcat.sjpu.storage.connection;
 import org.apache.commons.dbcp2.*;
 import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.xblackcat.sjpu.storage.StorageException;
+import org.xblackcat.sjpu.storage.StorageUtils;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -19,30 +20,14 @@ public class SimplePooledConnectionFactory extends AConnectionFactory {
     private final String poolName;
 
     public SimplePooledConnectionFactory(IDBConfig settings) throws StorageException {
-        super(settings);
+        this(settings.getDriver(), StorageUtils.createDefaultPool(settings));
+    }
 
-        ConnectionFactory connectionFactory = new DriverManagerConnectionFactory(
-                this.settings.getUrl(),
-                this.settings.getUser(),
-                this.settings.getPassword()
-        );
-
-        final int poolSize = settings.getPoolSize();
-
-        final PoolableConnectionFactory poolableConnectionFactory = new PoolableConnectionFactory(connectionFactory, null);
-        poolableConnectionFactory.setValidationQuery("SELECT 1+1");
-
-        final GenericObjectPool<PoolableConnection> connectionPool = new GenericObjectPool<>(poolableConnectionFactory);
-
-        poolableConnectionFactory.setPool(connectionPool);
-
-        connectionPool.setMaxIdle(poolSize);
-        connectionPool.setMinIdle(poolSize);
-        connectionPool.setMaxTotal(poolSize);
-        connectionPool.setTestOnBorrow(true);
-        connectionPool.setTestWhileIdle(true);
-        connectionPool.setTimeBetweenEvictionRunsMillis(5000);
-        connectionPool.setBlockWhenExhausted(true);
+    public SimplePooledConnectionFactory(
+            String driverClassName,
+            GenericObjectPool<PoolableConnection> connectionPool
+    ) throws StorageException {
+        super(driverClassName);
 
         try {
             Class.forName("org.apache.commons.dbcp2.PoolingDriver");

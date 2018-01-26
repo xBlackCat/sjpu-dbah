@@ -11,8 +11,11 @@ import java.sql.SQLException;
  */
 
 public class SimpleConnectionFactory extends AConnectionFactory {
+    private final IDBConfig settings;
+
     public SimpleConnectionFactory(IDBConfig settings) throws StorageException {
-        super(settings);
+        super(settings.getDriver());
+        this.settings = settings;
     }
 
     public Connection getConnection() throws SQLException {
