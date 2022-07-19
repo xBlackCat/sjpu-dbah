@@ -39,7 +39,8 @@ public class StorageBuilder {
             consumers.putAll(StorageUtils.DEFAULT_ROWSET_CONSUMERS);
         }
         if (defaultMappers) {
-            mappers.add(new EnumToStringMapper());
+            mappers.add(new EnumToStringMapper<>());
+            mappers.add(new InstantMapper());
             mappers.add(new LocalDateMapper());
             mappers.add(new LocalDateTimeMapper());
             mappers.add(new LocalTimeMapper());

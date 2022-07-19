@@ -100,6 +100,8 @@ public class AHBuilderUtils {
         map.put(java.sql.Date.class, "st.setDate(idx, %s);\n");
         map.put(java.sql.Timestamp.class, "st.setTimestamp(idx, %s);\n");
 
+        map.put(java.sql.Array.class, "st.setArray(idx, %s);\n");
+
         synchronized (AHBuilderUtils.class) {
             SET_DECLARATIONS = Collections.unmodifiableMap(map);
         }

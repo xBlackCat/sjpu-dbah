@@ -1,8 +1,10 @@
 package org.xblackcat.sjpu.storage.typemap;
 
+import org.xblackcat.sjpu.util.function.FunctionEx;
+
 import java.sql.Date;
+import java.sql.SQLException;
 import java.time.LocalDate;
-import java.util.function.Function;
 
 /**
  * A default mapper between java.sql.Timestamp and java.util.Date objects
@@ -15,7 +17,7 @@ public class LocalDateMapper implements IMapFactory<LocalDate, Date> {
     private final ITypeMap<LocalDate, Date> typeMap = new NullPassTypeMap<>(
             LocalDate.class,
             Date.class,
-            (Function<LocalDate, Date>) Date::valueOf,
+            (FunctionEx<LocalDate, Date, SQLException>) Date::valueOf,
             Date::toLocalDate
     );
 

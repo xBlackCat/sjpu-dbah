@@ -89,6 +89,10 @@ public class TypeMapper {
                 java.sql.Timestamp.class,
                 java.sql.Timestamp.class.getName() + " value%1$d = $1.getTimestamp(%1$d);\n"
         );
+        map.put(
+                java.sql.Array.class,
+                java.sql.Array.class.getName() + " value%1$d = $1.getArray(%1$d);\n"
+        );
 
         synchronized (AHBuilderUtils.class) {
             READ_DECLARATIONS = Collections.unmodifiableMap(map);

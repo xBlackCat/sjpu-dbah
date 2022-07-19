@@ -1,9 +1,11 @@
 package org.xblackcat.sjpu.storage.typemap;
 
+import org.xblackcat.sjpu.util.function.FunctionEx;
+
+import java.sql.SQLException;
 import java.sql.Time;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.function.Function;
 
 /**
  * A default mapper between java.sql.Timestamp and java.util.Date objects
@@ -16,7 +18,7 @@ public class LocalTimeMapper implements IMapFactory<LocalTime, Time> {
     private final ITypeMap<LocalTime, Time> typeMap = new NullPassTypeMap<>(
             LocalTime.class,
             Time.class,
-            (Function<LocalTime, Time>) Time::valueOf,
+            (FunctionEx<LocalTime, Time, SQLException>) Time::valueOf,
             Time::toLocalTime
     );
 

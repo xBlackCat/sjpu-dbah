@@ -13,6 +13,7 @@ public class TypeMapTest {
     public static final TypeMapper TEST_TYPE_MAPPER = new TypeMapper(
             new ClassPool(true),
             0,
+            new InstantMapper(),
             new LocalDateTimeMapper(),
             new LocalDateMapper(),
             new LocalTimeMapper(),
