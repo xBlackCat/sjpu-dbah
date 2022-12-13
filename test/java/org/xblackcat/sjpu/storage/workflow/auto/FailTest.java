@@ -1,7 +1,7 @@
 package org.xblackcat.sjpu.storage.workflow.auto;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.xblackcat.sjpu.builder.GeneratorException;
 import org.xblackcat.sjpu.storage.*;
 import org.xblackcat.sjpu.storage.ann.Sql;
@@ -23,9 +23,9 @@ public class FailTest {
         try {
             final ITestAH testAH = s.get(ITestAH.class);
 
-            Assert.fail("GeneratorException expected");
+            Assertions.fail("GeneratorException expected");
         } catch (GeneratorException e) {
-            Assert.assertEquals(
+            Assertions.assertEquals(
                     "Exception occurs while building method public abstract void org.xblackcat.sjpu.storage.workflow.auto.FailTest$ITestAH.getList(org.xblackcat.sjpu.storage.consumer.IRowConsumer) throws org.xblackcat.sjpu.storage.StorageException: Set target class with annotation interface org.xblackcat.sjpu.storage.ann.MapRowTo for method public abstract void org.xblackcat.sjpu.storage.workflow.auto.FailTest$ITestAH.getList(org.xblackcat.sjpu.storage.consumer.IRowConsumer) throws org.xblackcat.sjpu.storage.StorageException",
                     e.getMessage()
             ); // Exception occur
@@ -44,9 +44,9 @@ public class FailTest {
         try {
             final ITestArgAH testAH = s.get(ITestArgAH.class);
 
-            Assert.fail("GeneratorException expected");
+            Assertions.fail("GeneratorException expected");
         } catch (GeneratorException e) {
-            Assert.assertEquals(
+            Assertions.assertEquals(
                     "Exception occurs while building method public abstract void org.xblackcat.sjpu.storage.workflow.auto.FailTest$ITestArgAH.getList(org.xblackcat.sjpu.storage.consumer.IRowConsumer) throws org.xblackcat.sjpu.storage.StorageException: Row could be mapped only to non-abstract class",
                     e.getMessage()
             ); // Exception occur
@@ -65,9 +65,9 @@ public class FailTest {
         try {
             final ITestExpAH testAH = s.get(ITestExpAH.class);
 
-            Assert.fail("GeneratorException expected");
+            Assertions.fail("GeneratorException expected");
         } catch (GeneratorException e) {
-            Assert.assertEquals(
+            Assertions.assertEquals(
                     "Exception occurs while building method public abstract int org.xblackcat.sjpu.storage.workflow.auto.FailTest$ITestExpAH.getList(java.net.URL) throws org.xblackcat.sjpu.storage.StorageException: Can't process type java.net.URL",
                     e.getMessage()
             ); // Exception occur
@@ -86,9 +86,9 @@ public class FailTest {
         try {
             final ITestExp2AH testAH = s.get(ITestExp2AH.class);
 
-            Assert.fail("GeneratorException expected");
+            Assertions.fail("GeneratorException expected");
         } catch (GeneratorException e) {
-            Assert.assertEquals(
+            Assertions.assertEquals(
                     "Exception occurs while building method public abstract int org.xblackcat.sjpu.storage.workflow.auto.FailTest$ITestExp2AH.getList(java.net.URL) throws org.xblackcat.sjpu.storage.StorageException: Can't process type java.net.URL",
                     e.getMessage()
             ); // Exception occur

@@ -1,9 +1,9 @@
 package org.xblackcat.sjpu.storage.bugfix.fewenums;
 
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.xblackcat.sjpu.storage.*;
 import org.xblackcat.sjpu.storage.connection.IConnectionFactory;
 import org.xblackcat.sjpu.storage.typemap.EnumToStringMapper;
@@ -20,7 +20,7 @@ import java.util.List;
 public class EnumsReadTest {
     private IStorage storage;
 
-    @Before
+    @BeforeEach
     public void setupDatabase() throws StorageException {
         IConnectionFactory helper = StorageUtils.buildConnectionFactory(Config.TEST_DB_CONFIG);
         final StorageBuilder builder = new StorageBuilder();
@@ -34,7 +34,7 @@ public class EnumsReadTest {
         initAH.createDB();
     }
 
-    @After
+    @AfterEach
     public void dropDatabase() throws StorageException {
         storage.shutdown();
     }
@@ -44,19 +44,19 @@ public class EnumsReadTest {
         IEnumsAH eAH = storage.get(IEnumsAH.class);
 
         final List<FirstEnum> first = eAH.getFirst();
-        Assert.assertEquals(1, first.size());
-        Assert.assertEquals(FirstEnum.class, first.get(0).getClass());
-        Assert.assertEquals(FirstEnum.One, first.get(0));
+        Assertions.assertEquals(1, first.size());
+        Assertions.assertEquals(FirstEnum.class, first.get(0).getClass());
+        Assertions.assertEquals(FirstEnum.One, first.get(0));
 
         final List<SecondEnum> second = eAH.getSecond();
-        Assert.assertEquals(1, second.size());
-        Assert.assertEquals(SecondEnum.class, second.get(0).getClass());
-        Assert.assertEquals(SecondEnum.Unu, second.get(0));
+        Assertions.assertEquals(1, second.size());
+        Assertions.assertEquals(SecondEnum.class, second.get(0).getClass());
+        Assertions.assertEquals(SecondEnum.Unu, second.get(0));
 
         final List<ThirdEnum> third = eAH.getThird();
-        Assert.assertEquals(1, third.size());
-        Assert.assertEquals(ThirdEnum.class, third.get(0).getClass());
-        Assert.assertEquals(ThirdEnum.Un, third.get(0));
+        Assertions.assertEquals(1, third.size());
+        Assertions.assertEquals(ThirdEnum.class, third.get(0).getClass());
+        Assertions.assertEquals(ThirdEnum.Un, third.get(0));
 
     }
 }

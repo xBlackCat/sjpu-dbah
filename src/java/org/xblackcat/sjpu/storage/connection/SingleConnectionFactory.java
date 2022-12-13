@@ -7,11 +7,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Executor;
 
-/**
- * 20.03.2015 11:36
- *
- * @author xBlackCat
- */
 public class SingleConnectionFactory implements IConnectionFactory {
     protected final Connection con;
     protected NoCloseConnection noCloseConnection;

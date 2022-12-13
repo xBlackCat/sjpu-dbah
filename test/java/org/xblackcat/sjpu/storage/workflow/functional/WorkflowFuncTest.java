@@ -1,9 +1,9 @@
 package org.xblackcat.sjpu.storage.workflow.functional;
 
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.xblackcat.sjpu.storage.*;
 import org.xblackcat.sjpu.storage.connection.IConnectionFactory;
 import org.xblackcat.sjpu.storage.typemap.EnumToStringMapper;
@@ -24,7 +24,7 @@ import java.util.List;
 public class WorkflowFuncTest {
     private IStorage storage;
 
-    @Before
+    @BeforeEach
     public void setupDatabase() throws StorageException {
         IConnectionFactory helper = StorageUtils.buildConnectionFactory(Config.TEST_DB_CONFIG);
         final StorageBuilder builder = new StorageBuilder();
@@ -38,7 +38,7 @@ public class WorkflowFuncTest {
         initAH.createDB();
     }
 
-    @After
+    @AfterEach
     public void dropDatabase() throws StorageException {
         storage.shutdown();
     }
@@ -56,11 +56,11 @@ public class WorkflowFuncTest {
         {
             final IListFuncAH funcAH = storage.get(IListFuncAH.class, "SELECT id, name FROM list");
             final List<Element> list = funcAH.getList();
-            Assert.assertNotNull(list);
-            Assert.assertEquals(Numbers.values().length, list.size());
+            Assertions.assertNotNull(list);
+            Assertions.assertEquals(Numbers.values().length, list.size());
             for (Element el : list) {
-                Assert.assertNotNull(list);
-                Assert.assertEquals(Numbers.values()[el.id].name(), el.name);
+                Assertions.assertNotNull(list);
+                Assertions.assertEquals(Numbers.values()[el.id].name(), el.name);
             }
 
         }
@@ -68,19 +68,19 @@ public class WorkflowFuncTest {
         {
             final IListFuncAH funcAH = storage.get(IListFuncAH.class, "SELECT id, name FROM list WHERE id < 5");
             final List<Element> list = funcAH.getList();
-            Assert.assertNotNull(list);
-            Assert.assertEquals(5, list.size());
+            Assertions.assertNotNull(list);
+            Assertions.assertEquals(5, list.size());
             for (Element el : list) {
-                Assert.assertNotNull(list);
-                Assert.assertEquals(Numbers.values()[el.id].name(), el.name);
+                Assertions.assertNotNull(list);
+                Assertions.assertEquals(Numbers.values()[el.id].name(), el.name);
             }
         }
 
         {
             final IGetFuncAH funcAH = storage.get(IGetFuncAH.class,  "SELECT id, name FROM list WHERE id = ?");
             final ElementNumber element = funcAH.getElement(5);
-            Assert.assertNotNull(element);
-            Assert.assertEquals(Numbers.Five, element.getName());
+            Assertions.assertNotNull(element);
+            Assertions.assertEquals(Numbers.Five, element.getName());
         }
     }
 

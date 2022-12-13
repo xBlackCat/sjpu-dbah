@@ -2,8 +2,8 @@ package org.xblackcat.sjpu.storage.converter.builder;
 
 import javassist.CannotCompileException;
 import javassist.NotFoundException;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.xblackcat.sjpu.builder.GeneratorException;
 import org.xblackcat.sjpu.storage.typemap.TypeMapTest;
 import org.xblackcat.sjpu.storage.typemap.TypeMapper;
@@ -23,19 +23,20 @@ public class BuilderTest {
                     SimpleObject.class.getConstructors()[0]
             );
 
-            String expected = "{\n" +
-                    "java.lang.String value1 = $1.getString(1);\n" +
-                    "byte[] value2 = $1.getBytes(2);\n" +
-                    "java.sql.Timestamp value3 = $1.getTimestamp(3);\n" +
-                    "\n" +
-                    "return new org.xblackcat.sjpu.storage.converter.builder.SimpleObject(\n" +
-                    "value1,\n" +
-                    "(java.net.URI) org.xblackcat.sjpu.storage.typemap.TypeMapper.TypeMap_java_net_URI_0_Instance.I.forRead(value2),\n" +
-                    "(java.time.LocalDateTime) org.xblackcat.sjpu.storage.typemap.TypeMapper.TypeMap_java_time_LocalDateTime_0_Instance.I.forRead(value3)\n" +
-                    ");\n" +
-                    "}";
+            String expected = """
+                    {
+                    java.lang.String value1 = $1.getString(1);
+                    byte[] value2 = $1.getBytes(2);
+                    java.sql.Timestamp value3 = $1.getTimestamp(3);
 
-            Assert.assertEquals(expected, builder.buildBody());
+                    return new org.xblackcat.sjpu.storage.converter.builder.SimpleObject(
+                    value1,
+                    (java.net.URI) org.xblackcat.sjpu.storage.typemap.TypeMapper.TypeMap_java_net_URI_0_Instance.I.forRead(value2),
+                    (java.time.LocalDateTime) org.xblackcat.sjpu.storage.typemap.TypeMapper.TypeMap_java_time_LocalDateTime_0_Instance.I.forRead(value3)
+                    );
+                    }""";
+
+            Assertions.assertEquals(expected, builder.buildBody());
         }
 
         {
@@ -45,25 +46,26 @@ public class BuilderTest {
                     SimpleObject.class.getConstructors()[0]
             );
 
-            String expected = "{\n" +
-                    "int value1 = $1.getInt(1);\n" +
-                    "java.lang.String value2 = $1.getString(2);\n" +
-                    "byte[] value3 = $1.getBytes(3);\n" +
-                    "java.sql.Timestamp value4 = $1.getTimestamp(4);\n" +
-                    "java.lang.String value5 = $1.getString(5);\n" +
-                    "\n" +
-                    "return new org.xblackcat.sjpu.storage.converter.builder.Complex1(\n" +
-                    "value1,\n" +
-                    "new org.xblackcat.sjpu.storage.converter.builder.SimpleObject(\n" +
-                    "value2,\n" +
-                    "(java.net.URI) org.xblackcat.sjpu.storage.typemap.TypeMapper.TypeMap_java_net_URI_0_Instance.I.forRead(value3),\n" +
-                    "(java.time.LocalDateTime) org.xblackcat.sjpu.storage.typemap.TypeMapper.TypeMap_java_time_LocalDateTime_0_Instance.I.forRead(value4)\n" +
-                    "),\n" +
-                    "value5\n" +
-                    ");\n" +
-                    "}";
+            String expected = """
+                    {
+                    int value1 = $1.getInt(1);
+                    java.lang.String value2 = $1.getString(2);
+                    byte[] value3 = $1.getBytes(3);
+                    java.sql.Timestamp value4 = $1.getTimestamp(4);
+                    java.lang.String value5 = $1.getString(5);
 
-            Assert.assertEquals(expected, builder.buildBody());
+                    return new org.xblackcat.sjpu.storage.converter.builder.Complex1(
+                    value1,
+                    new org.xblackcat.sjpu.storage.converter.builder.SimpleObject(
+                    value2,
+                    (java.net.URI) org.xblackcat.sjpu.storage.typemap.TypeMapper.TypeMap_java_net_URI_0_Instance.I.forRead(value3),
+                    (java.time.LocalDateTime) org.xblackcat.sjpu.storage.typemap.TypeMapper.TypeMap_java_time_LocalDateTime_0_Instance.I.forRead(value4)
+                    ),
+                    value5
+                    );
+                    }""";
+
+            Assertions.assertEquals(expected, builder.buildBody());
         }
     }
 
@@ -73,43 +75,45 @@ public class BuilderTest {
         {
             final String body = build(TypeMapTest.TEST_TYPE_MAPPER, SimpleObject.class, null);
 
-            String expected = "{\n" +
-                    "java.lang.String value1 = $1.getString(1);\n" +
-                    "byte[] value2 = $1.getBytes(2);\n" +
-                    "java.sql.Timestamp value3 = $1.getTimestamp(3);\n" +
-                    "\n" +
-                    "return new org.xblackcat.sjpu.storage.converter.builder.SimpleObject(\n" +
-                    "value1,\n" +
-                    "(java.net.URI) org.xblackcat.sjpu.storage.typemap.TypeMapper.TypeMap_java_net_URI_0_Instance.I.forRead(value2),\n" +
-                    "(java.time.LocalDateTime) org.xblackcat.sjpu.storage.typemap.TypeMapper.TypeMap_java_time_LocalDateTime_0_Instance.I.forRead(value3)\n" +
-                    ");\n" +
-                    "}";
+            String expected = """
+                    {
+                    java.lang.String value1 = $1.getString(1);
+                    byte[] value2 = $1.getBytes(2);
+                    java.sql.Timestamp value3 = $1.getTimestamp(3);
 
-            Assert.assertEquals(expected, body);
+                    return new org.xblackcat.sjpu.storage.converter.builder.SimpleObject(
+                    value1,
+                    (java.net.URI) org.xblackcat.sjpu.storage.typemap.TypeMapper.TypeMap_java_net_URI_0_Instance.I.forRead(value2),
+                    (java.time.LocalDateTime) org.xblackcat.sjpu.storage.typemap.TypeMapper.TypeMap_java_time_LocalDateTime_0_Instance.I.forRead(value3)
+                    );
+                    }""";
+
+            Assertions.assertEquals(expected, body);
         }
 
         {
             final String body = build(TypeMapTest.TEST_TYPE_MAPPER, Complex1.class, null);
 
-            String expected = "{\n" +
-                    "int value1 = $1.getInt(1);\n" +
-                    "java.lang.String value2 = $1.getString(2);\n" +
-                    "byte[] value3 = $1.getBytes(3);\n" +
-                    "java.sql.Timestamp value4 = $1.getTimestamp(4);\n" +
-                    "java.lang.String value5 = $1.getString(5);\n" +
-                    "\n" +
-                    "return new org.xblackcat.sjpu.storage.converter.builder.Complex1(\n" +
-                    "value1,\n" +
-                    "new org.xblackcat.sjpu.storage.converter.builder.SimpleObject(\n" +
-                    "value2,\n" +
-                    "(java.net.URI) org.xblackcat.sjpu.storage.typemap.TypeMapper.TypeMap_java_net_URI_0_Instance.I.forRead(value3),\n" +
-                    "(java.time.LocalDateTime) org.xblackcat.sjpu.storage.typemap.TypeMapper.TypeMap_java_time_LocalDateTime_0_Instance.I.forRead(value4)\n" +
-                    "),\n" +
-                    "value5\n" +
-                    ");\n" +
-                    "}";
+            String expected = """
+                    {
+                    int value1 = $1.getInt(1);
+                    java.lang.String value2 = $1.getString(2);
+                    byte[] value3 = $1.getBytes(3);
+                    java.sql.Timestamp value4 = $1.getTimestamp(4);
+                    java.lang.String value5 = $1.getString(5);
 
-            Assert.assertEquals(expected, body);
+                    return new org.xblackcat.sjpu.storage.converter.builder.Complex1(
+                    value1,
+                    new org.xblackcat.sjpu.storage.converter.builder.SimpleObject(
+                    value2,
+                    (java.net.URI) org.xblackcat.sjpu.storage.typemap.TypeMapper.TypeMap_java_net_URI_0_Instance.I.forRead(value3),
+                    (java.time.LocalDateTime) org.xblackcat.sjpu.storage.typemap.TypeMapper.TypeMap_java_time_LocalDateTime_0_Instance.I.forRead(value4)
+                    ),
+                    value5
+                    );
+                    }""";
+
+            Assertions.assertEquals(expected, body);
         }
     }
 
@@ -123,7 +127,7 @@ public class BuilderTest {
 
         final Info info = analyser.analyze(clazz);
 
-        final ConverterMethodBuilder builder = new ConverterMethodBuilder(typeMapper, info.reference);
+        final ConverterMethodBuilder builder = new ConverterMethodBuilder(typeMapper, info.reference());
         return builder.buildBody();
     }
 
@@ -137,9 +141,9 @@ public class BuilderTest {
 
         try {
             builder.buildBody();
-            Assert.fail("Exception expected");
+            Assertions.fail("Exception expected");
         } catch (GeneratorException e) {
-            Assert.assertEquals("Can't process type org.xblackcat.sjpu.storage.converter.builder.SimpleObject", e.getMessage());
+            Assertions.assertEquals("Can't process type org.xblackcat.sjpu.storage.converter.builder.SimpleObject", e.getMessage());
         }
     }
 }

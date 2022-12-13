@@ -54,26 +54,26 @@ public class SqlStringUtils {
             Arg arg = sqlParts.get(Integer.valueOf(m.group(1)));
 
             if (arg != null) {
-                final ArgIdx argIdx = arg.idx;
+                final ArgIdx argIdx = arg.idx();
 
                 final String sqlPart = sql.substring(startPos, m.start());
                 checkSqlPart(counter, staticArgIt, fullArgsList, sqlPart);
                 body.append("sqlBuilder.append(\"");
                 body.append(StringEscapeUtils.escapeJava(sqlPart));
                 body.append("\");\n");
-                final int idx = argIdx.idx + 1;
-                if (arg.sqlPart == null) {
+                final int idx = argIdx.idx() + 1;
+                if (arg.sqlPart() == null) {
                     body.append("sqlBuilder.append($");
                     body.append(idx);
                     body.append(");\n");
                 } else {
-                    final ArgInfo varArgInfo = arg.varArgInfo;
+                    final ArgInfo varArgInfo = arg.varArgInfo();
                     final boolean isVarArg = varArgInfo != null;
-                    final boolean isArray = isVarArg && arg.typeRawClass.isArray();
+                    final boolean isArray = isVarArg && arg.typeRawClass().isArray();
 
                     checkOptionalPart(counter, arg);
 
-                    boolean inBlock = argIdx.optional || isVarArg;
+                    boolean inBlock = argIdx.optional() || isVarArg;
                     fullArgsList.add(arg);
                     if (inBlock) {
                         body.append("if ($");
@@ -89,22 +89,25 @@ public class SqlStringUtils {
                         } else {
                             body.append("java.util.Iterator _it = $");
                             body.append(idx);
-                            body.append(".iterator();\n" +
-                                                "while (_it.hasNext()) {\n" +
-                                                "_it.next();\n");
+                            body.append("""
+                                                .iterator();
+                                                while (_it.hasNext()) {
+                                                _it.next();
+                                                """);
                         }
-                        body.append("if (firstElement) {\n" +
-                                            "firstElement = false;\n" +
-                                            "} else {\n" +
-                                            "sqlBuilder.append(\"");
-                        body.append(StringEscapeUtils.escapeJava(varArgInfo.methodName));
+                        body.append("""
+                                            if (firstElement) {
+                                            firstElement = false;
+                                            } else {
+                                            sqlBuilder.append(\"""");
+                        body.append(StringEscapeUtils.escapeJava(varArgInfo.methodName()));
 
                         body.append("\");\n");
                         body.append("}\n");
                     }
 
                     body.append("sqlBuilder.append(\"");
-                    body.append(StringEscapeUtils.escapeJava(arg.sqlPart));
+                    body.append(StringEscapeUtils.escapeJava(arg.sqlPart()));
                     body.append("\");\n");
 
                     if (isVarArg) {
@@ -112,7 +115,7 @@ public class SqlStringUtils {
                         body.append("if (firstElement) {\nthrow new java.lang.IllegalArgumentException(\"Empty ");
                         body.append(isArray ? "array" : "collection");
                         body.append(" for vararg argument #");
-                        body.append(argIdx.idx);
+                        body.append(argIdx.idx());
                         body.append("\");\n}\n");
                     }
                     if (inBlock) {
@@ -120,7 +123,7 @@ public class SqlStringUtils {
                             body.append("} else {\nthrow new java.lang.IllegalArgumentException(\"Null ");
                             body.append(isArray ? "array" : "collection");
                             body.append(" for vararg argument #");
-                            body.append(argIdx.idx);
+                            body.append(argIdx.idx());
                             body.append("\");\n");
                         }
                         body.append("}\n");
@@ -158,22 +161,22 @@ public class SqlStringUtils {
             Arg arg = sqlParts.get(idx);
 
             if (arg != null) {
-                final ArgIdx argIdx = arg.idx;
+                final ArgIdx argIdx = arg.idx();
                 final String sqlPart = sql.substring(startPos, m.start());
                 checkSqlPart(counter, staticArgIt, fullArgsList, sqlPart);
                 body.append('"');
                 body.append(StringEscapeUtils.escapeJava(sqlPart));
                 body.append("\" + ");
-                if (arg.sqlPart == null) {
+                if (arg.sqlPart() == null) {
                     body.append("$");
-                    body.append(argIdx.idx + 1);
+                    body.append(argIdx.idx() + 1);
                 } else {
                     checkOptionalPart(counter, arg);
 
                     fullArgsList.add(arg);
 
                     body.append('"');
-                    body.append(StringEscapeUtils.escapeJava(arg.sqlPart));
+                    body.append(StringEscapeUtils.escapeJava(arg.sqlPart()));
                     body.append('"');
                 }
                 body.append(" + ");
@@ -196,14 +199,14 @@ public class SqlStringUtils {
     }
 
     private static void checkOptionalPart(ArgumentCounter counter, Arg arg) {
-        int argsAmount = counter.argsInPart(arg.sqlPart);
+        int argsAmount = counter.argsInPart(arg.sqlPart());
         if (argsAmount == 0) {
             throw new GeneratorException("Optional SQL part is in quoted sql part and will not be set properly");
         } else if (argsAmount == 1) {
-            if (arg.expandedArgs != null && arg.expandedArgs.length != 0) {
+            if (arg.expandedArgs() != null && arg.expandedArgs().length != 0) {
                 throw new GeneratorException("Optional SQL part is in quoted sql part and will not be set properly");
             }
-        } else if (arg.expandedArgs == null || argsAmount != arg.expandedArgs.length) {
+        } else if (arg.expandedArgs() == null || argsAmount != arg.expandedArgs().length) {
             throw new GeneratorException("Optional SQL part is in quoted sql part and will not be set properly");
         }
     }
@@ -216,8 +219,8 @@ public class SqlStringUtils {
             }
             final Arg a = staticArgIt.next();
             fullArgsList.add(a);
-            if (a.expandedArgs != null && a.expandedArgs.length > 0) {
-                argsAmount -= a.expandedArgs.length;
+            if (a.expandedArgs() != null && a.expandedArgs().length > 0) {
+                argsAmount -= a.expandedArgs().length;
             } else {
                 argsAmount--;
             }

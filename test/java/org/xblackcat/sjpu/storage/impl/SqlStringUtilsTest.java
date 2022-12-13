@@ -1,7 +1,7 @@
 package org.xblackcat.sjpu.storage.impl;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.xblackcat.sjpu.storage.converter.builder.Arg;
 import org.xblackcat.sjpu.storage.converter.builder.ArgIdx;
 import org.xblackcat.sjpu.storage.converter.builder.ArgInfo;
@@ -30,8 +30,8 @@ public class SqlStringUtilsTest {
 
             final Collection<Arg> argIdxes = SqlStringUtils.appendSqlWithParts(bldr, sql, staticArgs, map);
 
-            Assert.assertEquals("java.lang.String sql = \"SELECT * FROM \" + $1 + \" a WHERE a.id = ?\";\n", bldr.toString());
-            Assert.assertEquals(staticArgs, argIdxes);
+            Assertions.assertEquals("java.lang.String sql = \"SELECT * FROM \" + $1 + \" a WHERE a.id = ?\";\n", bldr.toString());
+            Assertions.assertEquals(staticArgs, argIdxes);
         }
         {
             Collection<Arg> staticArgs = Collections.singletonList(staticArg1);
@@ -41,8 +41,8 @@ public class SqlStringUtilsTest {
 
             final Collection<Arg> argIdxes = SqlStringUtils.appendSqlWithParts(bldr, sql, staticArgs, map);
 
-            Assert.assertEquals("java.lang.String sql = \"SELECT * FROM \" + $1 + \" a WHERE a.{1} = ?\";\n", bldr.toString());
-            Assert.assertEquals(staticArgs, argIdxes);
+            Assertions.assertEquals("java.lang.String sql = \"SELECT * FROM \" + $1 + \" a WHERE a.{1} = ?\";\n", bldr.toString());
+            Assertions.assertEquals(staticArgs, argIdxes);
         }
         {
             Collection<Arg> staticArgs = Collections.singletonList(staticArg1);
@@ -59,8 +59,8 @@ public class SqlStringUtilsTest {
                     "}\n" +
                     "sqlBuilder.append(\" a WHERE a.{1} = ?\");\n" +
                     "java.lang.String sql = sqlBuilder.toString();\n";
-            Assert.assertEquals(expected, bldr.toString());
-            Assert.assertEquals(Arrays.asList(sqlOptArgJoinByte0, staticArg1), argIdxes);
+            Assertions.assertEquals(expected, bldr.toString());
+            Assertions.assertEquals(Arrays.asList(sqlOptArgJoinByte0, staticArg1), argIdxes);
         }
         {
             Collection<Arg> staticArgs = Collections.singleton(staticArg1);
@@ -70,8 +70,8 @@ public class SqlStringUtilsTest {
 
             final Collection<Arg> argIdxes = SqlStringUtils.appendSqlWithParts(bldr, sql, staticArgs, map);
 
-            Assert.assertEquals("java.lang.String sql = \"SELECT * FROM \" + \"?\" + \" a WHERE a.{1} = ?\";\n", bldr.toString());
-            Assert.assertEquals(Arrays.asList(sqlPartOptArg0, staticArg1), argIdxes);
+            Assertions.assertEquals("java.lang.String sql = \"SELECT * FROM \" + \"?\" + \" a WHERE a.{1} = ?\";\n", bldr.toString());
+            Assertions.assertEquals(Arrays.asList(sqlPartOptArg0, staticArg1), argIdxes);
 
         }
         {
@@ -81,11 +81,11 @@ public class SqlStringUtilsTest {
 
             final Collection<Arg> argIdxes = SqlStringUtils.appendSqlWithParts(bldr, sql, Collections.emptyList(), map);
 
-            Assert.assertEquals(
+            Assertions.assertEquals(
                     "java.lang.String sql = \"SELECT * FROM table a WHERE a.id = \" + \"?\" + \" and a.other_id = \" + \"?\" + \"\";\n",
                     bldr.toString()
             );
-            Assert.assertEquals(Arrays.asList(sqlPartOptArg0, sqlPartOptArg0), argIdxes);
+            Assertions.assertEquals(Arrays.asList(sqlPartOptArg0, sqlPartOptArg0), argIdxes);
         }
         {
             Collection<Arg> staticArgs = Collections.singleton(staticArg1);
@@ -110,8 +110,8 @@ public class SqlStringUtilsTest {
                     "sqlBuilder.append(\"\");\n" +
                     "java.lang.String sql = sqlBuilder.toString();\n";
 
-            Assert.assertEquals(expected, bldr.toString());
-            Assert.assertEquals(Arrays.asList(sqlOptArgJoinByte0, sqlArg2, staticArg1, sqlArg2), argIdxes);
+            Assertions.assertEquals(expected, bldr.toString());
+            Assertions.assertEquals(Arrays.asList(sqlOptArgJoinByte0, sqlArg2, staticArg1, sqlArg2), argIdxes);
         }
         {
             final Arg staticArg3 = new Arg(URL.class, 3);
@@ -154,8 +154,8 @@ public class SqlStringUtilsTest {
                     "sqlBuilder.append(\"\");\n" +
                     "java.lang.String sql = sqlBuilder.toString();\n";
 
-            Assert.assertEquals(expected, bldr.toString());
-            Assert.assertEquals(Arrays.asList(sqlVarArg0, sqlArg2, staticArg1, staticArg3, sqlArg2), argIdxes);
+            Assertions.assertEquals(expected, bldr.toString());
+            Assertions.assertEquals(Arrays.asList(sqlVarArg0, sqlArg2, staticArg1, staticArg3, sqlArg2), argIdxes);
         }
         {
             final Arg sqlVarArg0 = new Arg(
@@ -198,8 +198,8 @@ public class SqlStringUtilsTest {
                     "sqlBuilder.append(\"\");\n" +
                     "java.lang.String sql = sqlBuilder.toString();\n";
 
-            Assert.assertEquals(expected, bldr.toString());
-            Assert.assertEquals(Collections.singletonList(sqlVarArg0), argIdxes);
+            Assertions.assertEquals(expected, bldr.toString());
+            Assertions.assertEquals(Collections.singletonList(sqlVarArg0), argIdxes);
         }
 
         // Failed conditions
@@ -211,9 +211,9 @@ public class SqlStringUtilsTest {
 
             try {
                 final Collection<Arg> argIdxes = SqlStringUtils.appendSqlWithParts(bldr, sql, staticArgs, map);
-                Assert.fail("An exception is expected");
+                Assertions.fail("An exception is expected");
             } catch (Exception e) {
-                Assert.assertEquals("Optional SQL part is in quoted sql part and will not be set properly", e.getMessage());
+                Assertions.assertEquals("Optional SQL part is in quoted sql part and will not be set properly", e.getMessage());
             }
 
         }
@@ -222,23 +222,23 @@ public class SqlStringUtilsTest {
 
     @Test
     public void testGetArgumentCount() throws Exception {
-        Assert.assertEquals(1, ArgumentCounter.getArgumentCount("SELECT * FROM {2} a WHERE a.id = ?"));
-        Assert.assertEquals(1, ArgumentCounter.getArgumentCount("SELECT *, 'table ?' FROM {2} a WHERE a.id = ?"));
-        Assert.assertEquals(2, ArgumentCounter.getArgumentCount("SELECT * FROM {2} a WHERE a.id = ? AND a = ? AND `quoted 'str\\`ing' `"));
-        Assert.assertEquals(1, ArgumentCounter.getArgumentCount("SELECT * FROM table a WHERE a.id = ?"));
+        Assertions.assertEquals(1, ArgumentCounter.getArgumentCount("SELECT * FROM {2} a WHERE a.id = ?"));
+        Assertions.assertEquals(1, ArgumentCounter.getArgumentCount("SELECT *, 'table ?' FROM {2} a WHERE a.id = ?"));
+        Assertions.assertEquals(2, ArgumentCounter.getArgumentCount("SELECT * FROM {2} a WHERE a.id = ? AND a = ? AND `quoted 'str\\`ing' `"));
+        Assertions.assertEquals(1, ArgumentCounter.getArgumentCount("SELECT * FROM table a WHERE a.id = ?"));
     }
 
     @Test
     public void sqlWithParts() throws Exception {
         ArgumentCounter c = new ArgumentCounter();
 
-        Assert.assertEquals(1, c.argsInPart("SELECT 1 FROM text WHERE id = ? AND `"));
-        Assert.assertTrue(c.isQuoteOpen());
-        Assert.assertEquals(1, c.argsInPart("` OR name = ? AND `"));
-        Assert.assertTrue(c.isQuoteOpen());
-        Assert.assertEquals(1, c.argsInPart("?` OR name = ? AND "));
-        Assert.assertFalse(c.isQuoteOpen());
-        Assert.assertEquals(1, c.argsInPart(" name = ? AND "));
-        Assert.assertEquals(4, c.getTotalAmount());
+        Assertions.assertEquals(1, c.argsInPart("SELECT 1 FROM text WHERE id = ? AND `"));
+        Assertions.assertTrue(c.isQuoteOpen());
+        Assertions.assertEquals(1, c.argsInPart("` OR name = ? AND `"));
+        Assertions.assertTrue(c.isQuoteOpen());
+        Assertions.assertEquals(1, c.argsInPart("?` OR name = ? AND "));
+        Assertions.assertFalse(c.isQuoteOpen());
+        Assertions.assertEquals(1, c.argsInPart(" name = ? AND "));
+        Assertions.assertEquals(4, c.getTotalAmount());
     }
 }

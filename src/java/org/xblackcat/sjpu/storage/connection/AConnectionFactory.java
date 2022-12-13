@@ -15,8 +15,8 @@ public abstract class AConnectionFactory implements IConnectionFactory {
         log = LogFactory.getLog(getClass());
 
         try {
-            Class.forName(driver).newInstance();
-        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+            Class.forName(driver).getConstructor().newInstance();
+        } catch (ReflectiveOperationException e) {
             throw new StorageException("Can not initialize JDBC driver.", e);
         }
     }

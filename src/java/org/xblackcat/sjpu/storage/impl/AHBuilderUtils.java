@@ -14,16 +14,9 @@ import org.xblackcat.sjpu.storage.typemap.ITypeMap;
 
 import java.math.BigDecimal;
 import java.sql.*;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-/**
- * 11.03.13 13:18
- *
- * @author xBlackCat
- */
 public class AHBuilderUtils {
 
     public static final Pattern FIRST_WORD_SQL = Pattern.compile("(\\w+)(\\s|$)");
@@ -43,69 +36,59 @@ public class AHBuilderUtils {
     public static final String CN_StorageUtils = BuilderUtils.getName(StorageUtils.class);
     public static final String CN_StorageException = BuilderUtils.getName(StorageException.class);
 
-    private static final Map<Class<?>, String> SET_DECLARATIONS;
+    private static final Map<Class<?>, String> SET_DECLARATIONS = Map.ofEntries(
+            Map.entry(long.class, "st.setLong(idx, %s);\n"),
+            Map.entry(
+                    Long.class,
+                    "{\njava.lang.Long tmpVal = %s;\nif (tmpVal == null) {\nst.setNull(idx, 0);\n} else {\nst.setLong(idx, tmpVal.longValue());\n}\n}\n"
+            ),
+            Map.entry(int.class, "st.setInt(idx, %s);\n"),
+            Map.entry(
+                    Integer.class,
+                    "{\njava.lang.Integer tmpVal = %s;\nif (tmpVal == null) {\nst.setNull(idx, 0);\n} else {\nst.setInt(idx, tmpVal.intValue());\n}\n}\n"
+            ),
+            Map.entry(short.class, "st.setShort(idx, %s);\n"),
+            Map.entry(
+                    Short.class,
+                    "{\njava.lang.Short tmpVal = %s;\nif (tmpVal == null) {\nst.setNull(idx, 0);\n} else {\nst.setShort(idx, tmpVal.shortValue());\n}\n}\n"
+            ),
+            Map.entry(byte.class, "st.setByte(idx, %s);\n"),
+            Map.entry(
+                    Byte.class,
+                    "{\njava.lang.Byte tmpVal = %s;\nif (tmpVal == null) {\nst.setNull(idx, 0);\n} else {\nst.setByte(idx, tmpVal.byteValue());\n}\n}\n"
+            ),
 
-    static {
-        Map<Class<?>, String> map = new HashMap<>();
+            // Float types
+            Map.entry(double.class, "st.setDouble(idx, %s);\n"),
+            Map.entry(
+                    Double.class,
+                    "{\njava.lang.Double tmpVal = %s;\nif (tmpVal == null) {\nst.setNull(idx, 0);\n} else {\nst.setDouble(idx, tmpVal.doubleValue());\n}\n}\n"
+            ),
+            Map.entry(float.class, "st.setFloat(idx, %s);\n"),
+            Map.entry(
+                    Float.class,
+                    "{\njava.lang.Float tmpVal = %s;\nif (tmpVal == null) {\nst.setNull(idx, 0);\n} else {\nst.setFloat(idx, tmpVal.floatValue());\n}\n}\n"
+            ),
 
-        // Integer types
-        map.put(long.class, "st.setLong(idx, %s);\n");
-        map.put(
-                Long.class,
-                "{\njava.lang.Long tmpVal = %s;\nif (tmpVal == null) {\nst.setNull(idx, 0);\n} else {\nst.setLong(idx, tmpVal.longValue());\n}\n}\n"
-        );
-        map.put(int.class, "st.setInt(idx, %s);\n");
-        map.put(
-                Integer.class,
-                "{\njava.lang.Integer tmpVal = %s;\nif (tmpVal == null) {\nst.setNull(idx, 0);\n} else {\nst.setInt(idx, tmpVal.intValue());\n}\n}\n"
-        );
-        map.put(short.class, "st.setShort(idx, %s);\n");
-        map.put(
-                Short.class,
-                "{\njava.lang.Short tmpVal = %s;\nif (tmpVal == null) {\nst.setNull(idx, 0);\n} else {\nst.setShort(idx, tmpVal.shortValue());\n}\n}\n"
-        );
-        map.put(byte.class, "st.setByte(idx, %s);\n");
-        map.put(
-                Byte.class,
-                "{\njava.lang.Byte tmpVal = %s;\nif (tmpVal == null) {\nst.setNull(idx, 0);\n} else {\nst.setByte(idx, tmpVal.byteValue());\n}\n}\n"
-        );
+            // Boolean type
+            Map.entry(boolean.class, "st.setBoolean(idx, %s);\n"),
+            Map.entry(
+                    Boolean.class,
+                    "{\njava.lang.Boolean tmpVal = %s;\nif (tmpVal == null) {\nst.setNull(idx, 0);\n} else {\nst.setBoolean(idx, tmpVal.booleanValue());\n}\n}\n"
+            ),
 
-        // Float types
-        map.put(double.class, "st.setDouble(idx, %s);\n");
-        map.put(
-                Double.class,
-                "{\njava.lang.Double tmpVal = %s;\nif (tmpVal == null) {\nst.setNull(idx, 0);\n} else {\nst.setDouble(idx, tmpVal.doubleValue());\n}\n}\n"
-        );
-        map.put(float.class, "st.setFloat(idx, %s);\n");
-        map.put(
-                Float.class,
-                "{\njava.lang.Float tmpVal = %s;\nif (tmpVal == null) {\nst.setNull(idx, 0);\n} else {\nst.setFloat(idx, tmpVal.floatValue());\n}\n}\n"
-        );
+            // Other types
+            Map.entry(byte[].class, "st.setBytes(idx, %s);\n"),
+            Map.entry(String.class, "st.setString(idx, %s);\n"),
+            Map.entry(BigDecimal.class, "st.setBigDecimal(idx, %s);\n"),
+            Map.entry(Object.class, "st.setObject(idx, %s);\n"),
 
-        // Boolean type
-        map.put(boolean.class, "st.setBoolean(idx, %s);\n");
-        map.put(
-                Boolean.class,
-                "{\njava.lang.Boolean tmpVal = %s;\nif (tmpVal == null) {\nst.setNull(idx, 0);\n} else {\nst.setBoolean(idx, tmpVal.booleanValue());\n}\n}\n"
-        );
-
-        // Other types
-        map.put(byte[].class, "st.setBytes(idx, %s);\n");
-        map.put(String.class, "st.setString(idx, %s);\n");
-        map.put(BigDecimal.class, "st.setBigDecimal(idx, %s);\n");
-        map.put(Object.class, "st.setObject(idx, %s);\n");
-
-        // Time classes
-        map.put(java.sql.Time.class, "st.setTime(idx, %s);\n");
-        map.put(java.sql.Date.class, "st.setDate(idx, %s);\n");
-        map.put(java.sql.Timestamp.class, "st.setTimestamp(idx, %s);\n");
-
-        map.put(java.sql.Array.class, "st.setArray(idx, %s);\n");
-
-        synchronized (AHBuilderUtils.class) {
-            SET_DECLARATIONS = Collections.unmodifiableMap(map);
-        }
-    }
+            // Time classes
+            Map.entry(Time.class, "st.setTime(idx, %s);\n"),
+            Map.entry(Date.class, "st.setDate(idx, %s);\n"),
+            Map.entry(Timestamp.class, "st.setTimestamp(idx, %s);\n"),
+            Map.entry(Array.class, "st.setArray(idx, %s);\n")
+    );
 
     public static void checkConverterInstance(
             ClassPool pool,

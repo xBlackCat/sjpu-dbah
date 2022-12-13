@@ -1,7 +1,7 @@
 package org.xblackcat.sjpu.storage.workflow.batched;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.xblackcat.sjpu.builder.GeneratorException;
 import org.xblackcat.sjpu.storage.*;
 import org.xblackcat.sjpu.storage.ann.Sql;
@@ -20,9 +20,9 @@ public class FailTest {
         try {
             final ITestAH testAH = s.get(ITestAH.class);
 
-            Assert.fail("GeneratorException expected");
+            Assertions.fail("GeneratorException expected");
         } catch (GeneratorException e) {
-            Assert.assertTrue(true); // Exception occur
+            Assertions.assertTrue(true); // Exception occur
         }
     }
 
@@ -37,9 +37,9 @@ public class FailTest {
         try {
             final ITestArgAH testAH = s.get(ITestArgAH.class);
 
-            Assert.fail("GeneratorException expected");
+            Assertions.fail("GeneratorException expected");
         } catch (GeneratorException e) {
-            Assert.assertTrue(true); // Exception occur
+            Assertions.assertTrue(true); // Exception occur
         }
     }
 

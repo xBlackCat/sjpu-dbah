@@ -6,11 +6,6 @@ import org.xblackcat.sjpu.storage.typemap.TypeMapper;
 
 import java.lang.reflect.Constructor;
 
-/**
- * 25.04.2014 12:58
- *
- * @author xBlackCat
- */
 class ConverterMethodBuilder {
     private final TypeMapper typeMapper;
     private final Constructor<?>[] constructors;

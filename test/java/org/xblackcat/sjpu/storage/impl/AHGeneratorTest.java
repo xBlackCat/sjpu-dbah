@@ -1,8 +1,8 @@
 package org.xblackcat.sjpu.storage.impl;
 
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.xblackcat.sjpu.storage.IAHFactory;
 import org.xblackcat.sjpu.storage.IStorage;
 import org.xblackcat.sjpu.storage.StorageException;
@@ -30,13 +30,13 @@ public class AHGeneratorTest {
         final ITIntAH intAH1 = s1.get(ITIntAH.class);
         final ITIntAH intAH2 = s2.get(ITIntAH.class);
 
-        Assert.assertNotEquals(intAH1.getClass().getClassLoader(), intAH2.getClass().getClassLoader());
-        Assert.assertNotEquals(intAH1.getClass(), intAH2.getClass());
+        Assertions.assertNotEquals(intAH1.getClass().getClassLoader(), intAH2.getClass().getClassLoader());
+        Assertions.assertNotEquals(intAH1.getClass(), intAH2.getClass());
 
-        Assert.assertEquals(intAH1.getClass().getClassLoader(), s1.get(ITIntAH.class).getClass().getClassLoader());
-        Assert.assertEquals(intAH1.getClass(), s1.get(ITIntAH.class).getClass());
-        Assert.assertTrue(intAH1.getClass() == s1.get(ITIntAH.class).getClass());
-        Assert.assertTrue(intAH1 == s1.get(ITIntAH.class));
+        Assertions.assertEquals(intAH1.getClass().getClassLoader(), s1.get(ITIntAH.class).getClass().getClassLoader());
+        Assertions.assertEquals(intAH1.getClass(), s1.get(ITIntAH.class).getClass());
+        Assertions.assertTrue(intAH1.getClass() == s1.get(ITIntAH.class).getClass());
+        Assertions.assertTrue(intAH1 == s1.get(ITIntAH.class));
     }
 
     @Test
@@ -49,7 +49,7 @@ public class AHGeneratorTest {
 
         // Remove standard methods
         for (Method m : Object.class.getMethods()) {
-            Assert.assertTrue("Standard method is not found: " + m.getName(), availableMethods.remove(m));
+            Assertions.assertTrue(availableMethods.remove(m), "Standard method is not found: " + m.getName());
         }
 
         NextMethod:
@@ -64,10 +64,10 @@ public class AHGeneratorTest {
                 }
             }
 
-            Assert.fail("Method " + m + " is not implemented");
+            Assertions.fail("Method " + m + " is not implemented");
         }
 
-        Assert.assertEquals("Found unexpected extra methods" + availableMethods, 0, availableMethods.size());
+        Assertions.assertEquals(0, availableMethods.size(), "Found unexpected extra methods" + availableMethods);
     }
 
     @Test
@@ -80,7 +80,7 @@ public class AHGeneratorTest {
 
         // Remove standard methods
         for (Method m : Object.class.getMethods()) {
-            Assert.assertTrue("Standard method is not found: " + m.getName(), availableMethods.remove(m));
+            Assertions.assertTrue(availableMethods.remove(m), "Standard method is not found: " + m.getName());
         }
 
         NextMethod:
@@ -95,10 +95,10 @@ public class AHGeneratorTest {
                 }
             }
 
-            Assert.fail("Method " + m + " is not implemented");
+            Assertions.fail("Method " + m + " is not implemented");
         }
 
-        Assert.assertEquals("Found unexpected extra methods" + availableMethods, 0, availableMethods.size());
+        Assertions.assertEquals(0, availableMethods.size(), "Found unexpected extra methods" + availableMethods);
     }
 
     @Test
@@ -106,7 +106,7 @@ public class AHGeneratorTest {
         IAHFactory storage = new Storage(new ConnectionFactoryStub());
 
         final IOptTestAH testAH = storage.get(IOptTestAH.class);
-        Assert.assertNotNull(testAH);
+        Assertions.assertNotNull(testAH);
     }
 
     /*    @Test
@@ -117,13 +117,13 @@ public class AHGeneratorTest {
                {
                    IAHFactory storage = new Storage(new QueryHelperStub(1l));
                    final ITLongAH testAH = storage.get(ITLongAH.class);
-                   Assert.assertEquals(one, testAH.getLong());
-                   Assert.assertEquals(Long.valueOf(one), testAH.getLongObject());
+                   org.junit.jupiter.api.Assertions.assertEquals(one, testAH.getLong());
+                   org.junit.jupiter.api.Assertions.assertEquals(Long.valueOf(one), testAH.getLongObject());
                    testAH.getLongObject(new AssertConsumer<>(Long.valueOf(one)));
    */
 /*
-                Assert.assertEquals(one, testAH.getLong2());
-                Assert.assertEquals(Long.valueOf(one), testAH.getLongObject2());
+                org.junit.jupiter.api.Assertions.assertEquals(one, testAH.getLong2());
+                org.junit.jupiter.api.Assertions.assertEquals(Long.valueOf(one), testAH.getLongObject2());
 *//*
 
             }
@@ -131,12 +131,12 @@ public class AHGeneratorTest {
             {
                 IAHFactory storage = new Storage(new QueryHelperStub(1));
                 final ITIntAH testAH = storage.get(ITIntAH.class);
-                Assert.assertEquals(one, testAH.getInt());
-                Assert.assertEquals(Integer.valueOf(one), testAH.getInteger());
+                org.junit.jupiter.api.Assertions.assertEquals(one, testAH.getInt());
+                org.junit.jupiter.api.Assertions.assertEquals(Integer.valueOf(one), testAH.getInteger());
 */
 /*
-                Assert.assertEquals(one, testAH.getInt2());
-                Assert.assertEquals(Integer.valueOf(one), testAH.getInteger2());
+                org.junit.jupiter.api.Assertions.assertEquals(one, testAH.getInt2());
+                org.junit.jupiter.api.Assertions.assertEquals(Integer.valueOf(one), testAH.getInteger2());
 *//*
 
             }
@@ -144,12 +144,12 @@ public class AHGeneratorTest {
             {
                 IAHFactory storage = new Storage(new QueryHelperStub((short) 1));
                 final ITShortAH testAH = storage.get(ITShortAH.class);
-                Assert.assertEquals(one, testAH.getShort());
-                Assert.assertEquals(Short.valueOf(one), testAH.getShortObject());
+                org.junit.jupiter.api.Assertions.assertEquals(one, testAH.getShort());
+                org.junit.jupiter.api.Assertions.assertEquals(Short.valueOf(one), testAH.getShortObject());
 */
 /*
-                Assert.assertEquals(one, testAH.getShort2());
-                Assert.assertEquals(Short.valueOf(one), testAH.getShortObject2());
+                org.junit.jupiter.api.Assertions.assertEquals(one, testAH.getShort2());
+                org.junit.jupiter.api.Assertions.assertEquals(Short.valueOf(one), testAH.getShortObject2());
 *//*
 
             }
@@ -157,12 +157,12 @@ public class AHGeneratorTest {
             {
                 IAHFactory storage = new Storage(new QueryHelperStub((byte) 1));
                 final ITByteAH testAH = storage.get(ITByteAH.class);
-                Assert.assertEquals(one, testAH.getByte());
-                Assert.assertEquals(Byte.valueOf(one), testAH.getByteObject());
+                org.junit.jupiter.api.Assertions.assertEquals(one, testAH.getByte());
+                org.junit.jupiter.api.Assertions.assertEquals(Byte.valueOf(one), testAH.getByteObject());
 */
 /*
-                Assert.assertEquals(one, testAH.getByte2());
-                Assert.assertEquals(Byte.valueOf(one), testAH.getByteObject2());
+                org.junit.jupiter.api.Assertions.assertEquals(one, testAH.getByte2());
+                org.junit.jupiter.api.Assertions.assertEquals(Byte.valueOf(one), testAH.getByteObject2());
 *//*
 
             }
@@ -170,12 +170,12 @@ public class AHGeneratorTest {
             {
                 IAHFactory storage = new Storage(new QueryHelperStub(true));
                 final ITBooleanAH testAH = storage.get(ITBooleanAH.class);
-                Assert.assertEquals(true, testAH.getBoolean());
-                Assert.assertEquals(Boolean.TRUE, testAH.getBooleanObject());
+                org.junit.jupiter.api.Assertions.assertEquals(true, testAH.getBoolean());
+                org.junit.jupiter.api.Assertions.assertEquals(Boolean.TRUE, testAH.getBooleanObject());
 */
 /*
-                Assert.assertEquals(true, testAH.getBoolean2());
-                Assert.assertEquals(Boolean.TRUE, testAH.getBooleanObject2());
+                org.junit.jupiter.api.Assertions.assertEquals(true, testAH.getBoolean2());
+                org.junit.jupiter.api.Assertions.assertEquals(Boolean.TRUE, testAH.getBooleanObject2());
 *//*
 
             }
@@ -183,12 +183,12 @@ public class AHGeneratorTest {
             {
                 IAHFactory storage = new Storage(new QueryHelperStub(1.f));
                 final ITFloatAH testAH = storage.get(ITFloatAH.class);
-                Assert.assertEquals(1.f, testAH.getFloat(), 0);
-                Assert.assertEquals(Float.valueOf(1.f), testAH.getFloatObject());
+                org.junit.jupiter.api.Assertions.assertEquals(1.f, testAH.getFloat(), 0);
+                org.junit.jupiter.api.Assertions.assertEquals(Float.valueOf(1.f), testAH.getFloatObject());
 */
 /*
-                Assert.assertEquals(1.f, testAH.getFloat2(), 0);
-                Assert.assertEquals(Float.valueOf(1.f), testAH.getFloatObject2());
+                org.junit.jupiter.api.Assertions.assertEquals(1.f, testAH.getFloat2(), 0);
+                org.junit.jupiter.api.Assertions.assertEquals(Float.valueOf(1.f), testAH.getFloatObject2());
 *//*
 
             }
@@ -196,12 +196,12 @@ public class AHGeneratorTest {
             {
                 IAHFactory storage = new Storage(new QueryHelperStub(1.));
                 final ITDoubleAH testAH = storage.get(ITDoubleAH.class);
-                Assert.assertEquals(1., testAH.getDouble(), 0.0000000001);
-                Assert.assertEquals(Double.valueOf(1.), testAH.getDoubleObject());
+                org.junit.jupiter.api.Assertions.assertEquals(1., testAH.getDouble(), 0.0000000001);
+                org.junit.jupiter.api.Assertions.assertEquals(Double.valueOf(1.), testAH.getDoubleObject());
 */
 /*
-                Assert.assertEquals(1., testAH.getDouble2(), 0.0000000001);
-                Assert.assertEquals(Double.valueOf(1.), testAH.getDoubleObject2());
+                org.junit.jupiter.api.Assertions.assertEquals(1., testAH.getDouble2(), 0.0000000001);
+                org.junit.jupiter.api.Assertions.assertEquals(Double.valueOf(1.), testAH.getDoubleObject2());
 *//*
 
             }
@@ -216,9 +216,9 @@ public class AHGeneratorTest {
 
         try {
             storage.get(ITObjFail1AH.class);
-            Assert.fail("Exception expected");
+            Assertions.fail("Exception expected");
         } catch (Exception e) {
-            Assert.assertEquals(
+            Assertions.assertEquals(
                     "Exception occurs while building method public abstract org.xblackcat.sjpu.storage.impl.FailData org.xblackcat.sjpu.storage.impl.ITObjFail1AH.getException() throws org.xblackcat.sjpu.storage.StorageException: Can't find a way to convert result row to object. Probably one of the following annotations should be used: [interface org.xblackcat.sjpu.storage.ann.ToObjectConverter, interface org.xblackcat.sjpu.storage.ann.RowMap, interface org.xblackcat.sjpu.storage.ann.MapRowTo]",
                     e.getMessage()
             );
@@ -226,9 +226,9 @@ public class AHGeneratorTest {
 
         try {
             storage.get(ITObjFail2AH.class);
-            Assert.fail("Exception expected");
+            Assertions.fail("Exception expected");
         } catch (Exception e) {
-            Assert.assertEquals(
+            Assertions.assertEquals(
                     "Exception occurs while building method public abstract org.xblackcat.sjpu.storage.impl.NoDefaultData org.xblackcat.sjpu.storage.impl.ITObjFail2AH.getException() throws org.xblackcat.sjpu.storage.StorageException: Can't find a way to convert result row to object. Probably one of the following annotations should be used: [interface org.xblackcat.sjpu.storage.ann.ToObjectConverter, interface org.xblackcat.sjpu.storage.ann.RowMap, interface org.xblackcat.sjpu.storage.ann.MapRowTo]",
                     e.getMessage()
             );
@@ -236,9 +236,9 @@ public class AHGeneratorTest {
 
         try {
             storage.get(ITObjFail3AH.class);
-            Assert.fail("Exception expected");
+            Assertions.fail("Exception expected");
         } catch (Exception e) {
-            Assert.assertEquals(
+            Assertions.assertEquals(
                     "Method public abstract org.xblackcat.sjpu.storage.impl.NoDefaultData org.xblackcat.sjpu.storage.impl.ITObjFail3AH.getException() throws org.xblackcat.sjpu.storage.StorageException should meet only one of the following requirements: annotated with org.xblackcat.sjpu.storage.ann.Sql or annotated with org.xblackcat.sjpu.storage.ann.DDL",
                     e.getMessage()
             );
@@ -267,38 +267,38 @@ public class AHGeneratorTest {
 
         storage = new Storage(new QueryHelperStub(1l));
         testAH = storage.get(IComplexAH.class);
-        Assert.assertEquals(one, testAH.getLong());
-        Assert.assertEquals(Long.valueOf(one), testAH.getLongObject());
+        org.junit.jupiter.api.Assertions.assertEquals(one, testAH.getLong());
+        org.junit.jupiter.api.Assertions.assertEquals(Long.valueOf(one), testAH.getLongObject());
 
         storage = new Storage(new QueryHelperStub(1));
         testAH = storage.get(IComplexAH.class);
-        Assert.assertEquals(one, testAH.getInt());
-        Assert.assertEquals(Integer.valueOf(one), testAH.getInteger());
+        org.junit.jupiter.api.Assertions.assertEquals(one, testAH.getInt());
+        org.junit.jupiter.api.Assertions.assertEquals(Integer.valueOf(one), testAH.getInteger());
 
         storage = new Storage(new QueryHelperStub((short) 1));
         testAH = storage.get(IComplexAH.class);
-        Assert.assertEquals(one, testAH.getShort());
-        Assert.assertEquals(Short.valueOf(one), testAH.getShortObject());
+        org.junit.jupiter.api.Assertions.assertEquals(one, testAH.getShort());
+        org.junit.jupiter.api.Assertions.assertEquals(Short.valueOf(one), testAH.getShortObject());
 
         storage = new Storage(new QueryHelperStub((byte) 1));
         testAH = storage.get(IComplexAH.class);
-        Assert.assertEquals(one, testAH.getByte());
-        Assert.assertEquals(Byte.valueOf(one), testAH.getByteObject());
+        org.junit.jupiter.api.Assertions.assertEquals(one, testAH.getByte());
+        org.junit.jupiter.api.Assertions.assertEquals(Byte.valueOf(one), testAH.getByteObject());
 
         storage = new Storage(new QueryHelperStub(true));
         testAH = storage.get(IComplexAH.class);
-        Assert.assertEquals(true, testAH.getBoolean());
-        Assert.assertEquals(Boolean.TRUE, testAH.getBooleanObject());
+        org.junit.jupiter.api.Assertions.assertEquals(true, testAH.getBoolean());
+        org.junit.jupiter.api.Assertions.assertEquals(Boolean.TRUE, testAH.getBooleanObject());
 
         storage = new Storage(new QueryHelperStub(1.f));
         testAH = storage.get(IComplexAH.class);
-        Assert.assertEquals(1.f, testAH.getFloat(), 0);
-        Assert.assertEquals(Float.valueOf(1.f), testAH.getFloatObject());
+        org.junit.jupiter.api.Assertions.assertEquals(1.f, testAH.getFloat(), 0);
+        org.junit.jupiter.api.Assertions.assertEquals(Float.valueOf(1.f), testAH.getFloatObject());
 
         storage = new Storage(new QueryHelperStub(1.));
         testAH = storage.get(IComplexAH.class);
-        Assert.assertEquals(1., testAH.getDouble(), 0.0000000001);
-        Assert.assertEquals(Double.valueOf(1.), testAH.getDoubleObject());
+        org.junit.jupiter.api.Assertions.assertEquals(1., testAH.getDouble(), 0.0000000001);
+        org.junit.jupiter.api.Assertions.assertEquals(Double.valueOf(1.), testAH.getDoubleObject());
     }
 */
 }

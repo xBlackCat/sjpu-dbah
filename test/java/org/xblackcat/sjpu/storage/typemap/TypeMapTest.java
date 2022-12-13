@@ -1,7 +1,7 @@
 package org.xblackcat.sjpu.storage.typemap;
 
 import javassist.ClassPool;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.xblackcat.sjpu.storage.UriTypeMap;
 
 /**

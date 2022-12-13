@@ -6,13 +6,13 @@ package org.xblackcat.sjpu.storage.connection;
  * @author xBlackCat
  */
 public interface IDBConfig {
-    String getDriver();
+    String driver();
 
-    String getUrl();
+    String url();
 
-    String getUser();
+    String user();
 
-    String getPassword();
+    String password();
 
-    int getPoolSize();
+    int poolSize();
 }

@@ -1,6 +1,6 @@
 package org.xblackcat.sjpu.storage.impl;
 
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 import org.xblackcat.sjpu.storage.ConsumeException;
 import org.xblackcat.sjpu.storage.consumer.IRowConsumer;
 
@@ -20,9 +20,9 @@ public class AssertConsumer<T> implements IRowConsumer<T> {
     @Override
     public boolean consume(T o) throws ConsumeException {
         if (done) {
-            Assert.fail("Double invocation.");
+            Assertions.fail("Double invocation.");
         }
-        Assert.assertEquals(expected, o);
+        Assertions.assertEquals(expected, o);
         done = true;
         return false;
     }

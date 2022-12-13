@@ -11,11 +11,6 @@ import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Deque;
 
-/**
- * 25.04.2014 15:32
- *
- * @author xBlackCat
- */
 class SignatureFinder extends AnAnalyser {
     private final Class<?>[] signature;
 
@@ -67,6 +62,7 @@ class SignatureFinder extends AnAnalyser {
             if (processed != null) {
                 return processed;
             }
+            //noinspection StatementWithEmptyBody
             while (stack.removeLast() != c) ;
         }
 
@@ -82,12 +78,12 @@ class SignatureFinder extends AnAnalyser {
         if (matched == null || stack.isEmpty()) {
             throw new GeneratorException(
                     "Can't find a way to convert result row to object. Probably one of the following annotations should be used: " +
-                            Arrays.asList(ToObjectConverter.class, RowMap.class, MapRowTo.class)
+                    Arrays.asList(ToObjectConverter.class, RowMap.class, MapRowTo.class)
             );
         }
 
 
-        final Constructor<?>[] reference = stack.toArray(new Constructor<?>[stack.size()]);
+        final Constructor<?>[] reference = stack.toArray(EMPTY_CONSTRUCTORS);
 
         Constructor<?>[] constructors = clazz.getConstructors();
         int i = 0;

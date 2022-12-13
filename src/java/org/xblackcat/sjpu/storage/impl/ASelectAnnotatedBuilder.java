@@ -66,27 +66,27 @@ public abstract class ASelectAnnotatedBuilder<A extends Annotation> extends AMap
         body.append("int idx = 0;\n");
 
         for (Arg arg : types) {
-            final Class<?> type = arg.typeRawClass;
+            final Class<?> type = arg.typeRawClass();
 
-            final ArgIdx argIdx = arg.idx;
-            final int idx = argIdx.idx + 1;
+            final ArgIdx argIdx = arg.idx();
+            final int idx = argIdx.idx() + 1;
 
-            final ArgInfo varArgInfo = arg.varArgInfo;
-            if (argIdx.optional) {
+            final ArgInfo varArgInfo = arg.varArgInfo();
+            if (argIdx.optional()) {
                 body.append("if ($");
                 body.append(idx);
                 body.append(" != null) ");
             }
             body.append("{\n");
 
-            final boolean noExpanding = arg.expandedArgs == null || arg.expandedArgs.length == 0;
+            final boolean noExpanding = arg.expandedArgs() == null || arg.expandedArgs().length == 0;
             final boolean isVarArg = varArgInfo != null;
             final boolean isArray = isVarArg && type.isArray();
 
             final String valueRef;
 
             if (isVarArg) {
-                final String elementClassName = BuilderUtils.getName(varArgInfo.clazz);
+                final String elementClassName = BuilderUtils.getName(varArgInfo.clazz());
                 if (isArray) {
                     body.append("for (int _i = 0; _i < $");
                     body.append(idx);
@@ -111,18 +111,18 @@ public abstract class ASelectAnnotatedBuilder<A extends Annotation> extends AMap
 
             if (noExpanding) {
                 if (isVarArg) {
-                    final ITypeMap<?, ?> typeMap = typeMapper.hasTypeMap(varArgInfo.clazz);
-                    appendSetArg(body, typeMap, valueRef, varArgInfo.clazz);
+                    final ITypeMap<?, ?> typeMap = typeMapper.hasTypeMap(varArgInfo.clazz());
+                    appendSetArg(body, typeMap, valueRef, varArgInfo.clazz());
                 } else {
                     final ITypeMap<?, ?> typeMap = typeMapper.hasTypeMap(type);
                     appendSetArg(body, typeMap, valueRef, type);
                 }
             } else {
-                for (ArgInfo argInfo : arg.expandedArgs) {
-                    final String subArgRef = "_" + idx + "_" + argInfo.methodName;
+                for (ArgInfo argInfo : arg.expandedArgs()) {
+                    final String subArgRef = "_" + idx + "_" + argInfo.methodName();
                     final Class<?> argTypeExpect;
 
-                    final Class<?> clazz = argInfo.clazz;
+                    final Class<?> clazz = argInfo.clazz();
                     final boolean isPrimitive = clazz.isPrimitive();
                     if (isPrimitive) {
                         argTypeExpect = Class.forName(((CtPrimitiveType) pool.get(clazz.getName())).getWrapperName());
@@ -145,7 +145,7 @@ public abstract class ASelectAnnotatedBuilder<A extends Annotation> extends AMap
                     }
                     body.append(valueRef);
                     body.append(".");
-                    body.append(argInfo.methodName);
+                    body.append(argInfo.methodName());
                     body.append("()");
                     if (isPrimitive) {
                         body.append(")");
@@ -272,7 +272,7 @@ public abstract class ASelectAnnotatedBuilder<A extends Annotation> extends AMap
         final QueryType type = getQueryType(m);
 
         if (type == QueryType.Select && converter == null) {
-            throw new GeneratorException("Converter should be specified for SELECT statement in method " + m.toString());
+            throw new GeneratorException("Converter should be specified for SELECT statement in method " + m);
         }
 
         ClassPool pool = BuilderUtils.getClassPool(typeMapper.getParentPool(), realReturnType, m.getParameterTypes());
@@ -364,13 +364,13 @@ public abstract class ASelectAnnotatedBuilder<A extends Annotation> extends AMap
             } else {
                 if (!noResult) {
                     if (forceReturnData || type == QueryType.Select) {
-                        throw new GeneratorException("Consumer can't be used with non-void return type: " + m.toString());
+                        throw new GeneratorException("Consumer can't be used with non-void return type: " + m);
                     }
                     if (int.class.equals(returnType)) {
                         returnString = "return rows;";
                     } else {
                         throw new GeneratorException(
-                                "Insert method with consumer can have only void or int return type: " + m.toString()
+                                "Insert method with consumer can have only void or int return type: " + m
                         );
                     }
                 } else {

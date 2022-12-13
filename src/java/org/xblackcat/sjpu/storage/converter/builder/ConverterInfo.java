@@ -4,8 +4,6 @@ import javassist.CannotCompileException;
 import javassist.Modifier;
 import javassist.NotFoundException;
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.xblackcat.sjpu.builder.BuilderUtils;
 import org.xblackcat.sjpu.builder.GeneratorException;
 import org.xblackcat.sjpu.storage.ann.*;
@@ -22,14 +20,7 @@ import java.lang.reflect.*;
 import java.sql.ResultSet;
 import java.util.*;
 
-/**
- * 17.12.13 16:45
- *
- * @author xBlackCat
- */
 public class ConverterInfo {
-    private static final Log log = LogFactory.getLog(ConverterInfo.class);
-
     private final Class<?> realReturnType;
     private final Class<? extends IToObjectConverter<?>> converter;
     private final Integer consumeIndex;
@@ -53,6 +44,7 @@ public class ConverterInfo {
         sqlParts = parts;
     }
 
+    @SuppressWarnings("rawtypes")
     public static ConverterInfo analyse(
             TypeMapper typeMapper,
             Map<Class<?>, Class<? extends IRowSetConsumer>> rowSetConsumers,
@@ -61,6 +53,7 @@ public class ConverterInfo {
         return simpleAnalyse(typeMapper, rowSetConsumers, m);
     }
 
+    @SuppressWarnings("rawtypes")
     protected static ConverterInfo simpleAnalyse(
             TypeMapper typeMapper,
             Map<Class<?>, Class<? extends IRowSetConsumer>> rowSetConsumers,
@@ -68,8 +61,7 @@ public class ConverterInfo {
     ) throws NotFoundException, CannotCompileException, ReflectiveOperationException {
         final Class<?> rawClass;
         final Class<?> proposalReturnClass;
-        if (m.getGenericReturnType() instanceof ParameterizedType) {
-            final ParameterizedType returnType = (ParameterizedType) m.getGenericReturnType();
+        if (m.getGenericReturnType() instanceof final ParameterizedType returnType) {
             if (!(returnType.getRawType() instanceof Class)) {
                 throw new GeneratorException("Raw type is not a class " + returnType + " in method " + m);
             }
@@ -92,7 +84,7 @@ public class ConverterInfo {
         Map<Class<?>, List<Method>> expandingClassesInMethod = collectClassesToExpand(m);
 
         final Type[] parameterClasses = m.getGenericParameterTypes();
-        final Annotation[][] anns = m.getParameterAnnotations();
+        final Annotation[][] annotations = m.getParameterAnnotations();
         {
             int i = 0;
             while (i < parameterClasses.length) {
@@ -120,15 +112,15 @@ public class ConverterInfo {
                     SqlOptArg sqlOptArg = null;
                     SqlArg sqlArg = null;
                     SqlVarArg sqlVarArg = null;
-                    for (Annotation a : anns[i]) {
-                        if (a instanceof SqlPart) {
-                            sqlPart = (SqlPart) a;
-                        } else if (a instanceof SqlOptArg) {
-                            sqlOptArg = (SqlOptArg) a;
-                        } else if (a instanceof SqlVarArg) {
-                            sqlVarArg = (SqlVarArg) a;
-                        } else if (a instanceof SqlArg) {
-                            sqlArg = (SqlArg) a;
+                    for (Annotation a : annotations[i]) {
+                        if (a instanceof SqlPart part) {
+                            sqlPart = part;
+                        } else if (a instanceof SqlOptArg optArg) {
+                            sqlOptArg = optArg;
+                        } else if (a instanceof SqlVarArg varArg) {
+                            sqlVarArg = varArg;
+                        } else if (a instanceof SqlArg arg) {
+                            sqlArg = arg;
                         }
                     }
 
@@ -146,7 +138,7 @@ public class ConverterInfo {
                         if (expandedArgs.length > 1) {
                             throw new GeneratorException(
                                     "Optional SqlArg should be mapped to a single element. Expanded to " + expandedArgs.length +
-                                            " args in " + m
+                                    " args in " + m
                             );
                         }
 
@@ -156,7 +148,7 @@ public class ConverterInfo {
                         if (oldVal != null) {
                             throw new GeneratorException(
                                     "Two arguments (" + oldVal + " and " + i + ") are referenced to the same sql part index " +
-                                            sqlArg.value() + " in method " + m
+                                    sqlArg.value() + " in method " + m
                             );
                         }
                     } else if (sqlPart != null) {
@@ -211,7 +203,7 @@ public class ConverterInfo {
                         if (oldVal != null) {
                             throw new GeneratorException(
                                     "Two arguments (" + oldVal + " and " + i + ") are referenced to the same sql part index " +
-                                            sqlPart.value() + " in method " + m
+                                    sqlPart.value() + " in method " + m
                             );
                         }
                     } else if (sqlOptArg != null) {
@@ -275,11 +267,11 @@ public class ConverterInfo {
             } else {
                 realReturnClass = mapRowTo.value();
                 if (consumerParamIdx == null &&
-                        !hasRowSetConsumer &&
-                        !rawClass.isAssignableFrom(realReturnClass)) {
+                    !hasRowSetConsumer &&
+                    !rawClass.isAssignableFrom(realReturnClass)) {
                     throw new GeneratorException(
                             "Mapped object " + realReturnClass.getName() + " can not be returned as " + rawClass.getName() +
-                                    " from method " + m
+                            " from method " + m
                     );
                 }
             }
@@ -343,7 +335,7 @@ public class ConverterInfo {
         } else if (argumentCountInAdditional != expandedArgs.length) {
             throw new GeneratorException(
                     "Optional Sql part have " + additional + " arguments to substitute and argument expanded into " +
-                            expandedArgs.length + " arguments. " + m
+                    expandedArgs.length + " arguments. " + m
             );
         }
     }
@@ -428,7 +420,7 @@ public class ConverterInfo {
             Method getter = BuilderUtils.findGetter(aClass, property);
             if (getter == null) {
                 throw new GeneratorException("Invalid property/method name '" + property + "' is specified for expanding class " +
-                                                     aClass.getName() + ": no getter is found");
+                                             aClass.getName() + ": no getter is found");
             }
             methods.add(getter);
         }
@@ -436,12 +428,12 @@ public class ConverterInfo {
     }
 
     private static Class<?> getRaw(Type t) {
-        if (t instanceof Class) {
-            return (Class) t;
-        } else if (t instanceof ParameterizedType) {
-            return getRaw(((ParameterizedType) t).getRawType());
-        } else if (t instanceof GenericArrayType) {
-            return Array.newInstance(getRaw(((GenericArrayType) t).getGenericComponentType()), 0).getClass();
+        if (t instanceof @SuppressWarnings("rawtypes")Class c) {
+            return c;
+        } else if (t instanceof ParameterizedType pt) {
+            return getRaw(pt.getRawType());
+        } else if (t instanceof GenericArrayType gat) {
+            return Array.newInstance(getRaw(gat.getGenericComponentType()), 0).getClass();
         }
         throw new GeneratorException("Unexpected type " + t);
     }
@@ -460,11 +452,11 @@ public class ConverterInfo {
 
         final Info info = analyser.analyze(type);
 
-        final String converterCN = BuilderUtils.asIdentifier(type) + "Converter" + info.suffix;
-        final Class<IToObjectConverter> targetClass = IToObjectConverter.class;
+        final String converterCN = BuilderUtils.asIdentifier(type) + "Converter" + info.suffix();
+        final var targetClass = IToObjectConverter.class;
         return typeMapper.getOrInitTypeMap(
                 type,
-                () -> new ConverterMethodBuilder(typeMapper, info.reference).buildBody(),
+                () -> new ConverterMethodBuilder(typeMapper, info.reference()).buildBody(),
                 converterCN,
                 targetClass
         );

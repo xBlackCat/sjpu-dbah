@@ -6,23 +6,19 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
-/**
- * @author ASUS
- */
-
 public class SimpleConnectionFactory extends AConnectionFactory {
     private final IDBConfig settings;
 
     public SimpleConnectionFactory(IDBConfig settings) throws StorageException {
-        super(settings.getDriver());
+        super(settings.driver());
         this.settings = settings;
     }
 
     public Connection getConnection() throws SQLException {
         return DriverManager.getConnection(
-                settings.getUrl(),
-                settings.getUser(),
-                settings.getPassword()
+                settings.url(),
+                settings.user(),
+                settings.password()
         );
     }
 

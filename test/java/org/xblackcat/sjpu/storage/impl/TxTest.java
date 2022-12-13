@@ -1,9 +1,9 @@
 package org.xblackcat.sjpu.storage.impl;
 
 import org.apache.commons.lang3.mutable.MutableInt;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.xblackcat.sjpu.storage.*;
 import org.xblackcat.sjpu.storage.ann.MapRowTo;
 import org.xblackcat.sjpu.storage.ann.Sql;
@@ -18,7 +18,7 @@ import org.xblackcat.sjpu.storage.consumer.IRowConsumer;
 public class TxTest {
     private Storage storage;
 
-    @Before
+    @BeforeEach
     public void setupDatabase() throws StorageException {
         IConnectionFactory helper = StorageUtils.buildConnectionFactory(Config.TEST_DB_CONFIG);
         storage = new Storage(helper);
@@ -33,7 +33,7 @@ public class TxTest {
         }
 
         for (int i = 0; i < 10; i++) {
-            Assert.assertEquals("Index [" + i + "]", "Text-" + i, dbah.get(i));
+            Assertions.assertEquals("Text-" + i, dbah.get(i), "Index [" + i + "]");
         }
 
         // Rollback
@@ -43,9 +43,9 @@ public class TxTest {
             tx.fill(101, "Checkpoint2");
             tx.fill(102, "Checkpoint3");
         }
-        Assert.assertNull(dbah.get(100));
-        Assert.assertNull(dbah.get(101));
-        Assert.assertNull(dbah.get(102));
+        Assertions.assertNull(dbah.get(100));
+        Assertions.assertNull(dbah.get(101));
+        Assertions.assertNull(dbah.get(102));
 
         try (ITx b = storage.beginTransaction()) {
             DBAH tx = b.get(DBAH.class);
@@ -55,9 +55,9 @@ public class TxTest {
 
             b.commit();
         }
-        Assert.assertEquals("Checkpoint1", dbah.get(100));
-        Assert.assertEquals("Checkpoint2", dbah.get(101));
-        Assert.assertEquals("Checkpoint3", dbah.get(102));
+        Assertions.assertEquals("Checkpoint1", dbah.get(100));
+        Assertions.assertEquals("Checkpoint2", dbah.get(101));
+        Assertions.assertEquals("Checkpoint3", dbah.get(102));
 
     }
 
@@ -70,7 +70,7 @@ public class TxTest {
         }
 
         for (int i = 0; i < 10; i++) {
-            Assert.assertEquals("Index [" + i + "]", "Text-" + i, dbah.get(i));
+            Assertions.assertEquals("Text-" + i, dbah.get(i), "Index [" + i + "]");
         }
 
         // Rollback
@@ -81,9 +81,9 @@ public class TxTest {
                 tx.fill(102, "Checkpoint3");
             }
         }
-        Assert.assertNull(dbah.get(100));
-        Assert.assertNull(dbah.get(101));
-        Assert.assertNull(dbah.get(102));
+        Assertions.assertNull(dbah.get(100));
+        Assertions.assertNull(dbah.get(101));
+        Assertions.assertNull(dbah.get(102));
 
         try (ITx b = storage.beginTransaction()) {
             try (DBBAH tx = b.startBatch(DBBAH.class)) {
@@ -93,9 +93,9 @@ public class TxTest {
             }
             b.commit();
         }
-        Assert.assertEquals("Checkpoint1", dbah.get(100));
-        Assert.assertEquals("Checkpoint2", dbah.get(101));
-        Assert.assertEquals("Checkpoint3", dbah.get(102));
+        Assertions.assertEquals("Checkpoint1", dbah.get(100));
+        Assertions.assertEquals("Checkpoint2", dbah.get(101));
+        Assertions.assertEquals("Checkpoint3", dbah.get(102));
 
         try (ITx b = storage.beginTransaction()) {
             try (DBBAH tx = b.startBatch(DBBAH.class)) {
@@ -110,12 +110,12 @@ public class TxTest {
             }
             b.commit();
         }
-        Assert.assertEquals("Checkpoint4", dbah.get(103));
-        Assert.assertEquals("Checkpoint5", dbah.get(104));
-        Assert.assertEquals("Checkpoint6", dbah.get(105));
-        Assert.assertEquals("Checkpoint7", dbah.get(106));
-        Assert.assertEquals("Checkpoint8", dbah.get(107));
-        Assert.assertEquals("Checkpoint9", dbah.get(108));
+        Assertions.assertEquals("Checkpoint4", dbah.get(103));
+        Assertions.assertEquals("Checkpoint5", dbah.get(104));
+        Assertions.assertEquals("Checkpoint6", dbah.get(105));
+        Assertions.assertEquals("Checkpoint7", dbah.get(106));
+        Assertions.assertEquals("Checkpoint8", dbah.get(107));
+        Assertions.assertEquals("Checkpoint9", dbah.get(108));
 
     }
 
@@ -129,7 +129,7 @@ public class TxTest {
             final String value = "Hello, H2 database :)";
             int id = dbAH.put(value);
 
-            Assert.assertEquals(value, dbAH.get(id));
+            Assertions.assertEquals(value, dbAH.get(id));
         }
 
         {
@@ -144,7 +144,7 @@ public class TxTest {
                     value
             );
 
-            Assert.assertEquals(value, dbAH.get(key.intValue()));
+            Assertions.assertEquals(value, dbAH.get(key.intValue()));
         }
     }
 

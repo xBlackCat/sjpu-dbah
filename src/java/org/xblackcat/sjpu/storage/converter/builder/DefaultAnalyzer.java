@@ -23,7 +23,7 @@ class DefaultAnalyzer extends AnAnalyser {
 
         String suffix = checkParameters(clazz, signature);
 
-        return new Info(suffix, signature.toArray(new Constructor<?>[signature.size()]));
+        return new Info(suffix, signature.toArray(EMPTY_CONSTRUCTORS));
     }
 
     private String checkParameters(Class<?> clazz, List<Constructor<?>> signature) {

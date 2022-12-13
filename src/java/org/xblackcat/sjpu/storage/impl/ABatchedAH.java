@@ -7,9 +7,6 @@ import org.xblackcat.sjpu.storage.connection.IConnectionFactory;
 import java.sql.Connection;
 import java.sql.SQLException;
 
-/**
- * @author xBlackCat Date: 27.07.11
- */
 public abstract class ABatchedAH implements IBatchedAH {
     protected final Connection con;
 

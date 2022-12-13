@@ -1,9 +1,9 @@
 package org.xblackcat.sjpu.storage.workflow.batched;
 
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.xblackcat.sjpu.storage.*;
 import org.xblackcat.sjpu.storage.connection.IConnectionFactory;
 import org.xblackcat.sjpu.storage.consumer.IRowConsumer;
@@ -26,7 +26,7 @@ import java.util.Set;
 public class WorkflowBatchedTest {
     private IStorage storage;
 
-    @Before
+    @BeforeEach
     public void setupDatabase() throws StorageException {
         IConnectionFactory helper = StorageUtils.buildConnectionFactory(Config.TEST_DB_CONFIG);
         final StorageBuilder builder = new StorageBuilder();
@@ -40,7 +40,7 @@ public class WorkflowBatchedTest {
         initAH.createDB();
     }
 
-    @After
+    @AfterEach
     public void dropDatabase() throws StorageException {
         storage.shutdown();
     }
@@ -56,7 +56,7 @@ public class WorkflowBatchedTest {
             }
 
             for (Numbers n : Numbers.values()) {
-                Assert.assertEquals(n.name(), dataAH.get(n.ordinal()));
+                Assertions.assertEquals(n.name(), dataAH.get(n.ordinal()));
             }
         }
 
@@ -64,41 +64,41 @@ public class WorkflowBatchedTest {
             for (Numbers n : Numbers.values()) {
                 {
                     final Element element = dataAH.getElement(n.ordinal());
-                    Assert.assertNotNull(element);
-                    Assert.assertEquals(n.name(), element.name);
-                    Assert.assertEquals(n.ordinal(), element.id);
+                    Assertions.assertNotNull(element);
+                    Assertions.assertEquals(n.name(), element.name);
+                    Assertions.assertEquals(n.ordinal(), element.id);
                 }
 
                 final IElement<String> iElement = dataAH.getIElement(n.ordinal());
-                Assert.assertNotNull(iElement);
-                Assert.assertEquals(n.name(), iElement.getName());
-                Assert.assertEquals(n.ordinal(), iElement.getId());
+                Assertions.assertNotNull(iElement);
+                Assertions.assertEquals(n.name(), iElement.getName());
+                Assertions.assertEquals(n.ordinal(), iElement.getId());
             }
 
-            Assert.assertNull(dataAH.get(null));
-            Assert.assertNull(dataAH.getElement(null));
-            Assert.assertNull(dataAH.getIElement(null));
+            Assertions.assertNull(dataAH.get(null));
+            Assertions.assertNull(dataAH.getElement(null));
+            Assertions.assertNull(dataAH.getIElement(null));
 
         }
         try (final IDataAH dataAH = storage.startBatch(IDataAH.class)) {
             final List<Element> list = dataAH.getListElement();
             for (Element el : list) {
-                Assert.assertNotNull(list);
-                Assert.assertEquals(Numbers.values()[el.id].name(), el.name);
+                Assertions.assertNotNull(list);
+                Assertions.assertEquals(Numbers.values()[el.id].name(), el.name);
             }
         }
 
         try (final IDataAH dataAH = storage.startBatch(IDataAH.class)) {
             final List<IElement<String>> list = dataAH.getListIElement();
             for (IElement<String> el : list) {
-                Assert.assertNotNull(list);
-                Assert.assertEquals(Numbers.values()[el.getId()].name(), el.getName());
+                Assertions.assertNotNull(list);
+                Assertions.assertEquals(Numbers.values()[el.getId()].name(), el.getName());
             }
         }
 
         try (final IDataAH dataAH = storage.startBatch(IDataAH.class)) {
             IRowConsumer<Element> consumer = o -> {
-                Assert.assertEquals(Numbers.values()[o.getId()].name(), o.getName());
+                Assertions.assertEquals(Numbers.values()[o.getId()].name(), o.getName());
                 return false;
             };
             dataAH.getListElement(consumer);
@@ -108,7 +108,7 @@ public class WorkflowBatchedTest {
 
         try (final IDataAH dataAH = storage.startBatch(IDataAH.class)) {
             IRowConsumer<IElement<String>> consumer = o -> {
-                Assert.assertEquals(Numbers.values()[o.getId()].name(), o.getName());
+                Assertions.assertEquals(Numbers.values()[o.getId()].name(), o.getName());
                 return false;
             };
             dataAH.getListIElement(consumer);
@@ -119,7 +119,7 @@ public class WorkflowBatchedTest {
         try (final IDataAH dataAH = storage.startBatch(IDataAH.class)) {
             int[] expect = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
             int[] got = dataAH.getIds();
-            Assert.assertArrayEquals(expect, got);
+            Assertions.assertArrayEquals(expect, got);
         }
     }
 
@@ -136,61 +136,61 @@ public class WorkflowBatchedTest {
 
         try (final IDataEnumAH dataAH = storage.startBatch(IDataEnumAH.class)) {
             for (Numbers n : Numbers.values()) {
-                Assert.assertEquals(n, dataAH.get(n.ordinal()));
+                Assertions.assertEquals(n, dataAH.get(n.ordinal()));
             }
 
             for (Numbers n : Numbers.values()) {
                 final ElementNumber element = dataAH.getElement(n.ordinal());
-                Assert.assertNotNull(element);
-                Assert.assertEquals(n, element.name);
-                Assert.assertEquals(n.ordinal(), element.id);
+                Assertions.assertNotNull(element);
+                Assertions.assertEquals(n, element.name);
+                Assertions.assertEquals(n.ordinal(), element.id);
 
                 final IElement<Numbers> iElement = dataAH.getIElement(n.ordinal());
-                Assert.assertNotNull(iElement);
-                Assert.assertEquals(n, iElement.getName());
-                Assert.assertEquals(n.ordinal(), iElement.getId());
+                Assertions.assertNotNull(iElement);
+                Assertions.assertEquals(n, iElement.getName());
+                Assertions.assertEquals(n.ordinal(), iElement.getId());
             }
 
-            Assert.assertNull(dataAH.get(null));
-            Assert.assertNull(dataAH.getElement(null));
-            Assert.assertNull(dataAH.getIElement(null));
+            Assertions.assertNull(dataAH.get(null));
+            Assertions.assertNull(dataAH.getElement(null));
+            Assertions.assertNull(dataAH.getIElement(null));
         }
 
         try (final IDataEnumAH dataAH = storage.startBatch(IDataEnumAH.class)) {
             final List<ElementNumber> list = dataAH.getListElement();
-            Assert.assertNotNull(list);
+            Assertions.assertNotNull(list);
             for (ElementNumber el : list) {
-                Assert.assertEquals(Numbers.values()[el.id], el.name);
+                Assertions.assertEquals(Numbers.values()[el.id], el.name);
             }
         }
 
         try (final IDataEnumAH dataAH = storage.startBatch(IDataEnumAH.class)) {
             final Set<ElementNumber> list = dataAH.getSetElement();
-            Assert.assertNotNull(list);
+            Assertions.assertNotNull(list);
             for (ElementNumber el : list) {
-                Assert.assertEquals(Numbers.values()[el.id], el.name);
+                Assertions.assertEquals(Numbers.values()[el.id], el.name);
             }
         }
 
         try (final IDataEnumAH dataAH = storage.startBatch(IDataEnumAH.class)) {
             final EnumSet<Numbers> list = dataAH.getEnumSetElement();
-            Assert.assertNotNull(list);
+            Assertions.assertNotNull(list);
             for (Numbers el : Numbers.values()) {
-                Assert.assertTrue(list.contains(el));
+                Assertions.assertTrue(list.contains(el));
             }
         }
 
         try (final IDataEnumAH dataAH = storage.startBatch(IDataEnumAH.class)) {
             final List<IElement<Numbers>> list = dataAH.getListIElement();
             for (IElement<Numbers> el : list) {
-                Assert.assertNotNull(list);
-                Assert.assertEquals(Numbers.values()[el.getId()], el.getName());
+                Assertions.assertNotNull(list);
+                Assertions.assertEquals(Numbers.values()[el.getId()], el.getName());
             }
         }
 
         try (final IDataEnumAH dataAH = storage.startBatch(IDataEnumAH.class)) {
             IRowConsumer<ElementNumber> consumer = o -> {
-                Assert.assertEquals(Numbers.values()[o.getId()], o.getName());
+                Assertions.assertEquals(Numbers.values()[o.getId()], o.getName());
                 return false;
             };
             dataAH.getListElement(consumer);
@@ -200,7 +200,7 @@ public class WorkflowBatchedTest {
 
         try (final IDataEnumAH dataAH = storage.startBatch(IDataEnumAH.class)) {
             IRowConsumer<IElement<Numbers>> consumer = o -> {
-                Assert.assertEquals(Numbers.values()[o.getId()], o.getName());
+                Assertions.assertEquals(Numbers.values()[o.getId()], o.getName());
                 return false;
             };
             dataAH.getListIElement(consumer);
@@ -214,9 +214,9 @@ public class WorkflowBatchedTest {
 
         try (final IDataEnumAH dataAH = storage.startBatch(IDataEnumAH.class)) {
             final Map<Numbers, Integer> ma = dataAH.getMapElement();
-            Assert.assertEquals(Numbers.values().length, ma.size());
+            Assertions.assertEquals(Numbers.values().length, ma.size());
             for (Map.Entry<Numbers, Integer> e : ma.entrySet()) {
-                Assert.assertEquals(e.getKey() + " element", e.getKey().ordinal(), e.getValue().intValue());
+                Assertions.assertEquals(e.getKey().ordinal(), e.getValue().intValue(), e.getKey() + " element");
             }
         }
     }
@@ -232,7 +232,7 @@ public class WorkflowBatchedTest {
 
                 URI loaded = uriTest.get(id);
 
-                Assert.assertEquals(uri, loaded);
+                Assertions.assertEquals(uri, loaded);
             }
         }
         try (final IUriTestAH uriTest = storage.startBatch(IUriTestAH.class)) {
@@ -241,25 +241,25 @@ public class WorkflowBatchedTest {
                 URI uri = URI.create("http://example.org/test/" + i);
 
                 int rows = uriTest.putUri(i, uri);
-                Assert.assertEquals(1, rows);
+                Assertions.assertEquals(1, rows);
 
                 URI loaded = uriTest.get(i);
 
-                Assert.assertEquals(uri, loaded);
+                Assertions.assertEquals(uri, loaded);
             }
 
         }
         try (final IUriTestAH uriTest = storage.startBatch(IUriTestAH.class)) {
-            for (int i = 50; i < 60; i++) {
+            for (int i = 50; i < 55; i++) {
                 URI uri = URI.create("http://example.org/test/" + i);
 
                 final SingletonConsumer<Integer> idHolder = new SingletonConsumer<>();
                 int rows = uriTest.putUri(idHolder, uri);
-                Assert.assertEquals(1, rows);
+                Assertions.assertEquals(1, rows);
 
                 URI loaded = uriTest.get(idHolder.getRowsHolder());
 
-                Assert.assertEquals(uri, loaded);
+                Assertions.assertEquals(uri, loaded);
             }
 
         }
@@ -267,7 +267,7 @@ public class WorkflowBatchedTest {
             for (IElement<URI> uriElement : uriTest.getList()) {
                 IElement<URI> uri = uriTest.getElement(uriElement.getId());
 
-                Assert.assertEquals(uriElement, uri);
+                Assertions.assertEquals(uriElement, uri);
             }
         }
     }

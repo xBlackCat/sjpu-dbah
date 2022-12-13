@@ -10,17 +10,13 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/**
- * @author xBlackCat
- */
-
 public class SimplePooledConnectionFactory extends AConnectionFactory {
     private static final AtomicInteger POOL_NUMBER = new AtomicInteger();
 
     private final String poolName;
 
     public SimplePooledConnectionFactory(IDBConfig settings) throws StorageException {
-        this(settings.getDriver(), StorageUtils.createDefaultPool(settings));
+        this(settings.driver(), StorageUtils.createDefaultPool(settings));
     }
 
     public SimplePooledConnectionFactory(
