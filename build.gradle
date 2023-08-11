@@ -2,20 +2,18 @@ plugins {
     id 'java-library'
     id 'maven-publish'
     id 'signing'
-    id 'org.gradlex.java-module-dependencies' version "1.1"
-    id 'org.gradlex.java-module-testing' version "1.0"
-    id 'org.gradlex.extra-java-module-info' version "1.1"
 }
 
-
-sourceCompatibility = JavaVersion.VERSION_17
-targetCompatibility = JavaVersion.VERSION_17
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
 
 group = 'org.xblackcat.sjpu'
 def projectTitle = 'SJPU DB Access helper'
 
 version = new File('build.txt').getText('UTF-8')
-ext.commonManifest = manifest {
+ext.commonManifest = java.manifest {
     attributes(
             "Implementation-Title": projectTitle,
             "Implementation-Version": version
@@ -23,7 +21,7 @@ ext.commonManifest = manifest {
 }
 
 jar {
-    manifest = project.manifest {
+    manifest = java.manifest {
         from commonManifest
     }
 }
@@ -39,35 +37,23 @@ repositories {
     mavenCentral()
 }
 
-extraJavaModuleInfo {
-    automaticModule("commons-logging:commons-logging", "org.apache.commons.logging")
-    automaticModule("org.apache.commons:commons-dbcp2", "org.apache.commons.dbcp2")
-}
-
-javaModuleDependencies {
-    moduleNameToGA.put("org.apache.commons.pool2", "org.apache.commons:commons-pool2")
-//    moduleNameToGA.put("org.apache.commons.dbcp2", "org.apache.commons:commons-dbcp2")
-    moduleNameToGA.put('org.javassist', 'org.javassist:javassist')
-    moduleNameToGA.put('org.apache.commons.text', 'org.apache.commons:commons-text')
-}
-
 dependencies {
-    api group: 'org.xblackcat.sjpu', name: 'sjpu-rcb', version: '[0.4,1.0)'
-    api group: 'org.xblackcat.sjpu', name: 'sjpu-utils', version: '[0.2,1.0)'
-    api group: 'org.apache.commons', name: 'commons-dbcp2', version: '[2.9.0,3.0)'
+    api 'org.xblackcat.sjpu:sjpu-rcb:[0.4,1.0)'
+    api 'org.xblackcat.sjpu:sjpu-utils:[0.2,1.0)'
+    api 'org.apache.commons:commons-dbcp2:[2.9.0,3.0)'
 
-    testImplementation group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.18.0'
-    testImplementation group: 'org.apache.logging.log4j', name: 'log4j-jcl', version: '2.18.0'
-    testImplementation(platform("org.junit:junit-bom:5.8.2"))
-    testImplementation('org.junit.jupiter:junit-jupiter')
-    testImplementation('org.junit.jupiter:junit-jupiter-params')
-    testImplementation group: 'com.h2database', name: 'h2', version: '2.1.214'
+    testImplementation 'com.h2database:h2:2.1.214'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.0'
+    testImplementation 'org.junit.jupiter:junit-jupiter-params:5.10.0'
+    testRuntimeOnly 'org.apache.logging.log4j:log4j-core:2.20.0'
+    testRuntimeOnly 'org.apache.logging.log4j:log4j-jcl:2.20.0'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 tasks.register('sourcesJar', org.gradle.jvm.tasks.Jar) {
     from sourceSets.main.allJava
     archiveClassifier.set('sources')
-    manifest = project.manifest {
+    manifest = java.manifest {
         from commonManifest
     }
 }
@@ -79,7 +65,7 @@ javadoc {
 tasks.register('javadocJar', org.gradle.jvm.tasks.Jar) {
     from javadoc.outputs.files
     archiveClassifier.set('javadoc')
-    manifest = project.manifest {
+    manifest = java.manifest {
         from commonManifest
     }
 }
